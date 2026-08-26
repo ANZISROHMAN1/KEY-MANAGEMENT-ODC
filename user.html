@@ -8,6 +8,7 @@
   <script src="config.js"></script>
 </head>
 <body>
+  <div id="toastContainer" class="toast-container"></div>
   <div class="header">
     <h1>Portal Teknisi ODC</h1>
     <a href="index.html" class="nav-btn">Home</a>
@@ -211,12 +212,28 @@
       currentStream = null;
     }
 
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + (type === 'error' ? 'error' : '');
+      toast.innerHTML = (type === 'success' ? '✅ ' : '❌ ') + message;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease-out forwards';
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 4000);
+    }
+
     async function handleBorrow(e) {
       e.preventDefault();
       
       const selfie = document.getElementById('b_selfie').value;
       if(!selfie) {
-        alert('Silakan ambil foto selfie terlebih dahulu!');
+        showToast('Silakan ambil foto selfie terlebih dahulu!', 'error');
         return;
       }
 
@@ -241,7 +258,7 @@
         const data = await res.json();
         
         if (data.success) {
-          alert('Peminjaman berhasil dicatat!');
+          showToast(`Berhasil! Kunci ODC ${payload.odc} dipinjam oleh ${payload.user}`);
           document.getElementById('borrowForm').reset();
           document.getElementById('b_photo_status').style.display = 'none';
           document.getElementById('b_canvas').style.display = 'none';
@@ -251,11 +268,11 @@
             alert(`ALARM PENGEMBALIAN!\nKunci ODC ${payload.odc} waktu peminjaman (${payload.estimasi} Jam) telah habis. Silakan kembalikan kunci!`);
           }, alarmMs);
         } else {
-          alert('Gagal meminjam kunci: ' + (data.message || 'Error'));
+          showToast('Gagal meminjam kunci: ' + (data.message || 'Error'), 'error');
         }
       } catch (err) {
         console.error(err);
-        alert('Terjadi kesalahan saat mengirim data.');
+        showToast('Terjadi kesalahan saat mengirim data.', 'error');
       }
       
       btn.disabled = false;
@@ -267,7 +284,7 @@
       
       const selfie = document.getElementById('r_selfie').value;
       if(!selfie) {
-        alert('Silakan ambil foto selfie pengembalian terlebih dahulu!');
+        showToast('Silakan ambil foto selfie pengembalian terlebih dahulu!', 'error');
         return;
       }
 
@@ -289,16 +306,16 @@
         const data = await res.json();
         
         if (data.success) {
-          alert('Kunci berhasil dikembalikan!');
+          showToast(`Sukses! Kunci ODC ${payload.odc} telah dikembalikan.`);
           document.getElementById('returnForm').reset();
           document.getElementById('r_photo_status').style.display = 'none';
           document.getElementById('r_canvas').style.display = 'none';
         } else {
-          alert('Gagal: ' + (data.message || 'Error'));
+          showToast('Gagal: ' + (data.message || 'Error'), 'error');
         }
       } catch (err) {
         console.error(err);
-        alert('Terjadi kesalahan saat mengirim data.');
+        showToast('Terjadi kesalahan saat mengirim data.', 'error');
       }
 
       btn.disabled = false;
