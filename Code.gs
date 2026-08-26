@@ -1,4 +1,4 @@
-const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1PktpNMG9efKYyvszUZi8MhisTjUhu3eb/edit';
+const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1kJMH5vweXd4YU8j6urk2pk6iuGcLaUeSCzCWT6szmLM/edit';
 
 function doGet(e) {
   initSheets();
