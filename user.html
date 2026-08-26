@@ -11,6 +11,7 @@
   <div id="toastContainer" class="toast-container"></div>
   <div class="header">
     <h1>Portal Teknisi ODC</h1>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
   </div>
   
   <div class="container">
@@ -105,10 +106,32 @@
   </div>
 
   <script>
+    // Theme logic
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    if (currentTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+
+    function toggleTheme() {
+      let theme = document.documentElement.getAttribute('data-theme');
+      theme = (theme === 'dark') ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      updateThemeIcon(theme);
+    }
+    
+    function updateThemeIcon(theme) {
+      const btn = document.querySelector('.theme-toggle');
+      if (btn) btn.innerText = theme === 'dark' ? '☀️' : '🌙';
+    }
+
     let masterData = {};
     let currentStream = null;
 
-    document.addEventListener("DOMContentLoaded", async function() {
+    document.addEventListener("DOMContentLoaded", function() {
+      updateThemeIcon(currentTheme);
+      fetchMasterData();
+    });
+
+    async function fetchMasterData() {
       document.getElementById('loader').style.display = 'block';
       try {
         const res = await fetch(API_URL + '?action=getMasterData');
