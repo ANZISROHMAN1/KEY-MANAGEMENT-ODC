@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - ODC</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js"></script>
+</head>
+<body>
+  <div class="header">
+    <h1>Admin Dashboard - ODC</h1>
+    <a href="index.html" class="nav-btn">Kembali ke Home</a>
+  </div>
+  
+  <div class="container">
+    <div id="loader" class="loader"></div>
+    <div id="dashboard" class="dashboard-grid" style="display:none;">
+      <!-- STO Cards will be injected here -->
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div id="historyModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <h2 id="modalTitle">History Kunci</h2>
+      <div id="modalBody">
+        <!-- History details injected here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      fetchDashboardData();
+    });
+
+    async function fetchDashboardData() {
+      try {
+        const response = await fetch(API_URL + '?action=getDashboardData');
+        const data = await response.json();
+        renderDashboard(data);
+      } catch (err) {
+        console.error('Error fetching dashboard:', err);
+        alert('Gagal mengambil data dashboard');
+      }
+    }
+
+    function renderDashboard(data) {
+      document.getElementById('loader').style.display = 'none';
+      const dashboard = document.getElementById('dashboard');
+      dashboard.style.display = 'flex';
+      dashboard.innerHTML = '';
+      
+      for (const stoName in data) {
+        const sto = data[stoName];
+        const card = document.createElement('div');
+        card.className = `sto-card status-${sto.status}`;
+        
+        let odcHtml = '';
+        sto.odcs.forEach(odc => {
+          let icon = odc.status === 'red' ? '🔒' : '🔓';
+          let borrowData = odc.borrowDetails ? JSON.stringify(odc.borrowDetails) : '{}';
+          odcHtml += `
+            <div class="odc-item status-${odc.status}" onclick="handleOdcClick(event, '${odc.name}', '${odc.status}', '${btoa(borrowData)}')">
+              <div class="padlock-icon">${icon}</div>
+              <div>${odc.name}</div>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <h2>${sto.name}</h2>
+          <div style="text-align:center; font-size:12px; color:#666;">Klik untuk melihat ODC</div>
+          <div class="odc-list">
+            ${odcHtml}
+          </div>
+        `;
+        
+        card.onclick = function() {
+          this.classList.toggle('expanded');
+        };
+        
+        dashboard.appendChild(card);
+      }
+    }
+
+    async function handleOdcClick(event, odcName, status, borrowDataStr) {
+      event.stopPropagation(); // Prevent STO card from toggling
+      
+      const modal = document.getElementById('historyModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalBody = document.getElementById('modalBody');
+      
+      modalTitle.innerText = `Detail Kunci: ${odcName}`;
+      modalBody.innerHTML = '<div class="loader"></div>';
+      modal.style.display = 'block';
+      
+      if (status === 'red') {
+        const borrowData = JSON.parse(atob(borrowDataStr));
+        
+        let html = `
+          <div style="background:#ffebee; padding:15px; border-radius:8px; margin-bottom:15px;">
+            <h3 style="color:red; margin-top:0;">Sedang Dipinjam</h3>
+            <p><strong>Teknisi:</strong> ${borrowData.user}</p>
+            <p><strong>Kegiatan:</strong> ${borrowData.kegiatan}</p>
+            <p><strong>Waktu Pinjam:</strong> ${borrowData.waktuPinjam}</p>
+            <p><strong>Estimasi:</strong> ${borrowData.estimasi} Jam</p>
+            ${borrowData.selfiePinjam ? `<p><a href="${borrowData.selfiePinjam}" target="_blank" style="color:var(--primary-color);">Lihat Foto Selfie</a></p>` : ''}
+          </div>
+          <hr>
+          <h3>Riwayat Sebelumnya</h3>
+          <div id="historyList"><div class="loader"></div></div>
+        `;
+        modalBody.innerHTML = html;
+        
+        fetchHistory(odcName);
+      } else {
+        fetchHistory(odcName);
+      }
+    }
+
+    async function fetchHistory(odcName) {
+      try {
+        const response = await fetch(API_URL + '?action=getOdcHistory&odc=' + encodeURIComponent(odcName));
+        const historyList = await response.json();
+        renderHistory(historyList);
+      } catch (err) {
+        document.getElementById('modalBody').innerHTML = '<p>Gagal mengambil riwayat.</p>';
+      }
+    }
+
+    function renderHistory(historyList) {
+      const historyContainer = document.getElementById('historyList') || document.getElementById('modalBody');
+      
+      if (historyList.length === 0) {
+        historyContainer.innerHTML = '<p>Belum ada riwayat peminjaman.</p>';
+        return;
+      }
+      
+      let html = '<ul style="list-style-type:none; padding:0;">';
+      historyList.forEach(h => {
+        html += `
+          <li style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
+            <strong>${h.user}</strong> (${h.kegiatan})<br>
+            <small style="color:#666;">Pinjam: ${h.waktuPinjam}</small><br>
+            <small style="color:#666;">Kembali: ${h.waktuKembali}</small>
+          </li>
+        `;
+      });
+      html += '</ul>';
+      historyContainer.innerHTML = html;
+    }
+
+    function closeModal() {
+      document.getElementById('historyModal').style.display = 'none';
+    }
+
+    setInterval(() => {
+      if(document.getElementById('historyModal').style.display !== 'block') {
+         fetchDashboardData();
+      }
+    }, 30000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Teknisi ODC</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js"></script>
+</head>
+<body>
+  <div class="header">
+    <h1>Portal Teknisi ODC</h1>
+    <a href="index.html" class="nav-btn">Home</a>
+  </div>
+  
+  <div class="container">
+    <div class="form-container">
+      <div class="tabs">
+        <div class="tab active" id="tabBorrow" onclick="switchTab('borrow')">Pinjam Kunci</div>
+        <div class="tab" id="tabReturn" onclick="switchTab('return')">Kembalikan Kunci</div>
+      </div>
+
+      <div id="loader" class="loader" style="display:none;"></div>
+
+      <!-- Borrow Form -->
+      <form id="borrowForm" onsubmit="handleBorrow(event)">
+        <div class="form-group">
+          <label>Nama Teknisi</label>
+          <input type="text" id="b_user" required placeholder="Masukkan nama Anda">
+        </div>
+        
+        <div class="form-group">
+          <label>STO</label>
+          <select id="b_sto" required onchange="populateOdc('b')">
+            <option value="">Pilih STO...</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>ODC</label>
+          <select id="b_odc" required>
+            <option value="">Pilih ODC...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Nama Kegiatan</label>
+          <input type="text" id="b_kegiatan" required placeholder="Contoh: Maintenance / Perbaikan">
+        </div>
+
+        <div class="form-group">
+          <label>Estimasi Pengerjaan (Jam)</label>
+          <input type="number" id="b_estimasi" required min="1" step="1" placeholder="Contoh: 2">
+        </div>
+
+        <!-- Camera UI -->
+        <div class="camera-container">
+          <label>Selfie Evidence</label>
+          <video id="b_video" autoplay playsinline></video>
+          <canvas id="b_canvas" style="display:none;"></canvas>
+          <div>
+            <button type="button" class="btn-camera" onclick="startCamera('b')">Buka Kamera</button>
+            <button type="button" class="btn-camera" onclick="takePhoto('b')">Ambil Foto</button>
+          </div>
+          <input type="hidden" id="b_selfie" required>
+          <p id="b_photo_status" style="color:green; font-weight:bold; display:none;">Foto berhasil diambil ✓</p>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btn_submit_b">Submit Peminjaman</button>
+      </form>
+
+      <!-- Return Form -->
+      <form id="returnForm" style="display:none;" onsubmit="handleReturn(event)">
+        <div class="form-group">
+          <label>STO</label>
+          <select id="r_sto" required onchange="populateOdc('r')">
+            <option value="">Pilih STO...</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>ODC yang Dipinjam</label>
+          <select id="r_odc" required>
+            <option value="">Pilih ODC...</option>
+          </select>
+        </div>
+
+        <!-- Camera UI -->
+        <div class="camera-container">
+          <label>Selfie Evidence Pengembalian</label>
+          <video id="r_video" autoplay playsinline></video>
+          <canvas id="r_canvas" style="display:none;"></canvas>
+          <div>
+            <button type="button" class="btn-camera" onclick="startCamera('r')">Buka Kamera</button>
+            <button type="button" class="btn-camera" onclick="takePhoto('r')">Ambil Foto</button>
+          </div>
+          <input type="hidden" id="r_selfie" required>
+          <p id="r_photo_status" style="color:green; font-weight:bold; display:none;">Foto berhasil diambil ✓</p>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btn_submit_r">Submit Pengembalian</button>
+      </form>
+      
+    </div>
+  </div>
+
+  <script>
+    let masterData = {};
+    let currentStream = null;
+
+    document.addEventListener("DOMContentLoaded", async function() {
+      document.getElementById('loader').style.display = 'block';
+      try {
+        const res = await fetch(API_URL + '?action=getMasterData');
+        masterData = await res.json();
+        populateSto('b');
+        populateSto('r');
+      } catch (e) {
+        console.error(e);
+        alert('Gagal mengambil data master');
+      }
+      document.getElementById('loader').style.display = 'none';
+    });
+
+    function switchTab(tab) {
+      if(currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+      
+      if(tab === 'borrow') {
+        document.getElementById('tabBorrow').classList.add('active');
+        document.getElementById('tabReturn').classList.remove('active');
+        document.getElementById('borrowForm').style.display = 'block';
+        document.getElementById('returnForm').style.display = 'none';
+      } else {
+        document.getElementById('tabBorrow').classList.remove('active');
+        document.getElementById('tabReturn').classList.add('active');
+        document.getElementById('borrowForm').style.display = 'none';
+        document.getElementById('returnForm').style.display = 'block';
+      }
+    }
+
+    function populateSto(prefix) {
+      const select = document.getElementById(prefix + '_sto');
+      select.innerHTML = '<option value="">Pilih STO...</option>';
+      
+      for (const sto in masterData) {
+        const opt = document.createElement('option');
+        opt.value = sto;
+        opt.innerText = sto;
+        select.appendChild(opt);
+      }
+    }
+
+    function populateOdc(prefix) {
+      const stoName = document.getElementById(prefix + '_sto').value;
+      const select = document.getElementById(prefix + '_odc');
+      select.innerHTML = '<option value="">Pilih ODC...</option>';
+      
+      if (stoName && masterData[stoName]) {
+        masterData[stoName].forEach(odc => {
+          const opt = document.createElement('option');
+          opt.value = odc;
+          opt.innerText = odc;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    // Camera Logic
+    async function startCamera(prefix) {
+      const video = document.getElementById(prefix + '_video');
+      if(currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        video.style.display = 'block';
+        document.getElementById(prefix + '_canvas').style.display = 'none';
+        video.srcObject = stream;
+        currentStream = stream;
+      } catch (err) {
+        alert('Gagal mengakses kamera: ' + err.message);
+      }
+    }
+
+    function takePhoto(prefix) {
+      const video = document.getElementById(prefix + '_video');
+      const canvas = document.getElementById(prefix + '_canvas');
+      const input = document.getElementById(prefix + '_selfie');
+      const status = document.getElementById(prefix + '_photo_status');
+
+      if(!currentStream) {
+        alert('Buka kamera terlebih dahulu!');
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      
+      const dataUrl = canvas.toDataURL('image/png');
+      input.value = dataUrl;
+      
+      video.style.display = 'none';
+      canvas.style.display = 'block';
+      status.style.display = 'block';
+
+      currentStream.getTracks().forEach(track => track.stop());
+      currentStream = null;
+    }
+
+    async function handleBorrow(e) {
+      e.preventDefault();
+      
+      const selfie = document.getElementById('b_selfie').value;
+      if(!selfie) {
+        alert('Silakan ambil foto selfie terlebih dahulu!');
+        return;
+      }
+
+      const payload = {
+        user: document.getElementById('b_user').value,
+        sto: document.getElementById('b_sto').value,
+        odc: document.getElementById('b_odc').value,
+        kegiatan: document.getElementById('b_kegiatan').value,
+        estimasi: document.getElementById('b_estimasi').value,
+        selfie: selfie
+      };
+
+      const btn = document.getElementById('btn_submit_b');
+      btn.disabled = true;
+      btn.innerText = 'Mengirim...';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'submitBorrow', payload: payload })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert('Peminjaman berhasil dicatat!');
+          document.getElementById('borrowForm').reset();
+          document.getElementById('b_photo_status').style.display = 'none';
+          document.getElementById('b_canvas').style.display = 'none';
+          
+          const alarmMs = parseInt(payload.estimasi) * 60 * 60 * 1000;
+          setTimeout(() => {
+            alert(`ALARM PENGEMBALIAN!\nKunci ODC ${payload.odc} waktu peminjaman (${payload.estimasi} Jam) telah habis. Silakan kembalikan kunci!`);
+          }, alarmMs);
+        } else {
+          alert('Gagal meminjam kunci: ' + (data.message || 'Error'));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Terjadi kesalahan saat mengirim data.');
+      }
+      
+      btn.disabled = false;
+      btn.innerText = 'Submit Peminjaman';
+    }
+
+    async function handleReturn(e) {
+      e.preventDefault();
+      
+      const selfie = document.getElementById('r_selfie').value;
+      if(!selfie) {
+        alert('Silakan ambil foto selfie pengembalian terlebih dahulu!');
+        return;
+      }
+
+      const payload = {
+        sto: document.getElementById('r_sto').value,
+        odc: document.getElementById('r_odc').value,
+        selfie: selfie
+      };
+
+      const btn = document.getElementById('btn_submit_r');
+      btn.disabled = true;
+      btn.innerText = 'Mengirim...';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'submitReturn', payload: payload })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert('Kunci berhasil dikembalikan!');
+          document.getElementById('returnForm').reset();
+          document.getElementById('r_photo_status').style.display = 'none';
+          document.getElementById('r_canvas').style.display = 'none';
+        } else {
+          alert('Gagal: ' + (data.message || 'Error'));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Terjadi kesalahan saat mengirim data.');
+      }
+
+      btn.disabled = false;
+      btn.innerText = 'Submit Pengembalian';
+    }
+  </script>
+</body>
+</html>
