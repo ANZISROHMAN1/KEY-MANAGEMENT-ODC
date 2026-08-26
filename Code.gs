@@ -169,14 +169,14 @@ function submitReturn(data) {
   let record = null;
   
   for (let i = 1; i < activeData.length; i++) {
-    if (activeData[i][2] === data.odc) {
+    if (activeData[i][2] && data.odc && activeData[i][2].toString().trim() === data.odc.toString().trim()) {
       rowIndex = i + 1;
       record = activeData[i];
       break;
     }
   }
   
-  if (rowIndex === -1) return { success: false, message: 'ODC is not currently borrowed' };
+  if (rowIndex === -1) return { success: false, message: 'Kunci ODC ini belum dipinjam / tidak ada di daftar aktif' };
   
   const fileName = 'KEMBALI_' + data.odc + '_' + new Date().getTime() + '.png';
   const selfieUrl = uploadImageToDrive(data.selfie, fileName);
