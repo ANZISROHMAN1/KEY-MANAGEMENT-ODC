@@ -22,6 +22,7 @@
       <div class="tabs">
         <div class="tab active" id="tabBorrow" onclick="switchTab('borrow')">Pinjam Kunci</div>
         <div class="tab" id="tabReturn" onclick="switchTab('return')">Kembalikan Kunci</div>
+        <div class="tab" id="tabEvidence" onclick="switchTab('evidence')">Evidence Kegiatan</div>
       </div>
 
       <div id="loader" class="loader" style="display:none;"></div>
@@ -105,6 +106,47 @@
         <button type="submit" class="btn-submit" id="btn_submit_r">Submit Pengembalian</button>
       </form>
       
+      <!-- Evidence Form -->
+      <form id="evidenceForm" style="display:none;" onsubmit="handleEvidence(event)">
+        <div class="form-group">
+          <label>Nama Teknisi</label>
+          <input type="text" id="e_user" required placeholder="Masukkan nama Anda">
+        </div>
+
+        <div class="form-group">
+          <label>STO</label>
+          <select id="e_sto" required onchange="populateOdc('e')">
+            <option value="">Pilih STO...</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>ODC</label>
+          <select id="e_odc" required>
+            <option value="">Pilih ODC...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Detail Kegiatan</label>
+          <input type="text" id="e_kegiatan" required placeholder="Contoh: Perbaikan port / Tarik kabel">
+        </div>
+
+        <!-- Camera UI -->
+        <div class="camera-container">
+          <label>Foto Evidence</label>
+          <video id="e_video" autoplay playsinline></video>
+          <canvas id="e_canvas" style="display:none;"></canvas>
+          <div>
+            <button type="button" class="btn-camera" onclick="startCamera('e')">Buka Kamera</button>
+            <button type="button" class="btn-camera" onclick="takePhoto('e')">Ambil Foto</button>
+          </div>
+          <input type="hidden" id="e_selfie" required>
+          <p id="e_photo_status" style="color:green; font-weight:bold; display:none;">Foto berhasil diambil ✓</p>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btn_submit_e">Submit Evidence</button>
+      </form>
     </div>
   </div>
 
@@ -141,6 +183,7 @@
         masterData = await res.json();
         populateSto('b');
         populateSto('r');
+        populateSto('e');
       } catch (e) {
         console.error(e);
         alert('Gagal mengambil data master');
@@ -151,19 +194,22 @@
     function switchTab(tab) {
       if(currentStream) {
         currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
       }
       
-      if(tab === 'borrow') {
-        document.getElementById('tabBorrow').classList.add('active');
-        document.getElementById('tabReturn').classList.remove('active');
-        document.getElementById('borrowForm').style.display = 'block';
-        document.getElementById('returnForm').style.display = 'none';
-      } else {
-        document.getElementById('tabBorrow').classList.remove('active');
-        document.getElementById('tabReturn').classList.add('active');
-        document.getElementById('borrowForm').style.display = 'none';
-        document.getElementById('returnForm').style.display = 'block';
-      }
+      const forms = ['borrow', 'return', 'evidence'];
+      forms.forEach(f => {
+        const tabEl = document.getElementById('tab' + f.charAt(0).toUpperCase() + f.slice(1));
+        const formEl = document.getElementById(f + 'Form');
+        
+        if (f === tab) {
+          tabEl.classList.add('active');
+          formEl.style.display = 'block';
+        } else {
+          tabEl.classList.remove('active');
+          formEl.style.display = 'none';
+        }
+      });
     }
 
     function populateSto(prefix) {
@@ -345,6 +391,51 @@
 
       btn.disabled = false;
       btn.innerText = 'Submit Pengembalian';
+    }
+
+    async function handleEvidence(e) {
+      e.preventDefault();
+      
+      const selfie = document.getElementById('e_selfie').value;
+      if(!selfie) {
+        showToast('Silakan ambil foto evidence terlebih dahulu!', 'error');
+        return;
+      }
+
+      const payload = {
+        user: document.getElementById('e_user').value,
+        sto: document.getElementById('e_sto').value,
+        odc: document.getElementById('e_odc').value,
+        kegiatan: document.getElementById('e_kegiatan').value,
+        selfie: selfie
+      };
+
+      const btn = document.getElementById('btn_submit_e');
+      btn.disabled = true;
+      btn.innerText = 'Mengirim...';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'submitEvidence', payload: payload })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          showToast(`Sukses! Evidence ODC ${payload.odc} telah terkirim.`);
+          document.getElementById('evidenceForm').reset();
+          document.getElementById('e_photo_status').style.display = 'none';
+          document.getElementById('e_canvas').style.display = 'none';
+        } else {
+          showToast('Gagal: ' + (data.message || 'Error'), 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Terjadi kesalahan saat mengirim data.', 'error');
+      }
+
+      btn.disabled = false;
+      btn.innerText = 'Submit Evidence';
     }
   </script>
 </body>

@@ -35,6 +35,8 @@ function doPost(e) {
       result = submitBorrow(data.payload);
     } else if (action === 'submitReturn') {
       result = submitReturn(data.payload);
+    } else if (action === 'submitEvidence') {
+      result = submitEvidence(data.payload);
     } else {
       result = { success: false, message: 'Invalid action' };
     }
@@ -56,6 +58,23 @@ function initSheets() {
     const sheet = ss.insertSheet('History');
     sheet.appendRow(['ID', 'STO', 'ODC', 'User', 'Kegiatan', 'Estimasi', 'Waktu Pinjam', 'Selfie Pinjam URL', 'Waktu Kembali', 'Selfie Kembali URL']);
   }
+  if (!ss.getSheetByName('EvidenceKegiatan')) {
+    const sheet = ss.insertSheet('EvidenceKegiatan');
+    sheet.appendRow(['ID', 'STO', 'ODC', 'Teknisi', 'Kegiatan', 'Waktu', 'Foto Evidence URL']);
+  }
+}
+
+function submitEvidence(data) {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const sheet = ss.getSheetByName('EvidenceKegiatan');
+  
+  const fileName = 'EVIDENCE_' + data.odc + '_' + new Date().getTime() + '.png';
+  const selfieUrl = uploadImageToDrive(data.selfie, fileName);
+  const id = 'EVD-' + new Date().getTime();
+  const time = new Date().toLocaleString();
+  
+  sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, time, selfieUrl]);
+  return { success: true, id: id };
 }
 
 function getMasterData() {
