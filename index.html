@@ -63,7 +63,13 @@
         renderDashboard(data);
       } catch (err) {
         console.error('Error fetching dashboard:', err);
-        // Silently fail on auto-refresh errors to avoid annoying alerts
+        const dashboard = document.getElementById('dashboard');
+        if (dashboard.innerHTML.trim() === '') {
+          document.getElementById('loader').style.display = 'none';
+          dashboard.style.display = 'block';
+          dashboard.innerHTML = '<div style="text-align:center; padding: 30px; color: var(--red-status);">Gagal terhubung ke database Google Sheets.<br>Mencoba ulang dalam 5 detik...</div>';
+          setTimeout(fetchDashboardData, 5000);
+        }
       }
     }
 
