@@ -21,8 +21,8 @@
     <div class="form-container">
       <div class="tabs">
         <div class="tab active" id="tabBorrow" onclick="switchTab('borrow')">Pinjam Kunci</div>
-        <div class="tab" id="tabReturn" onclick="switchTab('return')">Kembalikan Kunci</div>
         <div class="tab" id="tabEvidence" onclick="switchTab('evidence')">Evidence Kegiatan</div>
+        <div class="tab" id="tabReturn" onclick="switchTab('return')">Kembalikan Kunci</div>
       </div>
 
       <div id="loader" class="loader" style="display:none;"></div>
@@ -197,7 +197,7 @@
         currentStream = null;
       }
       
-      const forms = ['borrow', 'return', 'evidence'];
+      const forms = ['borrow', 'evidence', 'return'];
       forms.forEach(f => {
         const tabEl = document.getElementById('tab' + f.charAt(0).toUpperCase() + f.slice(1));
         const formEl = document.getElementById(f + 'Form');
