@@ -246,10 +246,18 @@
       document.getElementById('loader').style.display = 'block';
       try {
         const res = await fetch(API_URL + '?action=getMasterData');
-        masterData = await res.json();
-        populateSto('b');
-        populateSto('r');
-        populateSto('e');
+        const rawData = await res.json();
+        
+        // Flatten {sa: {sto: [odc]}} to {sto: [odc]}
+        masterData = {};
+        for (const sa in rawData) {
+          for (const sto in rawData[sa]) {
+            if (!masterData[sto]) masterData[sto] = [];
+            masterData[sto] = masterData[sto].concat(rawData[sa][sto]);
+          }
+        }
+
+        ['b', 'r', 'e'].forEach(prefix => populateSto(prefix));
       } catch (e) {
         console.error(e);
         alert('Gagal mengambil data master');
