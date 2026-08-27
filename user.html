@@ -80,10 +80,40 @@
           <input type="number" id="b_estimasi" required min="1" step="1" placeholder="Contoh: 2">
         </div>
 
-        <div class="camera-container" style="margin-bottom: 20px;">
-          <label>Foto Selfie Evidence (Pilih Maksimal 4 Foto)</label>
-          <input type="file" id="b_selfie_files" accept="image/*" multiple required style="margin-bottom: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 8px; width: 100%; box-sizing: border-box;" onchange="updateFileListLimit('b_selfie_files', 'b_selfie_status', 4)">
-          <p id="b_selfie_status" style="color:var(--primary-color); font-weight:bold; display:none; margin-top: 5px;"></p>
+        <label style="font-weight:600; color:var(--text-main); margin-bottom:10px; display:block;">Foto Selfie Evidence (Pilih Maksimal 4 Foto)</label>
+        <div class="evidence-grid">
+          <div class="evidence-box" onclick="document.getElementById('b_ev1').click()">
+            <span class="ev-label">EVIDENCE 1</span>
+            <div class="ev-content" id="b_ev1_content">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload Image</span>
+            </div>
+            <input type="file" id="b_ev1" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'b_ev1_content')">
+          </div>
+          <div class="evidence-box" onclick="document.getElementById('b_ev2').click()">
+            <span class="ev-label">EVIDENCE 2</span>
+            <div class="ev-content" id="b_ev2_content">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload Image</span>
+            </div>
+            <input type="file" id="b_ev2" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'b_ev2_content')">
+          </div>
+          <div class="evidence-box" onclick="document.getElementById('b_ev3').click()">
+            <span class="ev-label">EVIDENCE 3</span>
+            <div class="ev-content" id="b_ev3_content">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload Image</span>
+            </div>
+            <input type="file" id="b_ev3" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'b_ev3_content')">
+          </div>
+          <div class="evidence-box" onclick="document.getElementById('b_ev4').click()">
+            <span class="ev-label">EVIDENCE 4</span>
+            <div class="ev-content" id="b_ev4_content">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload Image</span>
+            </div>
+            <input type="file" id="b_ev4" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'b_ev4_content')">
+          </div>
         </div>
 
         <button type="submit" class="btn-submit" id="btn_submit_b">Submit Peminjaman</button>
@@ -166,10 +196,40 @@
           <input type="text" id="e_reason" placeholder="Contoh: Menunggu material / Kendala cuaca">
         </div>
 
-        <div class="camera-container" style="margin-bottom: 20px;">
-          <label>Foto Evidence (Bisa Pilih Lebih dari 1 Foto)</label>
-          <input type="file" id="e_files" accept="image/*" multiple required style="margin-bottom: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 8px; width: 100%; box-sizing: border-box;" onchange="updateFileList('e_files', 'e_files_status')">
-          <p id="e_files_status" style="color:var(--primary-color); font-weight:bold; display:none; margin-top: 5px;"></p>
+        <label style="font-weight:600; color:var(--text-main); margin-bottom:10px; display:block;">Foto Evidence (Bisa Pilih Lebih dari 1 Foto)</label>
+        <div class="evidence-grid">
+          <div class="evidence-box" onclick="document.getElementById('e_ev1').click()">
+            <span class="ev-label">EVIDENCE 1</span>
+            <div class="ev-content" id="e_ev1_content">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload Image</span>
+            </div>
+            <input type="file" id="e_ev1" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'e_ev1_content')">
+          </div>
+          <div class="evidence-box" onclick="document.getElementById('e_ev2').click()">
+            <span class="ev-label">EVIDENCE 2</span>
+            <div class="ev-content" id="e_ev2_content">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload Image</span>
+            </div>
+            <input type="file" id="e_ev2" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'e_ev2_content')">
+          </div>
+          <div class="evidence-box" onclick="document.getElementById('e_ev3').click()">
+            <span class="ev-label">EVIDENCE 3</span>
+            <div class="ev-content" id="e_ev3_content">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload Image</span>
+            </div>
+            <input type="file" id="e_ev3" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'e_ev3_content')">
+          </div>
+          <div class="evidence-box" onclick="document.getElementById('e_ev4').click()">
+            <span class="ev-label">EVIDENCE 4</span>
+            <div class="ev-content" id="e_ev4_content">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload Image</span>
+            </div>
+            <input type="file" id="e_ev4" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'e_ev4_content')">
+          </div>
         </div>
 
         <button type="submit" class="btn-submit" id="btn_submit_e">Submit Evidence</button>
@@ -337,32 +397,50 @@
       }
     }
 
-    function updateFileListLimit(inputId, statusId, maxFiles) {
-      const input = document.getElementById(inputId);
-      const status = document.getElementById(statusId);
-      if (input.files && input.files.length > 0) {
-        if (input.files.length > maxFiles) {
-          showToast(`Maksimal ${maxFiles} foto!`, 'error');
-          input.value = ''; 
-          status.style.display = 'none';
-          return;
-        }
-        status.innerText = `${input.files.length} file dipilih ✓`;
-        status.style.display = 'block';
-      } else {
-        status.style.display = 'none';
+    function handleSingleUpload(input, contentId) {
+      const content = document.getElementById(contentId);
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          content.innerHTML = `<img src="${e.target.result}" class="ev-preview">`;
+        };
+        reader.readAsDataURL(input.files[0]);
       }
     }
 
-    function readFilesAsBase64(files) {
-      return Promise.all(Array.from(files).map(file => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = e => resolve(e.target.result);
-          reader.onerror = e => reject(e);
-          reader.readAsDataURL(file);
-        });
-      }));
+    function resetGridContent(prefix) {
+      for (let i = 1; i <= 4; i++) {
+        const content = document.getElementById(prefix + i + '_content');
+        if (content) {
+          content.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <span>Upload Image</span>
+          `;
+        }
+      }
+    }
+
+    async function getGridFilesBase64(prefix) {
+      const inputs = [
+        document.getElementById(prefix + '1'),
+        document.getElementById(prefix + '2'),
+        document.getElementById(prefix + '3'),
+        document.getElementById(prefix + '4')
+      ];
+      
+      let base64Array = [];
+      for (let i = 0; i < inputs.length; i++) {
+        if (inputs[i] && inputs[i].files && inputs[i].files[0]) {
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = e => reject(e);
+            reader.readAsDataURL(inputs[i].files[0]);
+          });
+          base64Array.push(base64);
+        }
+      }
+      return base64Array;
     }
 
     function showToast(message, type = 'success') {
@@ -384,8 +462,8 @@
     async function handleBorrow(e) {
       e.preventDefault();
       
-      const selfieInput = document.getElementById('b_selfie_files');
-      if (!selfieInput.files || selfieInput.files.length === 0) {
+      const selfieBase64Array = await getGridFilesBase64('b_ev');
+      if (selfieBase64Array.length === 0) {
         showToast('Silakan pilih minimal 1 foto selfie evidence!', 'error');
         return;
       }
@@ -398,11 +476,9 @@
 
       const btn = document.getElementById('btn_submit_b');
       btn.disabled = true;
-      btn.innerText = 'Membaca Foto...';
+      btn.innerText = 'Mengirim...';
 
       try {
-        const selfieBase64Array = await readFilesAsBase64(selfieInput.files);
-        
         const payload = {
           user: document.getElementById('b_user').value,
           sto: document.getElementById('b_sto').value,
@@ -414,8 +490,6 @@
           dasarEvidence: dasarEvidence
         };
 
-        btn.innerText = 'Mengirim...';
-
         const res = await fetch(API_URL, {
           method: 'POST',
           body: JSON.stringify({ action: 'submitBorrow', payload: payload })
@@ -426,7 +500,7 @@
           showToast(`Berhasil! ID Tiket: ${data.id}`);
           alert(`PEMINJAMAN BERHASIL!\n\nID Tiket Anda: ${data.id}\nSimpan ID ini untuk melacak status peminjaman pada tab "Riwayat Tiket".`);
           document.getElementById('borrowForm').reset();
-          document.getElementById('b_selfie_status').style.display = 'none';
+          resetGridContent('b_ev');
           
           const alarmMs = parseInt(payload.estimasi) * 60 * 60 * 1000;
           setTimeout(() => {
@@ -491,19 +565,17 @@
     async function handleEvidence(e) {
       e.preventDefault();
       
-      const fileInput = document.getElementById('e_files');
-      if (!fileInput.files || fileInput.files.length === 0) {
+      const base64Photos = await getGridFilesBase64('e_ev');
+      if (base64Photos.length === 0) {
         showToast('Silakan pilih minimal 1 foto evidence!', 'error');
         return;
       }
 
       const btn = document.getElementById('btn_submit_e');
       btn.disabled = true;
-      btn.innerText = 'Membaca Foto...';
+      btn.innerText = 'Mengirim...';
 
       try {
-        const base64Photos = await readFilesAsBase64(fileInput.files);
-        
         const payload = {
           user: document.getElementById('e_user').value,
           sto: document.getElementById('e_sto').value,
@@ -513,8 +585,6 @@
           reason: document.getElementById('e_reason').value,
           photos: base64Photos
         };
-
-        btn.innerText = 'Mengirim...';
 
         const res = await fetch(API_URL, {
           method: 'POST',
@@ -526,7 +596,7 @@
           showToast(`Sukses! Evidence terkirim. ID Tiket: ${data.id}`);
           alert(`EVIDENCE BERHASIL TERKIRIM!\n\nID Tiket Anda: ${data.id}\nSimpan ID ini sebagai bukti laporan Anda.`);
           document.getElementById('evidenceForm').reset();
-          document.getElementById('e_files_status').style.display = 'none';
+          resetGridContent('e_ev');
         } else {
           showToast('Gagal: ' + (data.message || 'Error'), 'error');
         }

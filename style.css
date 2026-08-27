@@ -449,6 +449,69 @@ tbody tr:hover {
   margin: 30px auto;
 }
 
+/* 4-Grid Upload Evidence */
+.evidence-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.evidence-box {
+  background: var(--bg-color);
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+[data-theme="dark"] .evidence-box { 
+  background: rgba(255,255,255,0.02); 
+  border-color: #334155; 
+}
+.evidence-box:hover {
+  border-color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.05);
+}
+.evidence-box .ev-label {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ev-content {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary-color);
+  font-size: 14px;
+  font-weight: 600;
+}
+.ev-content svg {
+  width: 24px;
+  height: 24px;
+  stroke: var(--primary-color);
+}
+.ev-preview {
+  width: 100%;
+  height: 70px;
+  border-radius: 6px;
+  object-fit: cover;
+  margin-top: 15px;
+}
+
 /* Progress Stepper */
 .stepper-wrapper {
   display: flex;
