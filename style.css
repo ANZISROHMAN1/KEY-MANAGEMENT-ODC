@@ -156,6 +156,7 @@ body {
   cursor: pointer;
   transition: transform 0.2s;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
