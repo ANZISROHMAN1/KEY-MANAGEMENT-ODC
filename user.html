@@ -10,13 +10,40 @@
 </head>
 <body>
   <div id="toastContainer" class="toast-container"></div>
-  <div class="header">
-    <div style="display: flex; align-items: center; gap: 15px;">
-      <img src="logo.png?v=2" alt="O-Key Logo" style="height: 40px; width: 40px; object-fit: cover; border-radius: 8px;">
-      <h1>Portal Teknisi</h1>
+  
+  <!-- Login Overlay -->
+  <div id="loginOverlay" style="display: flex; min-height: 100vh; align-items: center; justify-content: center; background-color: var(--bg-color); padding: 20px;">
+    <div class="modal-content" style="max-width: 400px; width: 100%; position: relative; margin: 0; animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);">
+      <div style="text-align: center; margin-bottom: 25px;">
+        <img src="logo.png?v=2" alt="Logo" style="height: 70px; width: 70px; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h2 style="color: var(--primary-color); margin: 0; font-size: 24px;">Login Teknisi</h2>
+        <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Silakan masukkan kredensial Anda.</p>
+      </div>
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="l_username" required placeholder="Masukkan username">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="l_password" required placeholder="Masukkan password">
+        </div>
+        <button type="submit" class="btn-submit" id="btn_submit_login" style="margin-top: 10px;">Masuk</button>
+      </form>
     </div>
-    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
   </div>
+
+  <div id="appContainer" style="display: none;">
+    <div class="header">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <img src="logo.png?v=2" alt="O-Key Logo" style="height: 40px; width: 40px; object-fit: cover; border-radius: 8px;">
+        <h1>Portal Teknisi</h1>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button onclick="logout()" style="background: none; border: 1px solid var(--glass-border); color: var(--text-main); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Logout</button>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+      </div>
+    </div>
   
   <div class="container">
     <div class="form-container">
@@ -229,6 +256,7 @@
 
     </div>
   </div>
+  </div>
 
   <!-- Success Modal -->
   <div id="successModal" class="modal">
@@ -315,11 +343,79 @@
       if (btn) btn.innerText = theme === 'dark' ? '☀️' : '🌙';
     }
 
+    // Auth Logic
+    function checkAuth() {
+      const savedUser = localStorage.getItem('teknisi_user');
+      if (savedUser) {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'block';
+        
+        // Auto-fill and lock user fields
+        const userFields = ['b_user', 'e_user', 'r_user'];
+        userFields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.value = savedUser;
+            el.readOnly = true;
+            el.style.background = 'var(--glass-border)';
+            el.style.cursor = 'not-allowed';
+          }
+        });
+      } else {
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('appContainer').style.display = 'none';
+      }
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const user = document.getElementById('l_username').value;
+      const pass = document.getElementById('l_password').value;
+      
+      const btn = document.getElementById('btn_submit_login');
+      btn.disabled = true;
+      btn.innerText = 'Mengecek...';
+      
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'login',
+            payload: { username: user, password: pass }
+          })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          localStorage.setItem('teknisi_user', data.username);
+          showToast(`Selamat datang, ${data.username}!`, 'success');
+          document.getElementById('loginForm').reset();
+          checkAuth();
+        } else {
+          showToast(data.message || 'Login gagal', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Terjadi kesalahan jaringan', 'error');
+      }
+      
+      btn.disabled = false;
+      btn.innerText = 'Masuk';
+    }
+    
+    function logout() {
+      if (confirm('Apakah Anda yakin ingin logout?')) {
+        localStorage.removeItem('teknisi_user');
+        checkAuth();
+      }
+    }
+
     let masterData = {};
     let currentStream = null;
 
     document.addEventListener("DOMContentLoaded", function() {
       updateThemeIcon(currentTheme);
+      checkAuth();
       fetchMasterData();
     });
 

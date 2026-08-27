@@ -39,6 +39,8 @@ function doPost(e) {
       result = submitReturn(data.payload);
     } else if (action === 'submitEvidence') {
       result = submitEvidence(data.payload);
+    } else if (action === 'login') {
+      result = handleLogin(data.payload);
     } else {
       result = { success: false, message: 'Invalid action' };
     }
@@ -259,6 +261,28 @@ function submitReturn(data) {
   activeSheet.deleteRow(rowIndex);
   
   return { success: true };
+}
+
+function handleLogin(data) {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const sheet = ss.getSheetByName('Teknisi');
+  
+  if (!sheet) {
+    return { success: false, message: 'Sheet "Teknisi" tidak ditemukan di Spreadsheet. Harap hubungi Admin.' };
+  }
+  
+  const techData = sheet.getDataRange().getValues();
+  // Assuming row 1 is header (Username, Password)
+  for (let i = 1; i < techData.length; i++) {
+    const user = techData[i][0] ? techData[i][0].toString().trim() : '';
+    const pass = techData[i][1] ? techData[i][1].toString().trim() : '';
+    
+    if (user === data.username && pass === data.password) {
+      return { success: true, username: user };
+    }
+  }
+  
+  return { success: false, message: 'Username atau Password salah!' };
 }
 
 function getOdcHistory(odc) {
