@@ -80,58 +80,39 @@ function submitEvidence(data) {
   }
   
   const photoUrls = urls.join(', \n');
-  const id = generateTicketId(data.sto, true);
+  const id = generateTicketId(data.sto, data.odc, true);
   const time = new Date().toLocaleString();
   
   sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, time, photoUrls, data.extend || '-', data.reason || '-']);
   return { success: true, id: id };
 }
 
-function generateTicketId(sto, isEvidence) {
-  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
-  let maxCount = 0;
+function generateTicketId(sto, odc, isEvidence) {
+  const dateStr = Utilities.formatDate(new Date(), "Asia/Jakarta", "ddMMyy");
   
-  if (!isEvidence) {
-    const activeSheet = ss.getSheetByName('ActiveBorrowings');
-    const historySheet = ss.getSheetByName('History');
-    
-    if (activeSheet) {
-      const activeData = activeSheet.getDataRange().getValues();
-      for (let i = 1; i < activeData.length; i++) {
-        if (activeData[i][1] === sto) {
-          const idStr = activeData[i][0].toString();
-          const num = parseInt(idStr.replace(sto, ''), 10);
-          if (!isNaN(num) && num > maxCount) maxCount = num;
-        }
-      }
-    }
-    
-    if (historySheet) {
-      const historyData = historySheet.getDataRange().getValues();
-      for (let i = 1; i < historyData.length; i++) {
-        if (historyData[i][1] === sto) {
-          const idStr = historyData[i][0].toString();
-          const num = parseInt(idStr.replace(sto, ''), 10);
-          if (!isNaN(num) && num > maxCount) maxCount = num;
-        }
-      }
-    }
-    
-    return sto + (maxCount + 1);
-  } else {
-    const evSheet = ss.getSheetByName('EvidenceKegiatan');
-    if (evSheet) {
-      const evData = evSheet.getDataRange().getValues();
-      for (let i = 1; i < evData.length; i++) {
-        if (evData[i][1] === sto) {
-          const idStr = evData[i][0].toString();
-          const num = parseInt(idStr.replace('EVD-' + sto, ''), 10);
-          if (!isNaN(num) && num > maxCount) maxCount = num;
-        }
-      }
-    }
-    return 'EVD-' + sto + (maxCount + 1);
+  // Mapping STO to abbreviation
+  const stoMapping = {
+    'BOGOR': 'BOO',
+    'CIBINONG': 'CBN',
+    'CIBADAK': 'CBD',
+    'CILEUNGSI': 'CLS',
+    'DRAMAGA': 'DRM',
+    'CIAWI': 'CAW',
+    'SUKABUMI': 'SKI',
+    'PAGELARAN': 'PGR',
+    'SEMPLAK': 'SPK',
+    'GUNUNG PUTRI': 'GNP'
+  };
+  
+  let stoAbbr = stoMapping[sto.toUpperCase()];
+  if (!stoAbbr) {
+    stoAbbr = sto.substring(0, 3).toUpperCase();
   }
+  
+  const odcStr = odc ? odc.toUpperCase() : 'ODC';
+  
+  const prefix = isEvidence ? "#EVD-" : "#";
+  return prefix + dateStr + stoAbbr + "-" + odcStr;
 }
 
 function getMasterData() {
@@ -244,7 +225,7 @@ function submitBorrow(data) {
     dasarUrl = uploadImageToDrive(data.dasarEvidence, dasarFileName);
   }
 
-  const id = generateTicketId(data.sto, false);
+  const id = generateTicketId(data.sto, data.odc, false);
   const time = new Date().toLocaleString();
   
   sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, data.estimasi, time, selfieUrl, data.dasarKegiatan || '', dasarUrl]);
