@@ -138,9 +138,8 @@
               </svg>`;
 
             odcHtml += `
-              <div class="odc-item status-${odc.status}" onclick="handleOdcClick(event, '${odc.name}', '${odc.status}', '${btoa(borrowData)}')">
+              <div class="odc-item status-${odc.status}" title="${odc.name}" onclick="handleOdcClick(event, '${odc.name}', '${odc.status}', '${btoa(borrowData)}')">
                 <div class="monitor-icon">${iconSvg}</div>
-                <div class="odc-name">${odc.name}</div>
               </div>
             `;
           });
