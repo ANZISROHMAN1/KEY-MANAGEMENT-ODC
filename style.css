@@ -17,8 +17,8 @@
   --green-status: #198754;
   --red-status: #dc3545;
   
-  --bg-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-  --bg-size: 20px 20px;
+  --bg-image: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.04) 1px, transparent 1px, transparent 20px);
+  --bg-size: auto;
 }
 
 [data-theme="dark"] {
@@ -32,7 +32,7 @@
   --glass-bg: rgba(15, 23, 42, 0.8);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --bg-image: radial-gradient(#334155 1px, transparent 1px);
+  --bg-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04) 1px, transparent 1px, transparent 20px);
 }
 
 body {
