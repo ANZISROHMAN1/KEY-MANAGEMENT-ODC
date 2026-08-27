@@ -13,6 +13,8 @@ function doGet(e) {
       result = getDashboardData();
     } else if (action === 'getOdcHistory') {
       result = getOdcHistory(e.parameter.odc);
+    } else if (action === 'getTechnicianHistory') {
+      result = getTechnicianHistory(e.parameter.query);
     } else {
       result = { error: 'Invalid action' };
     }
@@ -70,11 +72,58 @@ function submitEvidence(data) {
   
   const fileName = 'EVIDENCE_' + data.odc + '_' + new Date().getTime() + '.png';
   const selfieUrl = uploadImageToDrive(data.selfie, fileName);
-  const id = 'EVD-' + new Date().getTime();
+  const id = generateTicketId(data.sto, true);
   const time = new Date().toLocaleString();
   
   sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, time, selfieUrl]);
   return { success: true, id: id };
+}
+
+function generateTicketId(sto, isEvidence) {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  let maxCount = 0;
+  
+  if (!isEvidence) {
+    const activeSheet = ss.getSheetByName('ActiveBorrowings');
+    const historySheet = ss.getSheetByName('History');
+    
+    if (activeSheet) {
+      const activeData = activeSheet.getDataRange().getValues();
+      for (let i = 1; i < activeData.length; i++) {
+        if (activeData[i][1] === sto) {
+          const idStr = activeData[i][0].toString();
+          const num = parseInt(idStr.replace(sto, ''), 10);
+          if (!isNaN(num) && num > maxCount) maxCount = num;
+        }
+      }
+    }
+    
+    if (historySheet) {
+      const historyData = historySheet.getDataRange().getValues();
+      for (let i = 1; i < historyData.length; i++) {
+        if (historyData[i][1] === sto) {
+          const idStr = historyData[i][0].toString();
+          const num = parseInt(idStr.replace(sto, ''), 10);
+          if (!isNaN(num) && num > maxCount) maxCount = num;
+        }
+      }
+    }
+    
+    return sto + (maxCount + 1);
+  } else {
+    const evSheet = ss.getSheetByName('EvidenceKegiatan');
+    if (evSheet) {
+      const evData = evSheet.getDataRange().getValues();
+      for (let i = 1; i < evData.length; i++) {
+        if (evData[i][1] === sto) {
+          const idStr = evData[i][0].toString();
+          const num = parseInt(idStr.replace('EVD-' + sto, ''), 10);
+          if (!isNaN(num) && num > maxCount) maxCount = num;
+        }
+      }
+    }
+    return 'EVD-' + sto + (maxCount + 1);
+  }
 }
 
 function getMasterData() {
@@ -111,7 +160,9 @@ function getActiveBorrowings() {
       kegiatan: data[i][4],
       estimasi: data[i][5],
       waktuPinjam: data[i][6],
-      selfiePinjam: data[i][7]
+      selfiePinjam: data[i][7],
+      dasarKegiatan: data[i][8] || '',
+      dasarEvidence: data[i][9] || ''
     });
   }
   return active;
@@ -171,10 +222,17 @@ function submitBorrow(data) {
   
   const fileName = 'PINJAM_' + data.odc + '_' + new Date().getTime() + '.png';
   const selfieUrl = uploadImageToDrive(data.selfie, fileName);
-  const id = 'TRX-' + new Date().getTime();
+  
+  let dasarUrl = '';
+  if (data.dasarEvidence) {
+    const dasarFileName = 'DASAR_' + data.odc + '_' + new Date().getTime() + '.png';
+    dasarUrl = uploadImageToDrive(data.dasarEvidence, dasarFileName);
+  }
+
+  const id = generateTicketId(data.sto, false);
   const time = new Date().toLocaleString();
   
-  sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, data.estimasi, time, selfieUrl]);
+  sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, data.estimasi, time, selfieUrl, data.dasarKegiatan || '', dasarUrl]);
   return { success: true, id: id };
 }
 
@@ -201,7 +259,7 @@ function submitReturn(data) {
   const selfieUrl = uploadImageToDrive(data.selfie, fileName);
   const time = new Date().toLocaleString();
   
-  historySheet.appendRow([record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7], time, selfieUrl]);
+  historySheet.appendRow([record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7], time, selfieUrl, record[8] || '', record[9] || '']);
   activeSheet.deleteRow(rowIndex);
   
   return { success: true };
@@ -224,9 +282,63 @@ function getOdcHistory(odc) {
         waktuPinjam: data[i][6],
         waktuKembali: data[i][8],
         selfiePinjam: data[i][7],
-        selfieKembali: data[i][9]
+        selfieKembali: data[i][9],
+        dasarKegiatan: data[i][10] || '',
+        dasarEvidence: data[i][11] || ''
       });
     }
   }
   return history;
+}
+
+function getTechnicianHistory(query) {
+  if (!query) return { active: [], history: [] };
+  query = query.toString().toLowerCase().trim();
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  
+  const activeSheet = ss.getSheetByName('ActiveBorrowings');
+  let activeList = [];
+  if (activeSheet) {
+    const activeData = activeSheet.getDataRange().getValues();
+    for (let i = 1; i < activeData.length; i++) {
+      const id = (activeData[i][0] || '').toString().toLowerCase();
+      const user = (activeData[i][3] || '').toString().toLowerCase();
+      if (id.includes(query) || user.includes(query)) {
+        activeList.push({
+          id: activeData[i][0],
+          sto: activeData[i][1],
+          odc: activeData[i][2],
+          user: activeData[i][3],
+          kegiatan: activeData[i][4],
+          waktuPinjam: activeData[i][6],
+          status: 'Sedang Dipinjam'
+        });
+      }
+    }
+  }
+
+  const historySheet = ss.getSheetByName('History');
+  let historyList = [];
+  if (historySheet) {
+    const historyData = historySheet.getDataRange().getValues();
+    for (let i = historyData.length - 1; i > 0; i--) {
+      const id = (historyData[i][0] || '').toString().toLowerCase();
+      const user = (historyData[i][3] || '').toString().toLowerCase();
+      if (id.includes(query) || user.includes(query)) {
+        historyList.push({
+          id: historyData[i][0],
+          sto: historyData[i][1],
+          odc: historyData[i][2],
+          user: historyData[i][3],
+          kegiatan: historyData[i][4],
+          waktuPinjam: historyData[i][6],
+          waktuKembali: historyData[i][8],
+          status: 'Sudah Kembali'
+        });
+      }
+      if (historyList.length >= 20) break; // Limit to 20 recent records
+    }
+  }
+  
+  return { active: activeList, history: historyList };
 }

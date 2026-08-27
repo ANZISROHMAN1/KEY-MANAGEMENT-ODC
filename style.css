@@ -448,3 +448,66 @@ tbody tr:hover {
   animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
   margin: 30px auto;
 }
+
+/* Progress Stepper */
+.stepper-wrapper {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  position: relative;
+  padding: 0 10px;
+}
+.stepper-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 30px;
+  right: 30px;
+  height: 3px;
+  background: var(--glass-border);
+  z-index: 1;
+}
+.stepper-item {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  flex: 1;
+}
+.stepper-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-color);
+  border: 3px solid var(--glass-border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  font-size: 14px;
+  font-weight: bold;
+}
+.stepper-item.completed .stepper-icon {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+}
+.stepper-item.completed-green .stepper-icon {
+  background: var(--green-status);
+  border-color: var(--green-status);
+  color: #fff;
+}
+.stepper-item.active .stepper-icon {
+  background: var(--bg-color);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+.stepper-item p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.stepper-item.completed p { color: var(--primary-color); }
+.stepper-item.completed-green p { color: var(--green-status); }
+.stepper-item.active p { color: var(--primary-color); }

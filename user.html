@@ -19,6 +19,16 @@
   
   <div class="container">
     <div class="form-container">
+      <!-- Global Search / Tracking -->
+      <div id="historyForm" style="margin-bottom: 25px; padding: 15px; background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px;">
+        <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Lacak Tiket / Nama Teknisi</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="h_query" placeholder="Masukkan ID Tiket atau Nama" onkeypress="if(event.key === 'Enter') searchHistory()" style="flex: 1; margin: 0; font-size: 14px; padding: 8px 12px;">
+          <button type="button" class="btn-submit" id="btn_search_h" onclick="searchHistory()" style="margin: 0; width: auto; padding: 8px 15px; font-size: 14px;">Cari</button>
+        </div>
+        <div id="h_result" style="margin-top: 15px;"></div>
+      </div>
+
       <div class="tabs">
         <div class="tab active" id="tabBorrow" onclick="switchTab('borrow')">Pinjam Kunci</div>
         <div class="tab" id="tabEvidence" onclick="switchTab('evidence')">Evidence Kegiatan</div>
@@ -51,6 +61,18 @@
         <div class="form-group">
           <label>Nama Kegiatan</label>
           <input type="text" id="b_kegiatan" required placeholder="Contoh: Maintenance / Perbaikan">
+        </div>
+
+        <div class="form-group">
+          <label>Dasar Kegiatan</label>
+          <input type="text" id="b_dasar_kegiatan" required placeholder="Contoh: Tiket IN / Perintah Atasan (Teks Bebas)">
+        </div>
+
+        <div class="camera-container" style="margin-bottom: 20px;">
+          <label>Foto Evidence Dasar Kegiatan</label>
+          <input type="file" id="b_dasar_file" accept="image/*" required style="margin-bottom: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 8px; width: 100%; box-sizing: border-box;" onchange="handleFileBase64(event, 'b_dasar_evidence', 'b_dasar_status')">
+          <input type="hidden" id="b_dasar_evidence" required>
+          <p id="b_dasar_status" style="color:green; font-weight:bold; display:none; margin-top: 5px;">File berhasil ditambahkan ✓</p>
         </div>
 
         <div class="form-group">
@@ -147,6 +169,7 @@
 
         <button type="submit" class="btn-submit" id="btn_submit_e">Submit Evidence</button>
       </form>
+
     </div>
   </div>
 
@@ -283,6 +306,21 @@
       currentStream = null;
     }
 
+    function handleFileBase64(event, hiddenInputId, statusId) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById(hiddenInputId).value = e.target.result;
+          document.getElementById(statusId).style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        document.getElementById(hiddenInputId).value = '';
+        document.getElementById(statusId).style.display = 'none';
+      }
+    }
+
     function showToast(message, type = 'success') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
@@ -307,14 +345,22 @@
         showToast('Silakan ambil foto selfie terlebih dahulu!', 'error');
         return;
       }
+      
+      const dasarEvidence = document.getElementById('b_dasar_evidence').value;
+      if(!dasarEvidence) {
+        showToast('Silakan lampirkan foto evidence dasar kegiatan!', 'error');
+        return;
+      }
 
       const payload = {
         user: document.getElementById('b_user').value,
         sto: document.getElementById('b_sto').value,
         odc: document.getElementById('b_odc').value,
         kegiatan: document.getElementById('b_kegiatan').value,
+        dasarKegiatan: document.getElementById('b_dasar_kegiatan').value,
         estimasi: document.getElementById('b_estimasi').value,
-        selfie: selfie
+        selfie: selfie,
+        dasarEvidence: dasarEvidence
       };
 
       const btn = document.getElementById('btn_submit_b');
@@ -329,7 +375,8 @@
         const data = await res.json();
         
         if (data.success) {
-          showToast(`Berhasil! Kunci ODC ${payload.odc} dipinjam oleh ${payload.user}`);
+          showToast(`Berhasil! ID Tiket: ${data.id}`);
+          alert(`PEMINJAMAN BERHASIL!\n\nID Tiket Anda: ${data.id}\nSimpan ID ini untuk melacak status peminjaman pada tab "Riwayat Tiket".`);
           document.getElementById('borrowForm').reset();
           document.getElementById('b_photo_status').style.display = 'none';
           document.getElementById('b_canvas').style.display = 'none';
@@ -378,6 +425,7 @@
         
         if (data.success) {
           showToast(`Sukses! Kunci ODC ${payload.odc} telah dikembalikan.`);
+          alert(`PENGEMBALIAN BERHASIL!\n\nKunci ODC ${payload.odc} telah berhasil dikembalikan.`);
           document.getElementById('returnForm').reset();
           document.getElementById('r_photo_status').style.display = 'none';
           document.getElementById('r_canvas').style.display = 'none';
@@ -422,7 +470,8 @@
         const data = await res.json();
         
         if (data.success) {
-          showToast(`Sukses! Evidence ODC ${payload.odc} telah terkirim.`);
+          showToast(`Sukses! Evidence terkirim. ID Tiket: ${data.id}`);
+          alert(`EVIDENCE BERHASIL TERKIRIM!\n\nID Tiket Anda: ${data.id}\nSimpan ID ini sebagai bukti laporan Anda.`);
           document.getElementById('evidenceForm').reset();
           document.getElementById('e_photo_status').style.display = 'none';
           document.getElementById('e_canvas').style.display = 'none';
@@ -436,6 +485,114 @@
 
       btn.disabled = false;
       btn.innerText = 'Submit Evidence';
+    }
+
+    async function searchHistory() {
+      const query = document.getElementById('h_query').value.trim();
+      if (!query) {
+        showToast('Masukkan kata pencarian terlebih dahulu!', 'error');
+        return;
+      }
+      
+      const btn = document.getElementById('btn_search_h');
+      const resultDiv = document.getElementById('h_result');
+      
+      btn.disabled = true;
+      btn.innerText = 'Mencari...';
+      resultDiv.innerHTML = '<div class="loader" style="display:block; margin: 20px auto;"></div>';
+      
+      try {
+        const res = await fetch(API_URL + '?action=getTechnicianHistory&query=' + encodeURIComponent(query));
+        const data = await res.json();
+        
+        let html = '';
+        
+        if (data.active && data.active.length > 0) {
+          html += '<h3 style="margin-top:0;">Sedang Dipinjam</h3><ul style="list-style-type:none; padding:0;">';
+          data.active.forEach(item => {
+            html += `
+              <li style="background:var(--glass-bg); padding:20px; border-radius:12px; margin-bottom:15px; border:1px solid var(--primary-color); box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                  <strong style="font-size:16px;">${item.odc} (${item.sto})</strong>
+                  <span style="background:var(--primary-color); color:#fff; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold;">ID: ${item.id}</span>
+                </div>
+                
+                <div class="stepper-wrapper">
+                  <div class="stepper-item completed">
+                    <div class="stepper-icon">✓</div>
+                    <p>Dipinjam</p>
+                  </div>
+                  <div class="stepper-item active">
+                    <div class="stepper-icon">...</div>
+                    <p>Pengerjaan</p>
+                  </div>
+                  <div class="stepper-item">
+                    <div class="stepper-icon">3</div>
+                    <p>Dikembalikan</p>
+                  </div>
+                </div>
+
+                <div style="font-size:13px; line-height: 1.6; color:var(--text-main); border-top:1px solid var(--glass-border); padding-top:12px;">
+                  <div style="display:flex; justify-content:space-between;"><span>Teknisi:</span> <strong>${item.user}</strong></div>
+                  <div style="display:flex; justify-content:space-between;"><span>Kegiatan:</span> <strong>${item.kegiatan}</strong></div>
+                  <div style="display:flex; justify-content:space-between;"><span>Waktu Pinjam:</span> <strong>${item.waktuPinjam}</strong></div>
+                </div>
+              </li>
+            `;
+          });
+          html += '</ul>';
+        }
+        
+        if (data.history && data.history.length > 0) {
+          html += '<h3>Riwayat Pengembalian</h3><ul style="list-style-type:none; padding:0;">';
+          data.history.forEach(item => {
+            html += `
+              <li style="background:var(--glass-bg); padding:20px; border-radius:12px; margin-bottom:15px; border:1px solid var(--green-status); box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                  <strong style="font-size:16px;">${item.odc} (${item.sto})</strong>
+                  <span style="background:var(--green-status); color:#fff; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold;">ID: ${item.id}</span>
+                </div>
+                
+                <div class="stepper-wrapper">
+                  <div class="stepper-item completed-green">
+                    <div class="stepper-icon">✓</div>
+                    <p>Dipinjam</p>
+                  </div>
+                  <div class="stepper-item completed-green">
+                    <div class="stepper-icon">✓</div>
+                    <p>Pengerjaan</p>
+                  </div>
+                  <div class="stepper-item completed-green">
+                    <div class="stepper-icon">✓</div>
+                    <p>Dikembalikan</p>
+                  </div>
+                </div>
+
+                <div style="font-size:13px; line-height: 1.6; color:var(--text-main); border-top:1px solid var(--glass-border); padding-top:12px;">
+                  <div style="display:flex; justify-content:space-between;"><span>Teknisi:</span> <strong>${item.user}</strong></div>
+                  <div style="display:flex; justify-content:space-between;"><span>Kegiatan:</span> <strong>${item.kegiatan}</strong></div>
+                  <div style="display:flex; justify-content:space-between;"><span>Waktu Pinjam:</span> <strong>${item.waktuPinjam}</strong></div>
+                  <div style="display:flex; justify-content:space-between;"><span>Kembali:</span> <strong>${item.waktuKembali}</strong></div>
+                </div>
+              </li>
+            `;
+          });
+          html += '</ul>';
+        }
+        
+        if (html === '') {
+          html = '<p style="text-align:center; color:#666; padding:20px; background:#f9f9f9; border-radius:8px;">Tidak ada riwayat yang ditemukan untuk nama / ID tiket tersebut.</p>';
+        }
+        
+        resultDiv.innerHTML = html;
+        
+      } catch (err) {
+        console.error(err);
+        resultDiv.innerHTML = '<p style="color:red; text-align:center;">Gagal mengambil data riwayat. Silakan coba lagi.</p>';
+      }
+      
+      btn.disabled = false;
+      btn.innerText = 'Cari Riwayat';
     }
   </script>
 </body>
