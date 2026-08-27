@@ -41,6 +41,8 @@ function doPost(e) {
       result = submitEvidence(data.payload);
     } else if (action === 'login') {
       result = handleLogin(data.payload);
+    } else if (action === 'register') {
+      result = handleRegister(data.payload);
     } else {
       result = { success: false, message: 'Invalid action' };
     }
@@ -283,6 +285,35 @@ function handleLogin(data) {
   }
   
   return { success: false, message: 'Username atau Password salah!' };
+}
+
+function handleRegister(data) {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  let sheet = ss.getSheetByName('Teknisi');
+  
+  if (!sheet) {
+    // Auto-create the sheet if it doesn't exist
+    sheet = ss.insertSheet('Teknisi');
+    sheet.appendRow(['Username', 'Password']);
+  }
+  
+  const username = data.username.toString().trim();
+  const password = data.password.toString().trim();
+  
+  if (!username || !password) {
+    return { success: false, message: 'Username dan Password tidak boleh kosong!' };
+  }
+  
+  const techData = sheet.getDataRange().getValues();
+  for (let i = 1; i < techData.length; i++) {
+    const user = techData[i][0] ? techData[i][0].toString().trim() : '';
+    if (user.toLowerCase() === username.toLowerCase()) {
+      return { success: false, message: 'Username sudah terdaftar! Silakan gunakan username lain.' };
+    }
+  }
+  
+  sheet.appendRow([username, password]);
+  return { success: true, username: username };
 }
 
 function getOdcHistory(odc) {

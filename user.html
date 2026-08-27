@@ -16,8 +16,8 @@
     <div class="modal-content" style="max-width: 400px; width: 100%; position: relative; margin: 0; animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);">
       <div style="text-align: center; margin-bottom: 25px;">
         <img src="logo.png?v=2" alt="Logo" style="height: 70px; width: 70px; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-        <h2 style="color: var(--primary-color); margin: 0; font-size: 24px;">Login Teknisi</h2>
-        <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Silakan masukkan kredensial Anda.</p>
+        <h2 id="authTitle" style="color: var(--primary-color); margin: 0; font-size: 24px;">Login Teknisi</h2>
+        <p id="authSubtitle" style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Silakan masukkan kredensial Anda.</p>
       </div>
       <form id="loginForm" onsubmit="handleLoginSubmit(event)">
         <div class="form-group">
@@ -29,6 +29,24 @@
           <input type="password" id="l_password" required placeholder="Masukkan password">
         </div>
         <button type="submit" class="btn-submit" id="btn_submit_login" style="margin-top: 10px;">Masuk</button>
+        <p style="text-align: center; margin-top: 15px; font-size: 14px; color: var(--text-muted);">
+          Belum punya akun? <a href="#" onclick="toggleAuthMode('register'); return false;" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Daftar di sini</a>
+        </p>
+      </form>
+
+      <form id="registerForm" onsubmit="handleRegisterSubmit(event)" style="display: none;">
+        <div class="form-group">
+          <label>Username Baru</label>
+          <input type="text" id="r_username" required placeholder="Pilih username">
+        </div>
+        <div class="form-group">
+          <label>Password Baru</label>
+          <input type="password" id="r_password" required placeholder="Buat password">
+        </div>
+        <button type="submit" class="btn-submit" id="btn_submit_register" style="margin-top: 10px; background: #28a745;">Daftar Akun</button>
+        <p style="text-align: center; margin-top: 15px; font-size: 14px; color: var(--text-muted);">
+          Sudah punya akun? <a href="#" onclick="toggleAuthMode('login'); return false;" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Masuk di sini</a>
+        </p>
       </form>
     </div>
   </div>
@@ -401,6 +419,56 @@
       
       btn.disabled = false;
       btn.innerText = 'Masuk';
+    }
+
+    function toggleAuthMode(mode) {
+      if (mode === 'register') {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('registerForm').style.display = 'block';
+        document.getElementById('authTitle').innerText = 'Daftar Akun Baru';
+        document.getElementById('authSubtitle').innerText = 'Silakan buat kredensial baru Anda.';
+      } else {
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('registerForm').style.display = 'none';
+        document.getElementById('authTitle').innerText = 'Login Teknisi';
+        document.getElementById('authSubtitle').innerText = 'Silakan masukkan kredensial Anda.';
+      }
+    }
+
+    async function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const user = document.getElementById('r_username').value;
+      const pass = document.getElementById('r_password').value;
+      
+      const btn = document.getElementById('btn_submit_register');
+      btn.disabled = true;
+      btn.innerText = 'Mendaftar...';
+      
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'register',
+            payload: { username: user, password: pass }
+          })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          localStorage.setItem('teknisi_user', data.username);
+          showToast(`Berhasil mendaftar, selamat datang ${data.username}!`, 'success');
+          document.getElementById('registerForm').reset();
+          checkAuth();
+        } else {
+          showToast(data.message || 'Gagal mendaftar', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Terjadi kesalahan jaringan', 'error');
+      }
+      
+      btn.disabled = false;
+      btn.innerText = 'Daftar Akun';
     }
     
     function logout() {
