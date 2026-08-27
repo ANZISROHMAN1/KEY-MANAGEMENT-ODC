@@ -6,7 +6,6 @@
   <title>Admin Dashboard - ODC</title>
   <link rel="stylesheet" href="style.css">
   <script src="config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="header">
@@ -20,14 +19,6 @@
   <div class="container">
     <div id="loader" class="loader"></div>
     
-    <!-- Chart Section -->
-    <div id="statsSection" style="display:none; margin-bottom: 30px; background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: var(--glass-shadow); backdrop-filter: blur(10px);">
-      <h2 style="margin-top:0; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">Ringkasan Status Kunci ODC</h2>
-      <div style="max-height: 250px; display:flex; justify-content:center;">
-        <canvas id="odcChart"></canvas>
-      </div>
-    </div>
-
     <div id="dashboard" class="sa-container" style="display:none;">
       <!-- SA Sections injected here -->
     </div>
@@ -118,20 +109,14 @@
       }
     }
 
-    let odcChartInstance = null;
-
     function renderDashboard(data) {
       window.dashboardData = data; // Save for sub-page usage
       document.getElementById('loader').style.display = 'none';
       const dashboard = document.getElementById('dashboard');
-      const statsSection = document.getElementById('statsSection');
       dashboard.style.display = 'grid';
-      statsSection.style.display = 'block';
       dashboard.innerHTML = '';
       
       let activeBorrowingsList = [];
-      let totalAvailable = 0;
-      let totalBorrowed = 0;
       
       for (const saName in data) {
         const sa = data[saName];
@@ -149,9 +134,6 @@
           sto.odcs.forEach(odc => {
             if (odc.status === 'red' && odc.borrowDetails) {
               activeBorrowingsList.push(odc.borrowDetails);
-              totalBorrowed++;
-            } else {
-              totalAvailable++;
             }
           });
           
@@ -178,35 +160,6 @@
         saSection.appendChild(saGrid);
         dashboard.appendChild(saSection);
       }
-      
-      // Render Chart
-      const ctx = document.getElementById('odcChart').getContext('2d');
-      if (odcChartInstance) {
-        odcChartInstance.destroy();
-      }
-      odcChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Tersedia', 'Sedang Dipinjam'],
-          datasets: [{
-            data: [totalAvailable, totalBorrowed],
-            backgroundColor: ['#22c55e', '#ef4444'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'right',
-              labels: {
-                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#fff' : '#333'
-              }
-            }
-          }
-        }
-      });
       
       // Render active borrowings table
       const tableBody = document.getElementById('activeBorrowingsTableBody');
@@ -237,7 +190,6 @@
 
     function handleStoClick(event, stoName, saName) {
       event.stopPropagation();
-      document.getElementById('statsSection').style.display = 'none';
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('activeBorrowingsSection').style.display = 'none';
       document.getElementById('stoDetailView').style.display = 'block';
@@ -275,7 +227,6 @@
 
     function backToDashboard() {
       document.getElementById('stoDetailView').style.display = 'none';
-      document.getElementById('statsSection').style.display = 'block';
       document.getElementById('dashboard').style.display = 'grid';
       if (document.getElementById('activeBorrowingsTableBody').children.length > 0) {
         document.getElementById('activeBorrowingsSection').style.display = 'block';
