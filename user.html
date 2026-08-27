@@ -60,6 +60,11 @@
         </div>
 
         <div class="form-group">
+          <label>Waktu Pinjam</label>
+          <input type="datetime-local" id="b_waktu_pinjam" required>
+        </div>
+
+        <div class="form-group">
           <label>Nama Kegiatan</label>
           <input type="text" id="b_kegiatan" required placeholder="Contoh: Maintenance / Perbaikan">
         </div>
@@ -476,6 +481,7 @@
         kegiatan: document.getElementById('b_kegiatan').value,
         dasarKegiatan: document.getElementById('b_dasar_kegiatan').value,
         estimasi: document.getElementById('b_estimasi').value,
+        waktuPinjam: document.getElementById('b_waktu_pinjam').value,
         selfie: selfie,
         dasarEvidence: dasarEvidence
       };
@@ -498,10 +504,18 @@
           document.getElementById('b_photo_status').style.display = 'none';
           document.getElementById('b_canvas').style.display = 'none';
           
-          const alarmMs = parseInt(payload.estimasi) * 60 * 60 * 1000;
-          setTimeout(() => {
-            alert(`ALARM PENGEMBALIAN!\nKunci ODC ${payload.odc} waktu peminjaman (${payload.estimasi} Jam) telah habis. Silakan kembalikan kunci!`);
-          }, alarmMs);
+          const borrowTime = new Date(payload.waktuPinjam).getTime();
+          const alarmTime = borrowTime + (parseInt(payload.estimasi) * 60 * 60 * 1000);
+          const now = new Date().getTime();
+          const alarmMs = alarmTime - now;
+
+          if (alarmMs > 0) {
+            setTimeout(() => {
+              alert(`ALARM PENGEMBALIAN!\nKunci ODC ${payload.odc} waktu peminjaman (${payload.estimasi} Jam) telah habis. Silakan kembalikan kunci!`);
+            }, alarmMs);
+          } else {
+            alert(`ALARM PENGEMBALIAN!\nWaktu peminjaman kunci ODC ${payload.odc} sudah habis! Silakan segera kembalikan kunci.`);
+          }
         } else {
           showToast('Gagal meminjam kunci: ' + (data.message || 'Error'), 'error');
         }

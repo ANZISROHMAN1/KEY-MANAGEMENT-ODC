@@ -226,7 +226,7 @@ function submitBorrow(data) {
   }
 
   const id = generateTicketId(data.sto, data.odc, false);
-  const time = new Date().toLocaleString();
+  const time = data.waktuPinjam ? new Date(data.waktuPinjam).toLocaleString('id-ID', {timeZone: 'Asia/Jakarta'}) : new Date().toLocaleString('id-ID', {timeZone: 'Asia/Jakarta'});
   
   sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, data.estimasi, time, selfieUrl, data.dasarKegiatan || '', dasarUrl]);
   return { success: true, id: id };
