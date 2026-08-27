@@ -130,6 +130,15 @@
       
       <!-- Evidence Form -->
       <form id="evidenceForm" style="display:none;" onsubmit="handleEvidence(event)">
+        <div class="form-group" style="background: rgba(37, 99, 235, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed var(--primary-color);">
+          <label style="color: var(--primary-color);">ID Tiket Peminjaman</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="e_ticket_id" placeholder="Cth: BGL1" style="flex: 1; margin: 0; font-size: 14px; padding: 8px 12px;">
+            <button type="button" class="btn-submit" onclick="autofillEvidence(this)" style="margin: 0; width: auto; padding: 8px 15px; font-size: 14px;">Isi Otomatis</button>
+          </div>
+          <small style="color:var(--text-muted); display:block; margin-top:8px;">Masukkan ID Tiket untuk otomatis mengisi Nama, STO, ODC, dan Detail Kegiatan.</small>
+        </div>
+
         <div class="form-group">
           <label>Nama Teknisi</label>
           <input type="text" id="e_user" required placeholder="Masukkan nama Anda">
@@ -485,6 +494,48 @@
 
       btn.disabled = false;
       btn.innerText = 'Submit Evidence';
+    }
+
+    async function autofillEvidence(btn) {
+      const ticketId = document.getElementById('e_ticket_id').value.trim().toLowerCase();
+      if (!ticketId) {
+        showToast('Masukkan ID Tiket terlebih dahulu!', 'error');
+        return;
+      }
+      
+      const originalText = btn.innerText;
+      btn.innerText = 'Mencari...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(API_URL + '?action=getTechnicianHistory&query=' + encodeURIComponent(ticketId));
+        const data = await res.json();
+        
+        let ticket = null;
+        if (data.active) ticket = data.active.find(t => t.id.toLowerCase() === ticketId);
+        if (!ticket && data.history) ticket = data.history.find(t => t.id.toLowerCase() === ticketId);
+
+        if (ticket) {
+          document.getElementById('e_user').value = ticket.user;
+          document.getElementById('e_sto').value = ticket.sto;
+          populateOdc('e'); 
+          
+          setTimeout(() => {
+            document.getElementById('e_odc').value = ticket.odc;
+            document.getElementById('e_kegiatan').value = ticket.kegiatan;
+          }, 50);
+
+          showToast('Data berhasil diisi otomatis!', 'success');
+        } else {
+          showToast('Tiket tidak ditemukan!', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal mencari tiket.', 'error');
+      }
+
+      btn.innerText = originalText;
+      btn.disabled = false;
     }
 
     async function searchHistory() {
