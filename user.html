@@ -80,40 +80,17 @@
           <input type="number" id="b_estimasi" required min="1" step="1" placeholder="Contoh: 2">
         </div>
 
-        <label style="font-weight:600; color:var(--text-main); margin-bottom:10px; display:block;">Foto Evidence (Pilih Maksimal 4 Foto)</label>
-        <div class="evidence-grid">
-          <div class="evidence-box" onclick="document.getElementById('b_ev1').click()">
-            <span class="ev-label">EVIDENCE 1</span>
-            <div class="ev-content" id="b_ev1_content">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-              <span>Upload Image</span>
-            </div>
-            <input type="file" id="b_ev1" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'b_ev1_content')">
+        <!-- Camera UI -->
+        <div class="camera-container">
+          <label>Selfie Evidence</label>
+          <video id="b_video" autoplay playsinline></video>
+          <canvas id="b_canvas" style="display:none;"></canvas>
+          <div>
+            <button type="button" class="btn-camera" onclick="startCamera('b')">Buka Kamera</button>
+            <button type="button" class="btn-camera" onclick="takePhoto('b')">Ambil Foto</button>
           </div>
-          <div class="evidence-box" onclick="document.getElementById('b_ev2').click()">
-            <span class="ev-label">EVIDENCE 2</span>
-            <div class="ev-content" id="b_ev2_content">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-              <span>Upload Image</span>
-            </div>
-            <input type="file" id="b_ev2" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'b_ev2_content')">
-          </div>
-          <div class="evidence-box" onclick="document.getElementById('b_ev3').click()">
-            <span class="ev-label">EVIDENCE 3</span>
-            <div class="ev-content" id="b_ev3_content">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-              <span>Upload Image</span>
-            </div>
-            <input type="file" id="b_ev3" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'b_ev3_content')">
-          </div>
-          <div class="evidence-box" onclick="document.getElementById('b_ev4').click()">
-            <span class="ev-label">EVIDENCE 4</span>
-            <div class="ev-content" id="b_ev4_content">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-              <span>Upload Image</span>
-            </div>
-            <input type="file" id="b_ev4" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'b_ev4_content')">
-          </div>
+          <input type="hidden" id="b_selfie" required>
+          <p id="b_photo_status" style="color:green; font-weight:bold; display:none;">Foto berhasil diambil ✓</p>
         </div>
 
         <button type="submit" class="btn-submit" id="btn_submit_b">Submit Peminjaman</button>
@@ -462,9 +439,9 @@
     async function handleBorrow(e) {
       e.preventDefault();
       
-      const selfieBase64Array = await getGridFilesBase64('b_ev');
-      if (selfieBase64Array.length === 0) {
-        showToast('Silakan pilih minimal 1 foto selfie evidence!', 'error');
+      const selfie = document.getElementById('b_selfie').value;
+      if(!selfie) {
+        showToast('Silakan ambil foto selfie terlebih dahulu!', 'error');
         return;
       }
       
@@ -474,22 +451,22 @@
         return;
       }
 
+      const payload = {
+        user: document.getElementById('b_user').value,
+        sto: document.getElementById('b_sto').value,
+        odc: document.getElementById('b_odc').value,
+        kegiatan: document.getElementById('b_kegiatan').value,
+        dasarKegiatan: document.getElementById('b_dasar_kegiatan').value,
+        estimasi: document.getElementById('b_estimasi').value,
+        selfie: selfie,
+        dasarEvidence: dasarEvidence
+      };
+
       const btn = document.getElementById('btn_submit_b');
       btn.disabled = true;
       btn.innerText = 'Mengirim...';
 
       try {
-        const payload = {
-          user: document.getElementById('b_user').value,
-          sto: document.getElementById('b_sto').value,
-          odc: document.getElementById('b_odc').value,
-          kegiatan: document.getElementById('b_kegiatan').value,
-          dasarKegiatan: document.getElementById('b_dasar_kegiatan').value,
-          estimasi: document.getElementById('b_estimasi').value,
-          selfie: selfieBase64Array,
-          dasarEvidence: dasarEvidence
-        };
-
         const res = await fetch(API_URL, {
           method: 'POST',
           body: JSON.stringify({ action: 'submitBorrow', payload: payload })
@@ -500,7 +477,8 @@
           showToast(`Berhasil! ID Tiket: ${data.id}`);
           alert(`PEMINJAMAN BERHASIL!\n\nID Tiket Anda: ${data.id}\nSimpan ID ini untuk melacak status peminjaman pada tab "Riwayat Tiket".`);
           document.getElementById('borrowForm').reset();
-          resetGridContent('b_ev');
+          document.getElementById('b_photo_status').style.display = 'none';
+          document.getElementById('b_canvas').style.display = 'none';
           
           const alarmMs = parseInt(payload.estimasi) * 60 * 60 * 1000;
           setTimeout(() => {

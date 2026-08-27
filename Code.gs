@@ -228,15 +228,8 @@ function submitBorrow(data) {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
   const sheet = ss.getSheetByName('ActiveBorrowings');
   
-  let urls = [];
-  if (data.selfie && data.selfie.length > 0) {
-    for (let i = 0; i < data.selfie.length; i++) {
-      const fileName = 'PINJAM_' + data.odc + '_' + new Date().getTime() + '_' + i + '.png';
-      const url = uploadImageToDrive(data.selfie[i], fileName);
-      if (url) urls.push(url);
-    }
-  }
-  const selfieUrls = urls.join(', \n');
+  const fileName = 'PINJAM_' + data.odc + '_' + new Date().getTime() + '.png';
+  const selfieUrl = uploadImageToDrive(data.selfie, fileName);
   
   let dasarUrl = '';
   if (data.dasarEvidence) {
@@ -247,7 +240,7 @@ function submitBorrow(data) {
   const id = generateTicketId(data.sto, false);
   const time = new Date().toLocaleString();
   
-  sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, data.estimasi, time, selfieUrls, data.dasarKegiatan || '', dasarUrl]);
+  sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, data.estimasi, time, selfieUrl, data.dasarKegiatan || '', dasarUrl]);
   return { success: true, id: id };
 }
 
