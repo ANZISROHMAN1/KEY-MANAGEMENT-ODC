@@ -139,17 +139,19 @@ function getMasterData() {
   const sheet = ss.getSheets()[0];
   const data = sheet.getDataRange().getValues();
   
-  const stas = {};
+  const sas = {};
   for (let i = 1; i < data.length; i++) {
     const sto = data[i][5];
     const odc = data[i][7];
+    const sa = data[i][8] || 'OTHER';
     
     if (sto && odc) {
-      if (!stas[sto]) stas[sto] = [];
-      if (!stas[sto].includes(odc)) stas[sto].push(odc);
+      if (!sas[sa]) sas[sa] = {};
+      if (!sas[sa][sto]) sas[sa][sto] = [];
+      if (!sas[sa][sto].includes(odc)) sas[sa][sto].push(odc);
     }
   }
-  return stas;
+  return sas;
 }
 
 function getActiveBorrowings() {
@@ -177,27 +179,32 @@ function getActiveBorrowings() {
 }
 
 function getDashboardData() {
-  const stas = getMasterData();
+  const sas = getMasterData();
   const active = getActiveBorrowings();
   
   const dashboard = {};
   const activeMap = {};
   active.forEach(b => activeMap[b.odc] = b);
   
-  for (const sto in stas) {
-    dashboard[sto] = { name: sto, status: 'green', odcs: [] };
+  for (const sa in sas) {
+    dashboard[sa] = { name: sa, stos: {} };
     
-    stas[sto].forEach(odc => {
-      const isBorrowed = !!activeMap[odc];
-      if (isBorrowed) dashboard[sto].status = 'red';
+    for (const sto in sas[sa]) {
+      dashboard[sa].stos[sto] = { name: sto, status: 'green', odcs: [] };
       
-      dashboard[sto].odcs.push({
-        name: odc,
-        status: isBorrowed ? 'red' : 'green',
-        borrowDetails: isBorrowed ? activeMap[odc] : null
+      sas[sa][sto].forEach(odc => {
+        const isBorrowed = !!activeMap[odc];
+        if (isBorrowed) dashboard[sa].stos[sto].status = 'red';
+        
+        dashboard[sa].stos[sto].odcs.push({
+          name: odc,
+          status: isBorrowed ? 'red' : 'green',
+          borrowDetails: isBorrowed ? activeMap[odc] : null
+        });
       });
-    });
+    }
   }
+  
   return dashboard;
 }
 

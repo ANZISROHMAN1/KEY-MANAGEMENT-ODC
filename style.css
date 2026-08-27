@@ -94,6 +94,23 @@ body {
 }
 
 /* Admin Dashboard Styles */
+.sa-section {
+  margin-bottom: 30px;
+  background: var(--glass-bg);
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.sa-title {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: var(--text-main);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
 .dashboard-grid {
   display: flex;
   flex-wrap: wrap;

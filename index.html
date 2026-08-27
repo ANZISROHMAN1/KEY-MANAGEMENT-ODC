@@ -104,45 +104,59 @@
       
       let activeBorrowingsList = [];
       
-      for (const stoName in data) {
-        const sto = data[stoName];
-        const card = document.createElement('div');
-        card.className = `sto-card status-${sto.status}`;
+      for (const saName in data) {
+        const sa = data[saName];
         
-        let odcHtml = '';
-        sto.odcs.forEach(odc => {
-          let borrowData = odc.borrowDetails ? JSON.stringify(odc.borrowDetails) : '{}';
+        const saSection = document.createElement('div');
+        saSection.className = 'sa-section';
+        saSection.innerHTML = `<h2 class="sa-title">Service Area: ${sa.name}</h2>`;
+        
+        const saGrid = document.createElement('div');
+        saGrid.className = 'dashboard-grid';
+        
+        for (const stoName in sa.stos) {
+          const sto = sa.stos[stoName];
+          const card = document.createElement('div');
+          card.className = `sto-card status-${sto.status}`;
           
-          if (odc.status === 'red' && odc.borrowDetails) {
-            activeBorrowingsList.push(odc.borrowDetails);
-          }
-          
-          // Using a monitor-style icon matching the screenshot
-          let iconColor = odc.status === 'red' ? '#d9534f' : '#8cc63f';
-          let iconSvg = `
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="${iconColor}" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-              <rect x="6" y="6" width="12" height="8" fill="#fff" stroke="none"></rect>
-            </svg>`;
+          let odcHtml = '';
+          sto.odcs.forEach(odc => {
+            let borrowData = odc.borrowDetails ? JSON.stringify(odc.borrowDetails) : '{}';
+            
+            if (odc.status === 'red' && odc.borrowDetails) {
+              activeBorrowingsList.push(odc.borrowDetails);
+            }
+            
+            // Using a monitor-style icon matching the screenshot
+            let iconColor = odc.status === 'red' ? '#d9534f' : '#8cc63f';
+            let iconSvg = `
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="${iconColor}" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+                <rect x="6" y="6" width="12" height="8" fill="#fff" stroke="none"></rect>
+              </svg>`;
 
-          odcHtml += `
-            <div class="odc-item status-${odc.status}" onclick="handleOdcClick(event, '${odc.name}', '${odc.status}', '${btoa(borrowData)}')">
-              <div class="monitor-icon">${iconSvg}</div>
-              <div class="odc-name">${odc.name}</div>
+            odcHtml += `
+              <div class="odc-item status-${odc.status}" onclick="handleOdcClick(event, '${odc.name}', '${odc.status}', '${btoa(borrowData)}')">
+                <div class="monitor-icon">${iconSvg}</div>
+                <div class="odc-name">${odc.name}</div>
+              </div>
+            `;
+          });
+
+          card.innerHTML = `
+            <div class="sto-header">${sto.name}</div>
+            <div class="odc-list">
+              ${odcHtml}
             </div>
           `;
-        });
-
-        card.innerHTML = `
-          <div class="sto-header">${sto.name}</div>
-          <div class="odc-list">
-            ${odcHtml}
-          </div>
-        `;
+          
+          saGrid.appendChild(card);
+        }
         
-        dashboard.appendChild(card);
+        saSection.appendChild(saGrid);
+        dashboard.appendChild(saSection);
       }
       
       // Render active borrowings table
