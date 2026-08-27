@@ -95,106 +95,76 @@ body {
 
 /* Admin Dashboard Styles */
 .dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 25px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
   margin-top: 20px;
+  align-items: flex-start;
 }
 
 .sto-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: var(--glass-shadow);
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative;
-  overflow: hidden;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
 }
 
-.sto-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; height: 5px;
-  background: var(--glass-border);
-  transition: background 0.3s;
+.sto-header {
+  background: #5b8c5a;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 3px 6px;
+  text-transform: uppercase;
+  border-radius: 2px;
+  margin-bottom: 5px;
 }
 
-.sto-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-  border-color: var(--primary-color);
+.sto-card.status-red .sto-header {
+  background: #a94442;
 }
-
-.sto-card h2 {
-  margin: 0 0 15px 0;
-  font-size: 20px;
-  text-align: center;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-
-.sto-card.status-green::before {
-  background: var(--green-status);
-  box-shadow: 0 0 10px rgba(16,185,129,0.3);
-}
-.sto-card.status-green h2 { color: var(--green-status); }
-
-.sto-card.status-red::before {
-  background: var(--red-status);
-  box-shadow: 0 0 10px rgba(239,68,68,0.3);
-}
-.sto-card.status-red h2 { color: var(--red-status); }
 
 .odc-list {
-  display: none;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 15px;
-  margin-top: 20px;
-  animation: fadeIn 0.3s ease forwards;
-}
-
-.sto-card.expanded .odc-list { display: grid; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 .odc-item {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 10px;
-  padding: 15px 10px;
-  text-align: center;
+  min-width: 60px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fdfdfd;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  font-size: 14px;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.05);
 }
 
 .odc-item:hover {
-  transform: scale(1.05);
+  border-color: #999;
 }
 
-.odc-item.status-green {
-  border-color: rgba(16,185,129,0.4);
-  background: rgba(16,185,129,0.05);
-  color: var(--green-status);
+.monitor-icon {
+  margin-bottom: 2px;
+  display: flex;
+  justify-content: center;
 }
 
-.odc-item.status-red {
-  background: rgba(239,68,68,0.05);
-  border-color: rgba(239,68,68,0.4);
-  color: var(--red-status);
-}
-
-.padlock-icon {
-  font-size: 28px;
-  margin-bottom: 8px;
+.odc-name {
+  font-size: 9px;
+  text-align: center;
+  color: #333;
+  line-height: 1.1;
+  max-width: 70px;
+  word-wrap: break-word;
 }
 
 /* Theme Toggle Button */
