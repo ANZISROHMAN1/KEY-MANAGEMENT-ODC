@@ -32,7 +32,7 @@
 
       <div class="tabs">
         <div class="tab active" id="tabBorrow" onclick="switchTab('borrow')">Pinjam Kunci</div>
-        <div class="tab" id="tabEvidence" onclick="switchTab('evidence')">Evidence Kegiatan</div>
+        <div class="tab" id="tabEvidence" onclick="switchTab('evidence')">Pengerjaan</div>
         <div class="tab" id="tabReturn" onclick="switchTab('return')">Kembalikan Kunci</div>
       </div>
 
@@ -219,7 +219,7 @@
           </div>
         </div>
 
-        <button type="submit" class="btn-submit" id="btn_submit_e">Submit Evidence</button>
+        <button type="submit" class="btn-submit" id="btn_submit_e">Submit Pengerjaan</button>
       </form>
 
     </div>
@@ -589,8 +589,8 @@
         const data = await res.json();
         
         if (data.success) {
-          showToast(`Sukses! Evidence terkirim. ID Tiket: ${data.id}`);
-          alert(`EVIDENCE BERHASIL TERKIRIM!\n\nID Tiket Anda: ${data.id}\nSimpan ID ini sebagai bukti laporan Anda.`);
+          showToast(`Sukses! Data pengerjaan terkirim. ID Tiket: ${data.id}`);
+          alert(`PENGERJAAN BERHASIL TERKIRIM!\n\nID Tiket Anda: ${data.id}\nSimpan ID ini sebagai bukti laporan Anda.`);
           document.getElementById('evidenceForm').reset();
           resetGridContent('e_ev');
         } else {
@@ -602,7 +602,7 @@
       }
 
       btn.disabled = false;
-      btn.innerText = 'Submit Evidence';
+      btn.innerText = 'Submit Pengerjaan';
     }
 
     async function autofillForm(btn, prefix) {
