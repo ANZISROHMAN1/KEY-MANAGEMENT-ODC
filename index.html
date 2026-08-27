@@ -26,7 +26,9 @@
     <!-- Sub-page for STO Details -->
     <div id="stoDetailView" style="display:none;">
       <button onclick="backToDashboard()" style="margin-bottom: 20px; padding: 10px 15px; cursor:pointer; background:var(--primary-color); color:white; border:none; border-radius:5px; font-weight:bold;">&larr; Kembali ke Dashboard</button>
-      <h2 id="stoDetailTitle" style="margin-bottom: 20px;"></h2>
+      <h2 id="stoDetailTitle" style="margin-bottom: 10px;"></h2>
+      
+      <div id="stoAlertContainer" style="margin-bottom: 20px;"></div>
       
       <div class="sa-section" style="background:var(--card-bg);">
         <div id="stoDetailGrid" class="dashboard-grid">
@@ -198,9 +200,19 @@
       const stoDetailGrid = document.getElementById('stoDetailGrid');
       stoDetailGrid.innerHTML = '';
       
+      const alertContainer = document.getElementById('stoAlertContainer');
+      alertContainer.innerHTML = '';
+      if (window.stoTimerInterval) {
+        clearInterval(window.stoTimerInterval);
+      }
+      
       const sto = window.dashboardData[saName].stos[stoName];
+      let activeOdcs = [];
       
       sto.odcs.forEach(odc => {
+        if (odc.status === 'red' && odc.borrowDetails) {
+          activeOdcs.push({ name: odc.name, details: odc.borrowDetails });
+        }
         let borrowData = odc.borrowDetails ? JSON.stringify(odc.borrowDetails) : '{}';
         let borrowDataStr = btoa(encodeURIComponent(borrowData));
         
@@ -223,9 +235,84 @@
         `;
         stoDetailGrid.appendChild(odcCard);
       });
+
+      if (activeOdcs.length > 0) {
+        let alertHtml = '';
+        activeOdcs.forEach((item, index) => {
+          alertHtml += `
+            <div style="background: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--red-status); padding: 12px 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 14px;">
+              <div>
+                <strong>${item.name}</strong> dipinjam oleh <strong>${item.details.user}</strong>
+              </div>
+              <div id="timer-${index}" style="font-family: monospace; font-size: 16px; font-weight: bold; color: var(--red-status);">
+                Menghitung...
+              </div>
+            </div>
+          `;
+        });
+        alertContainer.innerHTML = alertHtml;
+        
+        window.stoTimerInterval = setInterval(() => {
+          activeOdcs.forEach((item, index) => {
+            let timerEl = document.getElementById(`timer-${index}`);
+            if (timerEl) {
+              let borrowDate = parseDateString(item.details.waktuPinjam);
+              let estimasi = parseFloat(item.details.estimasi) || 0;
+              let dueDate = new Date(borrowDate.getTime() + estimasi * 60 * 60 * 1000);
+              let now = new Date();
+              
+              let diff = dueDate - now;
+              let isOverdue = diff < 0;
+              if (isOverdue) diff = Math.abs(diff);
+              
+              let h = Math.floor(diff / (1000 * 60 * 60));
+              let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+              let s = Math.floor((diff % (1000 * 60)) / 1000);
+              
+              let timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+              
+              if (isOverdue) {
+                timerEl.innerHTML = `⚠️ Lewat Batas Waktu: ${timeStr}`;
+                timerEl.style.color = '#dc3545';
+              } else {
+                timerEl.innerHTML = `⏳ Sisa Waktu: ${timeStr}`;
+                timerEl.style.color = '#d97706';
+              }
+            }
+          });
+        }, 1000);
+      }
+    }
+
+    function parseDateString(dateStr) {
+      if (!dateStr) return new Date();
+      try {
+        let parts = dateStr.replace(',', '').split(' ');
+        if (parts.length >= 2) {
+          let dateParts = parts[0].split(/[\/\-]/);
+          let timeParts = parts[1].split(/[:.]/);
+          
+          if (dateParts.length === 3 && timeParts.length >= 2) {
+            let day = parseInt(dateParts[0], 10);
+            let month = parseInt(dateParts[1], 10) - 1;
+            let year = parseInt(dateParts[2], 10);
+            if (year < 100) year += 2000;
+            
+            let hour = parseInt(timeParts[0], 10);
+            let min = parseInt(timeParts[1], 10);
+            let sec = timeParts.length > 2 ? parseInt(timeParts[2], 10) : 0;
+            
+            return new Date(year, month, day, hour, min, sec);
+          }
+        }
+        return new Date(dateStr);
+      } catch (e) {
+        return new Date();
+      }
     }
 
     function backToDashboard() {
+      if (window.stoTimerInterval) clearInterval(window.stoTimerInterval);
       document.getElementById('stoDetailView').style.display = 'none';
       document.getElementById('dashboard').style.display = 'grid';
       if (document.getElementById('activeBorrowingsTableBody').children.length > 0) {
