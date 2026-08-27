@@ -94,6 +94,12 @@ body {
 }
 
 /* Admin Dashboard Styles */
+.sa-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
 .sa-section {
   margin-bottom: 30px;
   background: var(--glass-bg);

@@ -18,7 +18,7 @@
   
   <div class="container">
     <div id="loader" class="loader"></div>
-    <div id="dashboard" style="display:none;">
+    <div id="dashboard" class="sa-container" style="display:none;">
       <!-- SA Sections injected here -->
     </div>
     
@@ -112,7 +112,7 @@
       window.dashboardData = data; // Save for sub-page usage
       document.getElementById('loader').style.display = 'none';
       const dashboard = document.getElementById('dashboard');
-      dashboard.style.display = 'block';
+      dashboard.style.display = 'grid';
       dashboard.innerHTML = '';
       
       let activeBorrowingsList = [];
