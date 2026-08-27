@@ -70,12 +70,20 @@ function submitEvidence(data) {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
   const sheet = ss.getSheetByName('EvidenceKegiatan');
   
-  const fileName = 'EVIDENCE_' + data.odc + '_' + new Date().getTime() + '.png';
-  const selfieUrl = uploadImageToDrive(data.selfie, fileName);
+  let urls = [];
+  if (data.photos && data.photos.length > 0) {
+    for (let i = 0; i < data.photos.length; i++) {
+      const fileName = 'EVIDENCE_' + data.odc + '_' + new Date().getTime() + '_' + i + '.png';
+      const url = uploadImageToDrive(data.photos[i], fileName);
+      if (url) urls.push(url);
+    }
+  }
+  
+  const photoUrls = urls.join(', \n');
   const id = generateTicketId(data.sto, true);
   const time = new Date().toLocaleString();
   
-  sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, time, selfieUrl]);
+  sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, time, photoUrls, data.extend || '-', data.reason || '-']);
   return { success: true, id: id };
 }
 
