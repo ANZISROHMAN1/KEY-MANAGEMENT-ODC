@@ -230,7 +230,74 @@
     </div>
   </div>
 
+  <!-- Success Modal -->
+  <div id="successModal" class="modal">
+    <div class="modal-content" style="text-align: center;">
+      <span class="close-btn" onclick="document.getElementById('successModal').style.display='none'" style="cursor:pointer;">&times;</span>
+      <h3 id="modalTitle" style="color: var(--primary-color); margin-bottom: 10px;">BERHASIL!</h3>
+      <p id="modalMessage" style="margin-bottom: 15px; color: var(--text-main); font-size: 14px; line-height: 1.5;"></p>
+      
+      <div id="modalTicketContainer" style="background: var(--bg-color); border: 2px dashed var(--primary-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none;">
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">ID TIKET ANDA</p>
+        <h2 id="modalTicketId" style="margin: 0; color: var(--primary-color); word-break: break-all; font-size: 20px;"></h2>
+      </div>
+      
+      <button id="modalBtnCopy" class="btn-submit" onclick="copyTicketId()" style="margin-bottom: 10px; display: none; background: #28a745;">📋 Copy ID Tiket</button>
+      <button class="btn-submit" onclick="document.getElementById('successModal').style.display='none'" style="background: var(--text-muted);">Tutup</button>
+    </div>
+  </div>
+
   <script>
+    function showSuccessModal(title, message, ticketId = null) {
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalMessage').innerText = message;
+      
+      const ticketContainer = document.getElementById('modalTicketContainer');
+      const btnCopy = document.getElementById('modalBtnCopy');
+      
+      if (ticketId) {
+        document.getElementById('modalTicketId').innerText = ticketId;
+        ticketContainer.style.display = 'block';
+        btnCopy.style.display = 'block';
+      } else {
+        ticketContainer.style.display = 'none';
+        btnCopy.style.display = 'none';
+      }
+      
+      document.getElementById('successModal').style.display = 'block';
+    }
+
+    function copyTicketId() {
+      const ticketId = document.getElementById('modalTicketId').innerText;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(ticketId).then(() => {
+          showToast('ID Tiket berhasil disalin!', 'success');
+        }).catch(err => {
+          fallbackCopyTextToClipboard(ticketId);
+        });
+      } else {
+        fallbackCopyTextToClipboard(ticketId);
+      }
+    }
+
+    function fallbackCopyTextToClipboard(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.position = "fixed";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) showToast('ID Tiket berhasil disalin!', 'success');
+        else showToast('Gagal menyalin ID Tiket.', 'error');
+      } catch (err) {
+        showToast('Browser tidak mendukung auto-copy.', 'error');
+      }
+      document.body.removeChild(textArea);
+    }
     // Theme logic
     const currentTheme = localStorage.getItem('theme') || 'light';
     if (currentTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
@@ -499,7 +566,7 @@
         
         if (data.success) {
           showToast(`Berhasil! ID Tiket: ${data.id}`);
-          alert(`PEMINJAMAN BERHASIL!\n\nID Tiket Anda: ${data.id}\nSimpan ID ini untuk melacak status peminjaman pada tab "Riwayat Tiket".`);
+          showSuccessModal('PEMINJAMAN BERHASIL!', 'Simpan ID ini untuk melacak status peminjaman pada tab "Riwayat Tiket".', data.id);
           document.getElementById('borrowForm').reset();
           document.getElementById('b_photo_status').style.display = 'none';
           document.getElementById('b_canvas').style.display = 'none';
@@ -555,8 +622,8 @@
         const data = await res.json();
         
         if (data.success) {
-          showToast(`Sukses! Kunci ODC ${payload.odc} telah dikembalikan.`);
-          alert(`PENGEMBALIAN BERHASIL!\n\nKunci ODC ${payload.odc} telah berhasil dikembalikan.`);
+          showToast(`Berhasil! Kunci ${payload.odc} telah dikembalikan.`);
+          showSuccessModal('PENGEMBALIAN BERHASIL!', `Kunci ODC ${payload.odc} telah berhasil dikembalikan.`);
           document.getElementById('returnForm').reset();
           document.getElementById('r_photo_status').style.display = 'none';
           document.getElementById('r_canvas').style.display = 'none';
@@ -604,7 +671,7 @@
         
         if (data.success) {
           showToast(`Sukses! Data pengerjaan terkirim. ID Tiket: ${data.id}`);
-          alert(`PENGERJAAN BERHASIL TERKIRIM!\n\nID Tiket Anda: ${data.id}\nSimpan ID ini sebagai bukti laporan Anda.`);
+          showSuccessModal('PENGERJAAN BERHASIL TERKIRIM!', 'Simpan ID ini sebagai bukti laporan Anda.', data.id);
           document.getElementById('evidenceForm').reset();
           resetGridContent('e_ev');
         } else {
