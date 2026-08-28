@@ -3,8 +3,8 @@
 :root {
   --bg-dark: #2c323f;
   --bg-panel: #333a47;
-  --bg-sidebar: #242933;
-  --bg-header: #242933;
+  --bg-sidebar: #2b303b;
+  --bg-header: #2b303b;
   
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
@@ -12,11 +12,11 @@
   --primary-color: #3b82f6;
   --border-color: #475569;
   
-  /* Stat Card Colors */
-  --stat-blue: #38bdf8;
-  --stat-red: #f87171;
-  --stat-orange: #fb923c;
-  --stat-green: #4ade80;
+  /* Stat Card Colors dari screenshot */
+  --stat-blue: #59c5df;
+  --stat-red: #eb5e55;
+  --stat-orange: #f5af47;
+  --stat-green: #7ac143;
   
   --font-family: 'Inter', sans-serif;
 }
@@ -51,15 +51,14 @@ body {
   display: flex;
   align-items: center;
   padding: 0 20px;
-  background-color: #1e222a; /* Slightly darker */
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background-color: #8cc63f; /* Latar hijau di header sidebar */
+  color: #fff;
 }
 
 .sidebar-header .hamburger {
   font-size: 24px;
   margin-right: 15px;
   cursor: pointer;
-  color: var(--text-muted);
 }
 
 .sidebar-header h2 {
@@ -84,15 +83,20 @@ body {
 .sidebar-menu a {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
+  padding: 15px 20px;
   color: var(--text-muted);
   text-decoration: none;
   font-size: 14px;
   transition: all 0.2s;
 }
 
-.sidebar-menu li.active a {
-  background-color: #8cc63f; /* Green accent from WASAKA */
+.sidebar-menu a .icon {
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.sidebar-menu li.active > a {
+  background-color: #8cc63f; /* Hijau WASAKA */
   color: #fff;
   font-weight: 600;
 }
@@ -102,20 +106,29 @@ body {
   color: #fff;
 }
 
-.sidebar-menu .menu-header {
-  padding: 15px 20px 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.menu-item-has-children > a {
+  justify-content: space-between;
+}
+
+.arrow-down {
+  font-size: 10px;
+}
+
+.sub-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background-color: rgba(0,0,0,0.1);
+}
+
+.sub-menu a {
+  padding-left: 45px;
+  font-size: 13px;
 }
 
 .sidebar-user {
   padding: 15px 20px;
-  background-color: #1e222a;
+  background-color: rgba(0,0,0,0.2);
   border-top: 1px solid rgba(255,255,255,0.05);
   display: flex;
   justify-content: space-between;
