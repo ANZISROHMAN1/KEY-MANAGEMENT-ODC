@@ -965,14 +965,42 @@
         
         let html = '';
         
+        // Helper untuk parse tanggal "28/8/2026, 13.35.00" atau sejenisnya
+        const parseIdDate = (dateStr) => {
+          if (!dateStr) return new Date();
+          let cleanStr = dateStr.replace(/\./g, ':');
+          let parts = cleanStr.split(/[\s,]+/);
+          if (parts.length < 2) return new Date(cleanStr);
+          
+          let dParts = parts[0].split('/');
+          if (dParts.length === 3) {
+            let day = parseInt(dParts[0]), month = parseInt(dParts[1]) - 1, year = parseInt(dParts[2]);
+            let tParts = parts[1].split(':');
+            let hours = parseInt(tParts[0]) || 0, minutes = parseInt(tParts[1]) || 0, seconds = parseInt(tParts[2]) || 0;
+            return new Date(year, month, day, hours, minutes, seconds);
+          }
+          return new Date(dateStr);
+        };
+
         if (data.active && data.active.length > 0) {
           html += '<h3 style="margin-top:0;">Sedang Dipinjam</h3><ul style="list-style-type:none; padding:0;">';
           data.active.forEach(item => {
+            
+            const borrowTimeMs = parseIdDate(item.waktuPinjam).getTime();
+            const estimasi = parseInt(item.estimasi) || 0;
+            const alarmTimeMs = borrowTimeMs + (estimasi * 60 * 60 * 1000);
+            const isOverdue = new Date().getTime() > alarmTimeMs;
+            
+            const overdueBadge = isOverdue ? `<span style="background:var(--red-status); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:bold; margin-left: 8px; display:inline-flex; align-items:center; gap:4px; animation: pulse 2s infinite;">⚠️ Waktu Habis</span>` : '';
+
             html += `
-              <li style="background:var(--glass-bg); padding:20px; border-radius:12px; margin-bottom:15px; border:1px solid var(--primary-color); box-shadow:0 4px 6px rgba(0,0,0,0.05);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                  <strong style="font-size:16px;">${item.odc} (${item.sto})</strong>
-                  <span style="background:var(--primary-color); color:#fff; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold;">ID: ${item.id}</span>
+              <li style="background:var(--glass-bg); padding:20px; border-radius:12px; margin-bottom:15px; border:1px solid ${isOverdue ? 'var(--red-status)' : 'var(--primary-color)'}; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 10px;">
+                  <strong style="font-size:16px; color:${isOverdue ? 'var(--red-status)' : 'inherit'};">${item.odc} (${item.sto})</strong>
+                  <div style="display:flex; align-items:center;">
+                    <span style="background:${isOverdue ? 'var(--red-status)' : 'var(--primary-color)'}; color:#fff; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold;">ID: ${item.id}</span>
+                    ${overdueBadge}
+                  </div>
                 </div>
                 
                 <div class="stepper-wrapper">
