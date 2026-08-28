@@ -24,7 +24,6 @@
       <!-- SA Sections injected here -->
     </div>
     
-    <!-- Sub-page for STO Details -->
     <div id="stoDetailView" style="display:none;">
       <button onclick="backToDashboard()" style="margin-bottom: 20px; padding: 10px 15px; cursor:pointer; background:var(--primary-color); color:white; border:none; border-radius:5px; font-weight:bold;">&larr; Kembali ke Dashboard</button>
       <h2 id="stoDetailTitle" style="margin-bottom: 10px;"></h2>
@@ -34,6 +33,29 @@
       <div class="sa-section" style="background:var(--card-bg);">
         <div id="stoDetailGrid" class="dashboard-grid">
           <!-- ODC Icons injected here -->
+        </div>
+      </div>
+      
+      <!-- ODC History Section -->
+      <div id="odcHistorySection" style="display:none; margin-top: 30px; background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <h2 id="odcHistoryTitle" style="margin-top:0; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">Riwayat ODC</h2>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+            <thead>
+              <tr style="background: #8cc63f; color: white; border-bottom: 2px solid #ddd;">
+                <th style="padding: 10px;">#</th>
+                <th style="padding: 10px;">Start</th>
+                <th style="padding: 10px;">Close</th>
+                <th style="padding: 10px;">Durasi</th>
+                <th style="padding: 10px;">Kode</th>
+                <th style="padding: 10px;">Pekerjaan</th>
+                <th style="padding: 10px;">User</th>
+                <th style="padding: 10px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="odcHistoryTableBody">
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -299,25 +321,31 @@
     }
 
     function parseDateString(dateStr) {
-      if (!dateStr) return new Date();
+      if (!dateStr || dateStr.includes('Invalid')) return new Date();
       try {
-        let parts = dateStr.replace(',', '').split(' ');
-        if (parts.length >= 2) {
-          let dateParts = parts[0].split(/[\/\-]/);
-          let timeParts = parts[1].split(/[:.]/);
-          
-          if (dateParts.length === 3 && timeParts.length >= 2) {
-            let day = parseInt(dateParts[0], 10);
-            let month = parseInt(dateParts[1], 10) - 1;
-            let year = parseInt(dateParts[2], 10);
-            if (year < 100) year += 2000;
-            
-            let hour = parseInt(timeParts[0], 10);
-            let min = parseInt(timeParts[1], 10);
-            let sec = timeParts.length > 2 ? parseInt(timeParts[2], 10) : 0;
-            
-            return new Date(year, month, day, hour, min, sec);
+        let cleanStr = dateStr.replace(',', '');
+        let parts = cleanStr.split(/[\s,T]+/);
+        if (parts.length < 2) return new Date(cleanStr);
+        
+        let dateParts = parts[0].split(/[\/\-]/);
+        let timeParts = parts[1].split(/[:.]/);
+        
+        if (dateParts.length === 3 && timeParts.length >= 2) {
+          let day = parseInt(dateParts[0], 10);
+          let month = parseInt(dateParts[1], 10) - 1;
+          let year = parseInt(dateParts[2], 10);
+          if (year < 100) year += 2000;
+          if (dateParts[0].length === 4) { // YYYY-MM-DD
+             year = parseInt(dateParts[0], 10);
+             month = parseInt(dateParts[1], 10) - 1;
+             day = parseInt(dateParts[2], 10);
           }
+          
+          let hour = parseInt(timeParts[0], 10);
+          let min = parseInt(timeParts[1], 10);
+          let sec = timeParts.length > 2 ? parseInt(timeParts[2], 10) : 0;
+          
+          return new Date(year, month, day, hour, min, sec);
         }
         return new Date(dateStr);
       } catch (e) {
@@ -337,81 +365,106 @@
     }
 
     async function handleOdcClick(event, odcName, status, borrowDataStr) {
-      event.stopPropagation();
-      const modal = document.getElementById('historyModal');
-      const title = document.getElementById('modalTitle');
-      const body = document.getElementById('modalBody');
+      if (event && event.stopPropagation) event.stopPropagation();
       
+      const historySection = document.getElementById('odcHistorySection');
+      const title = document.getElementById('odcHistoryTitle');
+      const tbody = document.getElementById('odcHistoryTableBody');
+      
+      historySection.style.display = 'block';
+      title.innerText = `LOG ${odcName}`;
+      tbody.innerHTML = '<tr><td colspan="8" style="padding: 10px; text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
+      
+      let activeRowHtml = '';
       if (status === 'red') {
         const data = JSON.parse(decodeURIComponent(atob(borrowDataStr)));
-        title.innerText = `Detail Peminjaman: ${odcName}`;
-        body.innerHTML = `
-          <div style="background:var(--bg-color); padding:15px; border-radius:8px; border-left:4px solid var(--red-status);">
-            <p><strong>Status:</strong> <span style="color:var(--red-status);">Sedang Dipinjam</span></p>
-            <p><strong>Teknisi:</strong> ${data.user}</p>
-            <p><strong>Kegiatan:</strong> ${data.kegiatan}</p>
-            <p><strong>Dasar Kegiatan:</strong> ${data.dasarKegiatan || '-'}</p>
-            <p><strong>Waktu Pinjam:</strong> ${data.waktuPinjam}</p>
-            <p><strong>Estimasi:</strong> ${data.estimasi} Jam</p>
-            ${data.selfiePinjam ? `<p><strong>Foto Selfie:</strong><br><img src="${data.selfiePinjam}" style="max-width:100%; border-radius:8px; margin-top:5px;"></p>` : ''}
-            ${data.dasarEvidence ? `<p><strong>Foto Evidence:</strong><br><img src="${data.dasarEvidence}" style="max-width:100%; border-radius:8px; margin-top:5px;"></p>` : ''}
-          </div>
-          <hr>
-          <h3>Riwayat Sebelumnya</h3>
-          <div id="historyList"><div class="loader"></div></div>
+        const borrowDate = parseDateString(data.waktuPinjam);
+        const estimasi = parseFloat(data.estimasi) || 0;
+        const dueDate = new Date(borrowDate.getTime() + estimasi * 60 * 60 * 1000);
+        const diff = dueDate - new Date();
+        const isOverdue = diff < 0;
+        const absDiff = Math.abs(diff);
+        const h = Math.floor(absDiff / (1000 * 60 * 60));
+        const m = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((absDiff % (1000 * 60)) / 1000);
+        const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        
+        let durasiHtml = `<span style="color: ${isOverdue ? 'var(--red-status)' : 'var(--primary-color)'}; font-weight:bold;">${isOverdue ? '-' : ''}${timeStr} (Sisa)</span>`;
+        
+        activeRowHtml = `
+          <tr style="background: rgba(220, 53, 69, 0.05); border-bottom: 1px solid #ddd;">
+            <td style="padding: 10px;">1</td>
+            <td style="padding: 10px;">${data.waktuPinjam}</td>
+            <td style="padding: 10px;">-</td>
+            <td style="padding: 10px;">${durasiHtml}</td>
+            <td style="padding: 10px; font-weight:bold; color:var(--primary-color);">${odcName}</td>
+            <td style="padding: 10px;">${data.kegiatan}</td>
+            <td style="padding: 10px;">${data.user}</td>
+            <td style="padding: 10px;">
+              ${data.selfiePinjam ? `<a href="${data.selfiePinjam}" target="_blank" style="color:var(--primary-color); text-decoration:none;">📷 Selfie</a>` : ''}
+              ${data.dasarEvidence ? `<br><a href="${data.dasarEvidence}" target="_blank" style="color:var(--primary-color); text-decoration:none;">📄 Evidence</a>` : ''}
+            </td>
+          </tr>
         `;
-        fetchHistory(odcName);
-      } else {
-        title.innerText = `Status ODC: ${odcName}`;
-        body.innerHTML = `
-          <div style="background:var(--bg-color); padding:15px; border-radius:8px; border-left:4px solid var(--green-status);">
-            <p><strong>Status:</strong> <span style="color:var(--green-status);">Normal / Tersedia</span></p>
-            <p>Saat ini kunci ODC berada di STO dan siap untuk dipinjam.</p>
-          </div>
-          <hr>
-          <h3>Riwayat Sebelumnya</h3>
-          <div id="historyList"><div class="loader"></div></div>
-        `;
-        fetchHistory(odcName);
       }
-      modal.style.display = 'block';
+      
+      fetchHistory(odcName, activeRowHtml);
     }
 
-    async function fetchHistory(odcName) {
+    async function fetchHistory(odcName, activeRowHtml = '') {
       try {
         const response = await fetch(API_URL + '?action=getOdcHistory&odc=' + encodeURIComponent(odcName));
         const historyList = await response.json();
-        renderHistory(historyList);
+        renderHistory(odcName, historyList, activeRowHtml);
       } catch (err) {
-        document.getElementById('modalBody').innerHTML = '<p>Gagal mengambil riwayat.</p>';
+        document.getElementById('odcHistoryTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Gagal mengambil riwayat.</td></tr>';
       }
     }
 
-    function renderHistory(historyList) {
-      const historyContainer = document.getElementById('historyList') || document.getElementById('modalBody');
+    function renderHistory(odcName, historyList, activeRowHtml) {
+      const tbody = document.getElementById('odcHistoryTableBody');
+      let html = activeRowHtml;
       
-      if (historyList.length === 0) {
-        historyContainer.innerHTML = '<p>Belum ada riwayat peminjaman.</p>';
+      let index = activeRowHtml ? 2 : 1;
+      
+      if (historyList.length === 0 && !activeRowHtml) {
+        tbody.innerHTML = '<tr><td colspan="8" style="padding: 10px; text-align:center; color:#666;">Belum ada riwayat peminjaman untuk ODC ini.</td></tr>';
         return;
       }
       
-      let html = '<ul style="list-style-type:none; padding:0;">';
       historyList.forEach(h => {
+        const borrowDate = parseDateString(h.waktuPinjam);
+        const returnDate = parseDateString(h.waktuKembali);
+        let durasiHtml = '-';
+        if (borrowDate.getTime() > 0 && returnDate.getTime() > 0) {
+          const diff = returnDate - borrowDate;
+          if (diff >= 0) {
+            const dh = Math.floor(diff / (1000 * 60 * 60));
+            const dm = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const ds = Math.floor((diff % (1000 * 60)) / 1000);
+            durasiHtml = `${dh.toString().padStart(2, '0')}h ${dm.toString().padStart(2, '0')}m ${ds.toString().padStart(2, '0')}s`;
+          }
+        }
+        
         html += `
-          <li style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
-            <strong>${h.user}</strong> (${h.kegiatan})<br>
-            ${h.dasarKegiatan ? `<em>Dasar: ${h.dasarKegiatan}</em><br>` : ''}
-            <small style="color:#666;">Pinjam: ${h.waktuPinjam}</small><br>
-            <small style="color:#666;">Kembali: ${h.waktuKembali}</small><br>
-            <div style="display: flex; gap: 10px; margin-top: 5px; font-size: 12px;">
-              ${h.selfiePinjam ? `<a href="${h.selfiePinjam}" target="_blank" style="color:var(--primary-color); text-decoration:none;">Lihat Selfie</a>` : ''}
-              ${h.dasarEvidence ? `<a href="${h.dasarEvidence}" target="_blank" style="color:var(--primary-color); text-decoration:none;">Lihat Evidence Dasar</a>` : ''}
-            </div>
-          </li>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding: 10px;">${index++}</td>
+            <td style="padding: 10px;">${h.waktuPinjam}</td>
+            <td style="padding: 10px;">${h.waktuKembali}</td>
+            <td style="padding: 10px;">${durasiHtml}</td>
+            <td style="padding: 10px; color:var(--primary-color);">${odcName}</td>
+            <td style="padding: 10px;">${h.kegiatan}</td>
+            <td style="padding: 10px;">${h.user}</td>
+            <td style="padding: 10px; font-size:12px;">
+              ${h.selfiePinjam ? `<a href="${h.selfiePinjam}" target="_blank" style="color:var(--primary-color); text-decoration:none;">📷 Selfie P.</a>` : ''}
+              ${h.selfieKembali ? `<br><a href="${h.selfieKembali}" target="_blank" style="color:var(--primary-color); text-decoration:none;">📷 Selfie K.</a>` : ''}
+              ${h.dasarEvidence ? `<br><a href="${h.dasarEvidence}" target="_blank" style="color:var(--primary-color); text-decoration:none;">📄 Evidence</a>` : ''}
+            </td>
+          </tr>
         `;
       });
-      html += '</ul>';
-      historyContainer.innerHTML = html;
+      
+      tbody.innerHTML = html;
     }
 
     function closeModal() {
