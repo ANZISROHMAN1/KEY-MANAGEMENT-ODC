@@ -67,7 +67,7 @@
     <div class="form-container">
       <!-- Global Search / Tracking -->
       <div id="historyForm" style="margin-bottom: 25px; padding: 15px; background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px;">
-        <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Lacak Tiket / Nama Teknisi</label>
+        <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Riwayat & Status Tiket Anda</label>
         <div style="display: flex; gap: 10px;">
           <input type="text" id="h_query" placeholder="Masukkan ID Tiket atau Nama" onkeypress="if(event.key === 'Enter') searchHistory()" style="flex: 1; margin: 0; font-size: 14px; padding: 8px 12px;">
           <button type="button" class="btn-submit" id="btn_search_h" onclick="searchHistory()" style="margin: 0; width: auto; padding: 8px 15px; font-size: 14px;">Cari</button>
@@ -368,17 +368,20 @@
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('appContainer').style.display = 'block';
         
-        // Auto-fill and lock user fields
-        const userFields = ['b_user', 'e_user', 'r_user'];
+        const userFields = ['b_user', 'e_user', 'r_user', 'h_query'];
         userFields.forEach(id => {
           const el = document.getElementById(id);
           if (el) {
             el.value = savedUser;
-            el.readOnly = true;
-            el.style.background = 'var(--glass-border)';
-            el.style.cursor = 'not-allowed';
+            if (id !== 'h_query') {
+              el.readOnly = true;
+              el.style.background = 'var(--glass-border)';
+              el.style.cursor = 'not-allowed';
+            }
           }
         });
+        // Auto load history
+        if (typeof searchHistory === 'function') searchHistory(true);
       } else {
         document.getElementById('loginOverlay').style.display = 'flex';
         document.getElementById('appContainer').style.display = 'none';
@@ -480,6 +483,10 @@
 
     let masterData = {};
     let currentStream = null;
+    let borrowAlarmTimeout = null;
+    let currentAlarmEndTime = 0;
+    let currentEstimasi = 0;
+    let currentOdc = '';
 
     document.addEventListener("DOMContentLoaded", function() {
       updateThemeIcon(currentTheme);
@@ -732,20 +739,27 @@
           showToast(`Berhasil! ID Tiket: ${data.id}`);
           showSuccessModal('PEMINJAMAN BERHASIL!', 'Simpan ID ini untuk melacak status peminjaman pada tab "Riwayat Tiket".', data.id);
           document.getElementById('borrowForm').reset();
+          checkAuth(); // repopulate readonly fields
+          searchHistory(true); // refresh history
           document.getElementById('b_photo_status').style.display = 'none';
           document.getElementById('b_canvas').style.display = 'none';
           
           const borrowTime = new Date(payload.waktuPinjam).getTime();
-          const alarmTime = borrowTime + (parseInt(payload.estimasi) * 60 * 60 * 1000);
+          currentEstimasi = parseInt(payload.estimasi);
+          currentOdc = payload.odc;
+          const alarmTime = borrowTime + (currentEstimasi * 60 * 60 * 1000);
           const now = new Date().getTime();
           const alarmMs = alarmTime - now;
 
+          if (borrowAlarmTimeout) clearTimeout(borrowAlarmTimeout);
+
           if (alarmMs > 0) {
-            setTimeout(() => {
-              alert(`ALARM PENGEMBALIAN!\nKunci ODC ${payload.odc} waktu peminjaman (${payload.estimasi} Jam) telah habis. Silakan kembalikan kunci!`);
+            currentAlarmEndTime = alarmTime;
+            borrowAlarmTimeout = setTimeout(() => {
+              alert(`ALARM PENGEMBALIAN!\nKunci ODC ${currentOdc} waktu peminjaman (${currentEstimasi} Jam) telah habis. Silakan kembalikan kunci!`);
             }, alarmMs);
           } else {
-            alert(`ALARM PENGEMBALIAN!\nWaktu peminjaman kunci ODC ${payload.odc} sudah habis! Silakan segera kembalikan kunci.`);
+            alert(`ALARM PENGEMBALIAN!\nWaktu peminjaman kunci ODC ${currentOdc} sudah habis! Silakan segera kembalikan kunci.`);
           }
         } else {
           showToast('Gagal meminjam kunci: ' + (data.message || 'Error'), 'error');
@@ -789,6 +803,8 @@
           showToast(`Berhasil! Kunci ${payload.odc} telah dikembalikan.`);
           showSuccessModal('PENGEMBALIAN BERHASIL!', `Kunci ODC ${payload.odc} telah berhasil dikembalikan.`);
           document.getElementById('returnForm').reset();
+          checkAuth(); // repopulate readonly fields
+          searchHistory(true); // refresh history
           document.getElementById('r_photo_status').style.display = 'none';
           document.getElementById('r_canvas').style.display = 'none';
         } else {
@@ -837,7 +853,39 @@
           showToast(`Sukses! Data pengerjaan terkirim. ID Tiket: ${data.id}`);
           showSuccessModal('PENGERJAAN BERHASIL TERKIRIM!', 'Simpan ID ini sebagai bukti laporan Anda.', data.id);
           document.getElementById('evidenceForm').reset();
+          checkAuth(); // repopulate readonly fields
+          searchHistory(true); // refresh history
           resetGridContent('e_ev');
+
+          // Perbarui alert alarm jika ada extend
+          if (payload.extend && parseInt(payload.extend) > 0) {
+            const extraMs = parseInt(payload.extend) * 60 * 60 * 1000;
+            if (currentAlarmEndTime > 0) {
+              if (borrowAlarmTimeout) clearTimeout(borrowAlarmTimeout);
+              
+              currentAlarmEndTime += extraMs;
+              currentEstimasi += parseInt(payload.extend);
+              
+              const now = new Date().getTime();
+              const newAlarmMs = currentAlarmEndTime - now;
+              
+              if (newAlarmMs > 0) {
+                borrowAlarmTimeout = setTimeout(() => {
+                  alert(`ALARM PENGEMBALIAN!\nKunci ODC ${payload.odc} waktu peminjaman (${currentEstimasi} Jam, termasuk extend) telah habis. Silakan kembalikan kunci!`);
+                }, newAlarmMs);
+                showToast(`Waktu alarm diperbarui, ditambah ${payload.extend} jam.`, 'success');
+              }
+            } else {
+               // Jika halaman direfresh sebelumnya, buat alarm baru dari sekarang
+               currentEstimasi = parseInt(payload.extend);
+               currentAlarmEndTime = new Date().getTime() + extraMs;
+               borrowAlarmTimeout = setTimeout(() => {
+                  alert(`ALARM PENGEMBALIAN!\nWaktu extend (${currentEstimasi} Jam) untuk ODC ${payload.odc} telah habis. Silakan kembalikan kunci!`);
+               }, extraMs);
+               showToast(`Waktu alarm baru diatur untuk ${payload.extend} jam ke depan.`, 'success');
+            }
+          }
+
         } else {
           showToast('Gagal: ' + (data.message || 'Error'), 'error');
         }
@@ -896,10 +944,10 @@
       btn.disabled = false;
     }
 
-    async function searchHistory() {
+    async function searchHistory(isAuto = false) {
       const query = document.getElementById('h_query').value.trim();
       if (!query) {
-        showToast('Masukkan kata pencarian terlebih dahulu!', 'error');
+        if (!isAuto) showToast('Masukkan kata pencarian terlebih dahulu!', 'error');
         return;
       }
       
@@ -908,7 +956,8 @@
       
       btn.disabled = true;
       btn.innerText = 'Mencari...';
-      resultDiv.innerHTML = '<div class="loader" style="display:block; margin: 20px auto;"></div>';
+      if (!isAuto) resultDiv.innerHTML = '<div class="loader" style="display:block; margin: 20px auto;"></div>';
+      else resultDiv.innerHTML = '<p style="text-align:center; font-size:13px; color:var(--text-muted);">Memuat riwayat Anda...</p>';
       
       try {
         const res = await fetch(API_URL + '?action=getTechnicianHistory&query=' + encodeURIComponent(query));
@@ -928,16 +977,16 @@
                 
                 <div class="stepper-wrapper">
                   <div class="stepper-item completed">
-                    <div class="stepper-icon">✓</div>
-                    <p>Dipinjam</p>
+                    <div class="stepper-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg></div>
+                    <p>Input</p>
                   </div>
                   <div class="stepper-item active">
-                    <div class="stepper-icon">...</div>
-                    <p>Pengerjaan</p>
+                    <div class="stepper-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                    <p>Progress</p>
                   </div>
                   <div class="stepper-item">
-                    <div class="stepper-icon">3</div>
-                    <p>Dikembalikan</p>
+                    <div class="stepper-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+                    <p>Close</p>
                   </div>
                 </div>
 
@@ -964,16 +1013,16 @@
                 
                 <div class="stepper-wrapper">
                   <div class="stepper-item completed-green">
-                    <div class="stepper-icon">✓</div>
-                    <p>Dipinjam</p>
+                    <div class="stepper-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg></div>
+                    <p>Input</p>
                   </div>
                   <div class="stepper-item completed-green">
-                    <div class="stepper-icon">✓</div>
-                    <p>Pengerjaan</p>
+                    <div class="stepper-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                    <p>Progress</p>
                   </div>
                   <div class="stepper-item completed-green">
-                    <div class="stepper-icon">✓</div>
-                    <p>Dikembalikan</p>
+                    <div class="stepper-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+                    <p>Close</p>
                   </div>
                 </div>
 

@@ -88,6 +88,23 @@ function submitEvidence(data) {
   const time = new Date().toLocaleString();
   
   sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, time, photoUrls, data.extend || '-', data.reason || '-']);
+  
+  // Update estimasi di ActiveBorrowings jika ada extend
+  if (data.extend && parseInt(data.extend) > 0) {
+    const activeSheet = ss.getSheetByName('ActiveBorrowings');
+    if (activeSheet) {
+      const activeData = activeSheet.getDataRange().getValues();
+      for (let i = 1; i < activeData.length; i++) {
+        if (activeData[i][2] && activeData[i][2].toString().trim() === data.odc.toString().trim()) {
+          const currentEstimasi = parseInt(activeData[i][5]) || 0;
+          const newEstimasi = currentEstimasi + parseInt(data.extend);
+          activeSheet.getRange(i + 1, 6).setValue(newEstimasi); // Kolom 6 adalah 'Estimasi'
+          break;
+        }
+      }
+    }
+  }
+  
   return { success: true, id: id };
 }
 
