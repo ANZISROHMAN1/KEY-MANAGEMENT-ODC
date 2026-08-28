@@ -115,8 +115,15 @@
     function renderDashboard(data) {
       window.dashboardData = data; // Save for sub-page usage
       document.getElementById('loader').style.display = 'none';
+      
       const dashboard = document.getElementById('dashboard');
-      dashboard.style.display = 'grid';
+      const activeSection = document.getElementById('activeBorrowingsSection');
+      const stoDetailView = document.getElementById('stoDetailView');
+      const isDetailViewOpen = stoDetailView.style.display === 'block';
+      
+      if (!isDetailViewOpen) {
+        dashboard.style.display = 'grid';
+      }
       dashboard.innerHTML = '';
       
       let activeBorrowingsList = [];
@@ -170,7 +177,7 @@
       tableBody.innerHTML = '';
       
       if (activeBorrowingsList.length > 0) {
-        activeSection.style.display = 'block';
+        if (!isDetailViewOpen) activeSection.style.display = 'block';
         activeBorrowingsList.forEach(b => {
           const row = document.createElement('tr');
           row.style.borderBottom = '1px solid #eee';
@@ -186,13 +193,19 @@
           tableBody.appendChild(row);
         });
       } else {
-        activeSection.style.display = 'block';
+        if (!isDetailViewOpen) activeSection.style.display = 'block';
         tableBody.innerHTML = '<tr><td colspan="6" style="padding: 10px; text-align:center; color:#666;">Tidak ada kunci yang sedang dipinjam saat ini.</td></tr>';
+      }
+      
+      if (isDetailViewOpen && window.currentStoName && window.currentSaName) {
+        handleStoClick({stopPropagation: () => {}}, window.currentStoName, window.currentSaName);
       }
     }
 
     function handleStoClick(event, stoName, saName) {
-      event.stopPropagation();
+      if (event && event.stopPropagation) event.stopPropagation();
+      window.currentStoName = stoName;
+      window.currentSaName = saName;
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('activeBorrowingsSection').style.display = 'none';
       document.getElementById('stoDetailView').style.display = 'block';
@@ -314,6 +327,8 @@
 
     function backToDashboard() {
       if (window.stoTimerInterval) clearInterval(window.stoTimerInterval);
+      window.currentStoName = null;
+      window.currentSaName = null;
       document.getElementById('stoDetailView').style.display = 'none';
       document.getElementById('dashboard').style.display = 'grid';
       if (document.getElementById('activeBorrowingsTableBody').children.length > 0) {
