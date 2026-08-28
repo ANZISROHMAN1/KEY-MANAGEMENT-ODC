@@ -58,7 +58,7 @@
         <h1>Portal Teknisi</h1>
       </div>
       <div style="display: flex; gap: 10px; align-items: center;">
-        <button onclick="openHistoryModal()" style="background: var(--primary-color); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">Riwayat Tiket</button>
+        <button onclick="openHistoryModal()" style="position: relative; background: var(--primary-color); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">Riwayat Tiket<span id="badgeOverdue" style="display:none; position:absolute; top:-6px; right:-6px; background:var(--red-status); color:white; border-radius:50%; width:18px; height:18px; font-size:10px; align-items:center; justify-content:center; box-shadow:0 0 5px rgba(0,0,0,0.3); animation: pulse 2s infinite;"></span></button>
         <button onclick="logout()" style="background: none; border: 1px solid var(--glass-border); color: var(--text-main); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Logout</button>
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
       </div>
@@ -990,6 +990,8 @@
           return new Date(dateStr);
         };
 
+        let globalOverdueCount = 0;
+
         if (data.active && data.active.length > 0) {
           html += '<h3 style="margin-top:0;">Sedang Dipinjam</h3><ul style="list-style-type:none; padding:0;">';
           data.active.forEach(item => {
@@ -998,6 +1000,7 @@
             const estimasi = parseInt(item.estimasi) || 0;
             const alarmTimeMs = borrowTimeMs + (estimasi * 60 * 60 * 1000);
             const isOverdue = new Date().getTime() > alarmTimeMs;
+            if (isOverdue) globalOverdueCount++;
             
             const overdueBadge = isOverdue ? `<span style="background:var(--red-status); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:bold; margin-left: 8px; display:inline-flex; align-items:center; gap:4px; animation: pulse 2s infinite;">⚠️ Waktu Habis</span>` : '';
             const wPinjamText = (!item.waktuPinjam || item.waktuPinjam.includes('Invalid')) ? '<span style="color:var(--text-muted); font-style:italic;">Belum tercatat</span>' : item.waktuPinjam;
@@ -1079,6 +1082,16 @@
           html = '<p style="text-align:center; color:#666; padding:20px; background:#f9f9f9; border-radius:8px;">Tidak ada riwayat yang ditemukan untuk nama / ID tiket tersebut.</p>';
         }
         
+        const badge = document.getElementById('badgeOverdue');
+        if (badge) {
+          if (globalOverdueCount > 0) {
+            badge.style.display = 'flex';
+            badge.innerText = globalOverdueCount;
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+
         resultDiv.innerHTML = html;
         
       } catch (err) {
