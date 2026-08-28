@@ -230,6 +230,7 @@
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('activeBorrowingsSection').style.display = 'none';
       document.getElementById('stoDetailView').style.display = 'block';
+      document.getElementById('odcHistorySection').style.display = 'none';
       document.getElementById('stoDetailTitle').innerText = `Detail STO: ${stoName} (Service Area: ${saName})`;
       
       const stoDetailGrid = document.getElementById('stoDetailGrid');
@@ -245,11 +246,12 @@
       let activeOdcs = [];
       
       sto.odcs.forEach(odc => {
-        if (odc.status === 'red' && odc.borrowDetails) {
-          activeOdcs.push({ name: odc.name, details: odc.borrowDetails });
-        }
         let borrowData = odc.borrowDetails ? JSON.stringify(odc.borrowDetails) : '{}';
         let borrowDataStr = btoa(encodeURIComponent(borrowData));
+        
+        if (odc.status === 'red' && odc.borrowDetails) {
+          activeOdcs.push({ name: odc.name, details: odc.borrowDetails, borrowDataStr: borrowDataStr });
+        }
         
         let iconColor = odc.status === 'red' ? '#d9534f' : '#8cc63f';
         let iconSvg = `
@@ -275,9 +277,10 @@
         let alertHtml = '';
         activeOdcs.forEach((item, index) => {
           alertHtml += `
-            <div style="background: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--red-status); padding: 12px 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 14px;">
+            <div onclick="handleOdcClick(null, '${item.name}', 'red', '${item.borrowDataStr}')" style="background: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--red-status); padding: 12px 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; cursor: pointer;" title="Klik untuk melihat riwayat ODC ini">
               <div>
                 <strong>${item.name}</strong> dipinjam oleh <strong>${item.details.user}</strong>
+                <span style="font-size:11px; color:#666; margin-left:10px; background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:4px;">Klik untuk lihat riwayat</span>
               </div>
               <div id="timer-${index}" style="font-family: monospace; font-size: 16px; font-weight: bold; color: var(--red-status);">
                 Menghitung...
