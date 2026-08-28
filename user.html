@@ -58,24 +58,14 @@
         <h1>Portal Teknisi</h1>
       </div>
       <div style="display: flex; gap: 10px; align-items: center;">
+        <button onclick="openHistoryModal()" style="background: var(--primary-color); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">Riwayat Tiket</button>
         <button onclick="logout()" style="background: none; border: 1px solid var(--glass-border); color: var(--text-main); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Logout</button>
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
       </div>
     </div>
   
   <div class="container">
-    <div class="form-container">
-      <!-- Global Search / Tracking -->
-      <div id="historyForm" style="margin-bottom: 25px; padding: 15px; background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px;">
-        <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;">Riwayat & Status Tiket Anda</label>
-        <div style="display: flex; gap: 10px;">
-          <input type="text" id="h_query" placeholder="Masukkan ID Tiket atau Nama" onkeypress="if(event.key === 'Enter') searchHistory()" style="flex: 1; margin: 0; font-size: 14px; padding: 8px 12px;">
-          <button type="button" class="btn-submit" id="btn_search_h" onclick="searchHistory()" style="margin: 0; width: auto; padding: 8px 15px; font-size: 14px;">Cari</button>
-        </div>
-        <div id="h_result" style="margin-top: 15px;"></div>
-      </div>
-
-      <div class="tabs">
+    <div class="form-container">      <div class="tabs">
         <div class="tab active" id="tabBorrow" onclick="switchTab('borrow')">Pinjam Kunci</div>
         <div class="tab" id="tabEvidence" onclick="switchTab('evidence')">Pengerjaan</div>
         <div class="tab" id="tabReturn" onclick="switchTab('return')">Kembalikan Kunci</div>
@@ -293,7 +283,25 @@
     </div>
   </div>
 
+  <!-- History Modal -->
+  <div id="historyModal" class="modal">
+    <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+      <span class="close-btn" onclick="document.getElementById('historyModal').style.display='none'" style="cursor:pointer;">&times;</span>
+      <h3 style="color: var(--primary-color); margin-top: 0; margin-bottom: 20px;">Riwayat & Status Tiket Anda</h3>
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <input type="text" id="h_query" placeholder="Masukkan ID Tiket atau Nama" onkeypress="if(event.key === 'Enter') searchHistory()" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--bg-color); color: var(--text-main);">
+        <button type="button" class="btn-submit" id="btn_search_h" onclick="searchHistory()" style="margin: 0; width: auto; padding: 10px 20px;">Cari</button>
+      </div>
+      <div id="h_result"></div>
+    </div>
+  </div>
+
   <script>
+    function openHistoryModal() {
+      document.getElementById('historyModal').style.display = 'block';
+      if (typeof searchHistory === 'function') searchHistory(true);
+    }
+
     function showSuccessModal(title, message, ticketId = null) {
       document.getElementById('modalTitle').innerText = title;
       document.getElementById('modalMessage').innerText = message;
@@ -992,6 +1000,7 @@
             const isOverdue = new Date().getTime() > alarmTimeMs;
             
             const overdueBadge = isOverdue ? `<span style="background:var(--red-status); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:bold; margin-left: 8px; display:inline-flex; align-items:center; gap:4px; animation: pulse 2s infinite;">⚠️ Waktu Habis</span>` : '';
+            const wPinjamText = (!item.waktuPinjam || item.waktuPinjam.includes('Invalid')) ? '<span style="color:var(--text-muted); font-style:italic;">Belum tercatat</span>' : item.waktuPinjam;
 
             html += `
               <li style="background:var(--glass-bg); padding:20px; border-radius:12px; margin-bottom:15px; border:1px solid ${isOverdue ? 'var(--red-status)' : 'var(--primary-color)'}; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
@@ -1021,7 +1030,7 @@
                 <div style="font-size:13px; line-height: 1.6; color:var(--text-main); border-top:1px solid var(--glass-border); padding-top:12px;">
                   <div style="display:flex; justify-content:space-between;"><span>Teknisi:</span> <strong>${item.user}</strong></div>
                   <div style="display:flex; justify-content:space-between;"><span>Kegiatan:</span> <strong>${item.kegiatan}</strong></div>
-                  <div style="display:flex; justify-content:space-between;"><span>Waktu Pinjam:</span> <strong>${item.waktuPinjam}</strong></div>
+                  <div style="display:flex; justify-content:space-between;"><span>Waktu Pinjam:</span> <strong>${wPinjamText}</strong></div>
                 </div>
               </li>
             `;
@@ -1057,7 +1066,7 @@
                 <div style="font-size:13px; line-height: 1.6; color:var(--text-main); border-top:1px solid var(--glass-border); padding-top:12px;">
                   <div style="display:flex; justify-content:space-between;"><span>Teknisi:</span> <strong>${item.user}</strong></div>
                   <div style="display:flex; justify-content:space-between;"><span>Kegiatan:</span> <strong>${item.kegiatan}</strong></div>
-                  <div style="display:flex; justify-content:space-between;"><span>Waktu Pinjam:</span> <strong>${item.waktuPinjam}</strong></div>
+                  <div style="display:flex; justify-content:space-between;"><span>Waktu Pinjam:</span> <strong>${(!item.waktuPinjam || item.waktuPinjam.includes('Invalid')) ? '<span style="color:var(--text-muted); font-style:italic;">Belum tercatat</span>' : item.waktuPinjam}</strong></div>
                   <div style="display:flex; justify-content:space-between;"><span>Kembali:</span> <strong>${item.waktuKembali}</strong></div>
                 </div>
               </li>
