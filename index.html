@@ -53,11 +53,11 @@
         <div class="stat-cards">
           <div class="stat-card blue" style="cursor: pointer;" onclick="showUsersView()">
              <div class="stat-title">USERS</div>
-             <div class="stat-value">119 <span class="icon">👥</span></div>
+             <div class="stat-value"><span id="countUsers">...</span> <span class="icon">👥</span></div>
           </div>
           <div class="stat-card orange" style="cursor: pointer;" onclick="showGembokOpenView()">
              <div class="stat-title">GEMBOK OPEN</div>
-             <div class="stat-value">10 <span class="icon">📖</span></div>
+             <div class="stat-value"><span id="countGembokOpen">...</span> <span class="icon">📖</span></div>
           </div>
         </div>
 
@@ -204,7 +204,19 @@
 
       // Fetch Realtime Data
       fetchDashboardData();
+      fetchTotalUsers();
     });
+
+    async function fetchTotalUsers() {
+      try {
+        const response = await fetch(API_URL + '?action=getUsersList');
+        const users = await response.json();
+        const el = document.getElementById('countUsers');
+        if (el) el.innerText = users.length;
+      } catch (err) {
+        console.error('Error fetching total users:', err);
+      }
+    }
 
     // --- Existing Dashboard Logic (Adapted) ---
     async function fetchDashboardData() {
@@ -283,9 +295,22 @@
         dashboard.appendChild(saSection);
       }
       
+      // Update Stats
+      const countStoEl = document.getElementById('countSto');
+      if (countStoEl) countStoEl.innerText = totalSto;
+      
+      const countOdcEl = document.getElementById('countOdc');
+      if (countOdcEl) countOdcEl.innerText = totalOdcs;
+      
       // Render active borrowings table
       const tableBody = document.getElementById('activeBorrowingsTableBody');
       tableBody.innerHTML = '';
+      
+      // Update Gembok Open Stat Card
+      const countGembokOpenEl = document.getElementById('countGembokOpen');
+      if (countGembokOpenEl) {
+        countGembokOpenEl.innerText = activeBorrowingsList.length;
+      }
       
       if (activeBorrowingsList.length > 0) {
         if (!isDetailViewOpen) activeSection.style.display = 'block';
