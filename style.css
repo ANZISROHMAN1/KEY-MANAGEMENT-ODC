@@ -1,22 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg-dark: #2c323f;
-  --bg-panel: #333a47;
-  --bg-sidebar: #2b303b;
-  --bg-header: #2b303b;
+  --bg-dark: #0f172a;      /* Slate 900 */
+  --bg-panel: #1e293b;     /* Slate 800 */
+  --bg-sidebar: #0f172a;   /* Slate 900 */
+  --bg-header: #1e293b;    /* Slate 800 */
   
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   
-  --primary-color: #3b82f6;
-  --border-color: #475569;
+  --primary-color: #00d2ff; /* O-Key Cyan Accent */
+  --primary-hover: #00a8cc; 
+  --border-color: #334155;
   
-  /* Stat Card Colors dari screenshot */
-  --stat-blue: #59c5df;
-  --stat-red: #eb5e55;
-  --stat-orange: #f5af47;
-  --stat-green: #7ac143;
+  /* Stat Card Colors */
+  --stat-blue: #0ea5e9;
+  --stat-red: #ef4444;
+  --stat-orange: #f59e0b;
+  --stat-green: #10b981;
   
   --font-family: 'Inter', sans-serif;
 }
@@ -51,8 +52,8 @@ body {
   display: flex;
   align-items: center;
   padding: 0 20px;
-  background-color: #8cc63f; /* Latar hijau di header sidebar */
-  color: #fff;
+  background-color: var(--primary-color);
+  color: #000; /* Dark text for contrast against cyan */
 }
 
 .sidebar-header .hamburger {
@@ -96,8 +97,9 @@ body {
 }
 
 .sidebar-menu li.active > a {
-  background-color: #8cc63f; /* Hijau WASAKA */
-  color: #fff;
+  background-color: rgba(0, 210, 255, 0.15); /* Light cyan background */
+  color: var(--primary-color);
+  border-right: 4px solid var(--primary-color);
   font-weight: 600;
 }
 
