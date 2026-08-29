@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,80 +7,194 @@
   <link rel="icon" type="image/png" href="logo.png?v=2">
   <link rel="stylesheet" href="style.css">
   <script src="config.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="header">
-    <div style="display: flex; align-items: center; gap: 15px;">
-      <img src="logo.png?v=2" alt="ODC Logo" style="height: 40px; width: 40px; object-fit: cover; border-radius: 8px;">
-      <h1>O-Key Dashboard</h1>
-    </div>
-    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
-  </div>
   
-  <div class="container">
-    <div id="loader" class="loader"></div>
-    
-    <div id="dashboard" class="sa-container" style="display:none;">
-      <!-- SA Sections injected here -->
-    </div>
-    
-    <div id="stoDetailView" style="display:none;">
-      <button onclick="backToDashboard()" style="margin-bottom: 20px; padding: 10px 15px; cursor:pointer; background:var(--primary-color); color:white; border:none; border-radius:5px; font-weight:bold;">&larr; Kembali ke Dashboard</button>
-      <h2 id="stoDetailTitle" style="margin-bottom: 10px;"></h2>
-      
-      <div id="stoAlertContainer" style="margin-bottom: 20px;"></div>
-      
-      <div class="sa-section" style="background:var(--card-bg);">
-        <div id="stoDetailGrid" class="dashboard-grid">
-          <!-- ODC Icons injected here -->
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="hamburger">≡</div>
+        <h2>WASAKA</h2>
+      </div>
+      <ul class="sidebar-menu">
+        <li class="active">
+          <a href="#"><span class="icon">⏱</span> Dashboard</a>
+        </li>
+        <li class="menu-item-has-children">
+          <a href="#"><span class="icon">🛠</span> Admin <span class="arrow-down">v</span></a>
+          <ul class="sub-menu">
+            <li><a href="#">Kunci</a></li>
+            <li><a href="#">User & Akses</a></li>
+            <li><a href="#">History</a></li>
+            <li><a href="#">Tiketing QC</a></li>
+          </ul>
+        </li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-info">
+          <span class="icon">👤</span> Indra Kusuma <span class="badge">980160</span>
         </div>
+        <span class="arrow">></span>
       </div>
-      
-      <!-- ODC History Section -->
-      <div id="odcHistorySection" style="display:none; margin-top: 30px; background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-        <h2 id="odcHistoryTitle" style="margin-top:0; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">Riwayat ODC</h2>
-        <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-            <thead>
-              <tr style="background: #8cc63f; color: white; border-bottom: 2px solid #ddd;">
-                <th style="padding: 10px;">#</th>
-                <th style="padding: 10px;">Start</th>
-                <th style="padding: 10px;">Close</th>
-                <th style="padding: 10px;">Durasi</th>
-                <th style="padding: 10px;">Kode</th>
-                <th style="padding: 10px;">Pekerjaan</th>
-                <th style="padding: 10px;">User</th>
-                <th style="padding: 10px;">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="odcHistoryTableBody">
-            </tbody>
-          </table>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <h1>Dashboard</h1>
         </div>
-      </div>
-    </div>
-    
-    <div id="activeBorrowingsSection" style="display:none; margin-top: 40px; background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-      <h2 style="margin-top:0; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">REPOSITORY ACTIVITY</h2>
-      <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left;">
-          <thead>
-            <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
-              <th style="padding: 10px;">STO</th>
-              <th style="padding: 10px;">ODC</th>
-              <th style="padding: 10px;">Teknisi</th>
-              <th style="padding: 10px;">Kegiatan</th>
-              <th style="padding: 10px;">Dasar Kegiatan</th>
-              <th style="padding: 10px;">Waktu Pinjam</th>
-              <th style="padding: 10px;">Estimasi</th>
-            </tr>
-          </thead>
-          <tbody id="activeBorrowingsTableBody">
-            <!-- Active rows injected here -->
-          </tbody>
-        </table>
-      </div>
-    </div>
+        <div class="header-right">
+          <span class="icon-lock">🔒</span>
+          <input type="text" placeholder="Search Gembok" class="search-bar">
+          <select class="filter-dropdown">
+            <option>REGIONAL 3</option>
+          </select>
+          <select class="filter-dropdown">
+            <option>SUKABUMI</option>
+          </select>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <!-- Stat Cards -->
+        <div class="stat-cards">
+          <div class="stat-card blue">
+             <div class="stat-title">USERS</div>
+             <div class="stat-value">119 <span class="icon">👥</span></div>
+          </div>
+          <div class="stat-card red">
+             <div class="stat-title">Gembok Registered</div>
+             <div class="stat-value">427 <span class="icon">🔒</span></div>
+          </div>
+          <div class="stat-card red">
+             <div class="stat-title">Unaccess ODC > 30D</div>
+             <div class="stat-value">266 <span class="icon">🔒</span></div>
+          </div>
+          <div class="stat-card red">
+             <div class="stat-title">Belum Scanning ODC</div>
+             <div class="stat-value">288 <span class="icon">🔒</span></div>
+          </div>
+          <div class="stat-card orange">
+             <div class="stat-title">GEMBOK OPEN</div>
+             <div class="stat-value">10 <span class="icon">📖</span></div>
+          </div>
+          <div class="stat-card green">
+             <div class="stat-title">NEW USER</div>
+             <div class="stat-value">18 <span class="icon">👤</span></div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+          <div class="chart-box">
+             <h3>Gembok</h3>
+             <div class="pie-container">
+               <canvas id="chartGembok"></canvas>
+             </div>
+          </div>
+          <div class="chart-box">
+             <h3>Kerapian Odc</h3>
+             <div class="pie-container">
+               <canvas id="chartKerapian"></canvas>
+             </div>
+          </div>
+          <div class="chart-box">
+             <h3>Engsel Odc</h3>
+             <div class="pie-container">
+               <canvas id="chartEngsel"></canvas>
+             </div>
+          </div>
+        </div>
+
+        <div class="charts-row-2">
+          <div class="chart-box wide" style="background: transparent; box-shadow: none;">
+             <h3 style="text-align: center; font-size: 20px;">Akses Log Past 30 Days</h3>
+             <!-- Dummy space for line chart -->
+             <div style="height: 200px;"></div>
+          </div>
+          <div class="chart-box small">
+             <h3>Users</h3>
+             <div class="pie-container-small">
+               <canvas id="chartUsers"></canvas>
+             </div>
+          </div>
+        </div>
+
+        <hr style="border-color: var(--border-color); margin: 30px 0;">
+        <h2 style="margin-bottom: 20px; font-size: 18px;">Data Realtime (O-Key System)</h2>
+
+        <!-- Existing Realtime Data Section -->
+        <div id="loader" class="loader"></div>
+        
+        <div id="dashboard" class="sa-container" style="display:none;">
+          <!-- SA Sections injected here -->
+        </div>
+        
+        <div id="stoDetailView" style="display:none;">
+          <button onclick="backToDashboard()" class="btn-back">&larr; Kembali ke Dashboard</button>
+          <h2 id="stoDetailTitle" style="margin-bottom: 10px;"></h2>
+          
+          <div id="stoAlertContainer" style="margin-bottom: 20px;"></div>
+          
+          <div class="sa-section">
+            <div id="stoDetailGrid" class="dashboard-grid">
+              <!-- ODC Icons injected here -->
+            </div>
+          </div>
+          
+          <!-- ODC History Section -->
+          <div id="odcHistorySection" class="card-section" style="display:none;">
+            <h2 id="odcHistoryTitle">Riwayat ODC</h2>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Start</th>
+                    <th>Close</th>
+                    <th>Durasi</th>
+                    <th>Kode</th>
+                    <th>Pekerjaan</th>
+                    <th>User</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="odcHistoryTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <div id="activeBorrowingsSection" class="card-section" style="display:none;">
+          <h2>REPOSITORY ACTIVITY</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>STO</th>
+                  <th>ODC</th>
+                  <th>Teknisi</th>
+                  <th>Kegiatan</th>
+                  <th>Dasar Kegiatan</th>
+                  <th>Waktu Pinjam</th>
+                  <th>Estimasi</th>
+                </tr>
+              </thead>
+              <tbody id="activeBorrowingsTableBody">
+                <!-- Active rows injected here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div> <!-- dashboard-content -->
+    </main>
   </div>
 
   <!-- History Modal -->
@@ -95,28 +209,92 @@
   </div>
 
   <script>
-    // Theme logic
-    const currentTheme = localStorage.getItem('theme') || 'light';
-    if (currentTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-
-    function toggleTheme() {
-      let theme = document.documentElement.getAttribute('data-theme');
-      theme = (theme === 'dark') ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('theme', theme);
-      updateThemeIcon(theme);
-    }
-    
-    function updateThemeIcon(theme) {
-      const btn = document.querySelector('.theme-toggle');
-      if (btn) btn.innerText = theme === 'dark' ? '☀️' : '🌙';
-    }
-    
+    // Initialize Dummy Charts
     document.addEventListener("DOMContentLoaded", function() {
-      updateThemeIcon(currentTheme);
+      // Common Options for Doughnut charts
+      const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: { color: '#ccc', font: { size: 11 } }
+          }
+        },
+        borderWidth: 0,
+        cutout: '0%' // It looks like a pie chart in the image, not doughnut, so 0% cutout
+      };
+
+      // 1. Gembok Chart
+      new Chart(document.getElementById('chartGembok'), {
+        type: 'pie',
+        data: {
+          labels: ['Unscanning', 'Versi Lama', 'Versi Baru', 'Tidak Ada Gembok', 'Null'],
+          datasets: [{
+            data: [288, 0, 0, 0, 131],
+            backgroundColor: ['#2980b9', '#e67e22', '#27ae60', '#c0392b', '#9b59b6'],
+            borderWidth: 0
+          }]
+        },
+        options: commonOptions
+      });
+
+      // 2. Kerapian Odc Chart
+      new Chart(document.getElementById('chartKerapian'), {
+        type: 'pie',
+        data: {
+          labels: ['Unscanning', 'Rapih', 'Tidak Rapih'],
+          datasets: [{
+            data: [288, 138, 0],
+            backgroundColor: ['#2980b9', '#e67e22', '#27ae60'],
+            borderWidth: 0
+          }]
+        },
+        options: commonOptions
+      });
+
+      // 3. Engsel Odc Chart
+      new Chart(document.getElementById('chartEngsel'), {
+        type: 'pie',
+        data: {
+          labels: ['Unscanning', 'Bagus', 'Rusak'],
+          datasets: [{
+            data: [288, 137, 0],
+            backgroundColor: ['#2980b9', '#e67e22', '#27ae60'],
+            borderWidth: 0
+          }]
+        },
+        options: commonOptions
+      });
+
+      // 4. Users Chart
+      new Chart(document.getElementById('chartUsers'), {
+        type: 'pie',
+        data: {
+          labels: ['New User View', 'User', 'Admin'],
+          datasets: [{
+            data: [18, 93, 8],
+            backgroundColor: ['#2980b9', '#f39c12', '#27ae60'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: { color: '#ccc', font: { size: 10 } }
+            }
+          }
+        }
+      });
+
+      // Fetch Realtime Data
       fetchDashboardData();
     });
 
+    // --- Existing Dashboard Logic (Adapted) ---
     async function fetchDashboardData() {
       try {
         const response = await fetch(API_URL + '?action=getDashboardData');
@@ -128,14 +306,14 @@
         if (dashboard.innerHTML.trim() === '') {
           document.getElementById('loader').style.display = 'none';
           dashboard.style.display = 'block';
-          dashboard.innerHTML = '<div style="text-align:center; padding: 30px; color: var(--red-status);">Gagal terhubung ke database Google Sheets.<br>Mencoba ulang dalam 5 detik...</div>';
+          dashboard.innerHTML = '<div style="text-align:center; padding: 30px; color: #e74c3c;">Gagal terhubung ke database Google Sheets.<br>Mencoba ulang dalam 5 detik...</div>';
           setTimeout(fetchDashboardData, 5000);
         }
       }
     }
 
     function renderDashboard(data) {
-      window.dashboardData = data; // Save for sub-page usage
+      window.dashboardData = data; 
       document.getElementById('loader').style.display = 'none';
       
       const dashboard = document.getElementById('dashboard');
@@ -169,9 +347,9 @@
             }
           });
           
-          let iconColor = sto.status === 'red' ? '#d9534f' : '#8cc63f';
+          let iconColor = sto.status === 'red' ? '#e74c3c' : '#2ecc71';
           let iconSvg = `
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="${iconColor}" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="${iconColor}" stroke="#1e222d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
               <line x1="8" y1="21" x2="16" y2="21"></line>
               <line x1="12" y1="17" x2="12" y2="21"></line>
@@ -182,7 +360,7 @@
           stoCard.className = `odc-item status-${sto.status}`;
           stoCard.innerHTML = `
             <div class="monitor-icon">${iconSvg}</div>
-            <div style="font-size:10px; font-weight:bold; margin-top:5px; color:#333; text-align:center;">${sto.name}</div>
+            <div style="font-size:10px; font-weight:bold; margin-top:5px; color:#ddd; text-align:center;">${sto.name}</div>
           `;
           stoCard.onclick = (e) => handleStoClick(e, sto.name, sa.name);
           
@@ -201,21 +379,20 @@
         if (!isDetailViewOpen) activeSection.style.display = 'block';
         activeBorrowingsList.forEach(b => {
           const row = document.createElement('tr');
-          row.style.borderBottom = '1px solid #eee';
           row.innerHTML = `
-            <td style="padding: 10px;"><strong>${b.sto}</strong></td>
-            <td style="padding: 10px;">${b.odc}</td>
-            <td style="padding: 10px;">${b.user}</td>
-            <td style="padding: 10px;">${b.kegiatan}</td>
-            <td style="padding: 10px;">${b.dasarKegiatan || '-'}</td>
-            <td style="padding: 10px;">${b.waktuPinjam}</td>
-            <td style="padding: 10px;">${b.estimasi} Jam</td>
+            <td><strong>${b.sto}</strong></td>
+            <td>${b.odc}</td>
+            <td>${b.user}</td>
+            <td>${b.kegiatan}</td>
+            <td>${b.dasarKegiatan || '-'}</td>
+            <td>${b.waktuPinjam}</td>
+            <td>${b.estimasi} Jam</td>
           `;
           tableBody.appendChild(row);
         });
       } else {
         if (!isDetailViewOpen) activeSection.style.display = 'block';
-        tableBody.innerHTML = '<tr><td colspan="6" style="padding: 10px; text-align:center; color:#666;">Tidak ada kunci yang sedang dipinjam saat ini.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888;">Tidak ada kunci yang sedang dipinjam saat ini.</td></tr>';
       }
       
       if (isDetailViewOpen && window.currentStoName && window.currentSaName) {
@@ -253,9 +430,9 @@
           activeOdcs.push({ name: odc.name, details: odc.borrowDetails, borrowDataStr: borrowDataStr });
         }
         
-        let iconColor = odc.status === 'red' ? '#d9534f' : '#8cc63f';
+        let iconColor = odc.status === 'red' ? '#e74c3c' : '#2ecc71';
         let iconSvg = `
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="${iconColor}" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="${iconColor}" stroke="#1e222d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
             <line x1="8" y1="21" x2="16" y2="21"></line>
             <line x1="12" y1="17" x2="12" y2="21"></line>
@@ -268,7 +445,7 @@
         odcCard.onclick = (e) => handleOdcClick(e, odc.name, odc.status, borrowDataStr);
         odcCard.innerHTML = `
           <div class="monitor-icon">${iconSvg}</div>
-          <div style="font-size:8px; font-weight:bold; margin-top:2px; color:#333; text-align:center; max-width:60px; word-wrap:break-word;">${odc.name.split('-').pop()}</div>
+          <div style="font-size:8px; font-weight:bold; margin-top:2px; color:#ccc; text-align:center; max-width:60px; word-wrap:break-word;">${odc.name.split('-').pop()}</div>
         `;
         stoDetailGrid.appendChild(odcCard);
       });
@@ -277,14 +454,12 @@
         let alertHtml = '';
         activeOdcs.forEach((item, index) => {
           alertHtml += `
-            <div onclick="handleOdcClick(null, '${item.name}', 'red', '${item.borrowDataStr}')" style="background: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--red-status); padding: 12px 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; cursor: pointer;" title="Klik untuk melihat riwayat ODC ini">
+            <div onclick="handleOdcClick(null, '${item.name}', 'red', '${item.borrowDataStr}')" class="alert-box" title="Klik untuk melihat riwayat ODC ini">
               <div>
                 <strong>${item.name}</strong> dipinjam oleh <strong>${item.details.user}</strong>
-                <span style="font-size:11px; color:#666; margin-left:10px; background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:4px;">Klik untuk lihat riwayat</span>
+                <span class="badge-hint">Klik untuk lihat riwayat</span>
               </div>
-              <div id="timer-${index}" style="font-family: monospace; font-size: 16px; font-weight: bold; color: var(--red-status);">
-                Menghitung...
-              </div>
+              <div id="timer-${index}" class="timer">Menghitung...</div>
             </div>
           `;
         });
@@ -310,11 +485,11 @@
               let timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
               
               if (isOverdue) {
-                timerEl.innerHTML = `⚠️ Lewat Batas Waktu: ${timeStr}`;
-                timerEl.style.color = '#dc3545';
+                timerEl.innerHTML = `⚠️ Lewat Batas: ${timeStr}`;
+                timerEl.style.color = '#e74c3c';
               } else {
-                timerEl.innerHTML = `⏳ Sisa Waktu: ${timeStr}`;
-                timerEl.style.color = '#d97706';
+                timerEl.innerHTML = `⏳ Sisa: ${timeStr}`;
+                timerEl.style.color = '#f39c12';
               }
             }
           });
@@ -375,7 +550,7 @@
       
       historySection.style.display = 'block';
       title.innerText = `LOG ${odcName}`;
-      tbody.innerHTML = '<tr><td colspan="8" style="padding: 10px; text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       let activeRowHtml = '';
       if (status === 'red') {
@@ -391,20 +566,20 @@
         const s = Math.floor((absDiff % (1000 * 60)) / 1000);
         const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         
-        let durasiHtml = `<span style="color: ${isOverdue ? 'var(--red-status)' : 'var(--primary-color)'}; font-weight:bold;">${isOverdue ? '-' : ''}${timeStr} (Sisa)</span>`;
+        let durasiHtml = `<span style="color: ${isOverdue ? '#e74c3c' : '#3498db'}; font-weight:bold;">${isOverdue ? '-' : ''}${timeStr} (Sisa)</span>`;
         
         activeRowHtml = `
-          <tr style="background: rgba(220, 53, 69, 0.05); border-bottom: 1px solid #ddd;">
-            <td style="padding: 10px;">1</td>
-            <td style="padding: 10px;">${data.waktuPinjam}</td>
-            <td style="padding: 10px;">-</td>
-            <td style="padding: 10px;">${durasiHtml}</td>
-            <td style="padding: 10px; font-weight:bold; color:var(--primary-color);">${odcName}</td>
-            <td style="padding: 10px;">${data.kegiatan}</td>
-            <td style="padding: 10px;">${data.user}</td>
-            <td style="padding: 10px;">
-              ${data.selfiePinjam ? `<a href="${data.selfiePinjam}" target="_blank" style="color:var(--primary-color); text-decoration:none;">📷 Selfie</a>` : ''}
-              ${data.dasarEvidence ? `<br><a href="${data.dasarEvidence}" target="_blank" style="color:var(--primary-color); text-decoration:none;">📄 Evidence</a>` : ''}
+          <tr style="background: rgba(231, 76, 60, 0.1);">
+            <td>1</td>
+            <td>${data.waktuPinjam}</td>
+            <td>-</td>
+            <td>${durasiHtml}</td>
+            <td style="font-weight:bold; color:#3498db;">${odcName}</td>
+            <td>${data.kegiatan}</td>
+            <td>${data.user}</td>
+            <td>
+              ${data.selfiePinjam ? `<a href="${data.selfiePinjam}" target="_blank" class="link-btn">📷 Selfie</a>` : ''}
+              ${data.dasarEvidence ? `<br><a href="${data.dasarEvidence}" target="_blank" class="link-btn">📄 Evidence</a>` : ''}
             </td>
           </tr>
         `;
@@ -419,7 +594,7 @@
         const historyList = await response.json();
         renderHistory(odcName, historyList, activeRowHtml);
       } catch (err) {
-        document.getElementById('odcHistoryTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Gagal mengambil riwayat.</td></tr>';
+        document.getElementById('odcHistoryTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:#e74c3c;">Gagal mengambil riwayat.</td></tr>';
       }
     }
 
@@ -430,7 +605,7 @@
       let index = activeRowHtml ? 2 : 1;
       
       if (historyList.length === 0 && !activeRowHtml) {
-        tbody.innerHTML = '<tr><td colspan="8" style="padding: 10px; text-align:center; color:#666;">Belum ada riwayat peminjaman untuk ODC ini.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#888;">Belum ada riwayat peminjaman.</td></tr>';
         return;
       }
       
@@ -449,18 +624,18 @@
         }
         
         html += `
-          <tr style="border-bottom:1px solid #eee;">
-            <td style="padding: 10px;">${index++}</td>
-            <td style="padding: 10px;">${h.waktuPinjam}</td>
-            <td style="padding: 10px;">${h.waktuKembali}</td>
-            <td style="padding: 10px;">${durasiHtml}</td>
-            <td style="padding: 10px; color:var(--primary-color);">${odcName}</td>
-            <td style="padding: 10px;">${h.kegiatan}</td>
-            <td style="padding: 10px;">${h.user}</td>
-            <td style="padding: 10px; font-size:12px;">
-              ${h.selfiePinjam ? `<a href="${h.selfiePinjam}" target="_blank" style="color:var(--primary-color); text-decoration:none;">📷 Selfie P.</a>` : ''}
-              ${h.selfieKembali ? `<br><a href="${h.selfieKembali}" target="_blank" style="color:var(--primary-color); text-decoration:none;">📷 Selfie K.</a>` : ''}
-              ${h.dasarEvidence ? `<br><a href="${h.dasarEvidence}" target="_blank" style="color:var(--primary-color); text-decoration:none;">📄 Evidence</a>` : ''}
+          <tr>
+            <td>${index++}</td>
+            <td>${h.waktuPinjam}</td>
+            <td>${h.waktuKembali}</td>
+            <td>${durasiHtml}</td>
+            <td style="color:#3498db;">${odcName}</td>
+            <td>${h.kegiatan}</td>
+            <td>${h.user}</td>
+            <td style="font-size:12px;">
+              ${h.selfiePinjam ? `<a href="${h.selfiePinjam}" target="_blank" class="link-btn">📷 Selfie P.</a>` : ''}
+              ${h.selfieKembali ? `<br><a href="${h.selfieKembali}" target="_blank" class="link-btn">📷 Selfie K.</a>` : ''}
+              ${h.dasarEvidence ? `<br><a href="${h.dasarEvidence}" target="_blank" class="link-btn">📄 Evidence</a>` : ''}
             </td>
           </tr>
         `;
