@@ -55,61 +55,9 @@
              <div class="stat-title">USERS</div>
              <div class="stat-value">119 <span class="icon">👥</span></div>
           </div>
-          <div class="stat-card red">
-             <div class="stat-title">Gembok Registered</div>
-             <div class="stat-value">427 <span class="icon">🔒</span></div>
-          </div>
-          <div class="stat-card red">
-             <div class="stat-title">Unaccess ODC > 30D</div>
-             <div class="stat-value">266 <span class="icon">🔒</span></div>
-          </div>
-          <div class="stat-card red">
-             <div class="stat-title">Belum Scanning ODC</div>
-             <div class="stat-value">288 <span class="icon">🔒</span></div>
-          </div>
           <div class="stat-card orange" style="cursor: pointer;" onclick="showGembokOpenView()">
              <div class="stat-title">GEMBOK OPEN</div>
              <div class="stat-value">10 <span class="icon">📖</span></div>
-          </div>
-          <div class="stat-card green">
-             <div class="stat-title">NEW USER</div>
-             <div class="stat-value">18 <span class="icon">👤</span></div>
-          </div>
-        </div>
-
-        <!-- Charts Row -->
-        <div class="charts-row">
-          <div class="chart-box">
-             <h3>Gembok</h3>
-             <div class="pie-container">
-               <canvas id="chartGembok"></canvas>
-             </div>
-          </div>
-          <div class="chart-box">
-             <h3>Kerapian Odc</h3>
-             <div class="pie-container">
-               <canvas id="chartKerapian"></canvas>
-             </div>
-          </div>
-          <div class="chart-box">
-             <h3>Engsel Odc</h3>
-             <div class="pie-container">
-               <canvas id="chartEngsel"></canvas>
-             </div>
-          </div>
-        </div>
-
-        <div class="charts-row-2">
-          <div class="chart-box wide" style="background: transparent; box-shadow: none;">
-             <h3 style="text-align: center; font-size: 20px;">Akses Log Past 30 Days</h3>
-             <!-- Dummy space for line chart -->
-             <div style="height: 200px;"></div>
-          </div>
-          <div class="chart-box small">
-             <h3>Users</h3>
-             <div class="pie-container-small">
-               <canvas id="chartUsers"></canvas>
-             </div>
           </div>
         </div>
 
@@ -253,71 +201,6 @@
         borderWidth: 0,
         cutout: '0%' // It looks like a pie chart in the image, not doughnut, so 0% cutout
       };
-
-      // 1. Gembok Chart
-      new Chart(document.getElementById('chartGembok'), {
-        type: 'pie',
-        data: {
-          labels: ['Unscanning', 'Versi Lama', 'Versi Baru', 'Tidak Ada Gembok', 'Null'],
-          datasets: [{
-            data: [288, 0, 0, 0, 131],
-            backgroundColor: ['#2980b9', '#e67e22', '#27ae60', '#c0392b', '#9b59b6'],
-            borderWidth: 0
-          }]
-        },
-        options: commonOptions
-      });
-
-      // 2. Kerapian Odc Chart
-      new Chart(document.getElementById('chartKerapian'), {
-        type: 'pie',
-        data: {
-          labels: ['Unscanning', 'Rapih', 'Tidak Rapih'],
-          datasets: [{
-            data: [288, 138, 0],
-            backgroundColor: ['#2980b9', '#e67e22', '#27ae60'],
-            borderWidth: 0
-          }]
-        },
-        options: commonOptions
-      });
-
-      // 3. Engsel Odc Chart
-      new Chart(document.getElementById('chartEngsel'), {
-        type: 'pie',
-        data: {
-          labels: ['Unscanning', 'Bagus', 'Rusak'],
-          datasets: [{
-            data: [288, 137, 0],
-            backgroundColor: ['#2980b9', '#e67e22', '#27ae60'],
-            borderWidth: 0
-          }]
-        },
-        options: commonOptions
-      });
-
-      // 4. Users Chart
-      new Chart(document.getElementById('chartUsers'), {
-        type: 'pie',
-        data: {
-          labels: ['New User View', 'User', 'Admin'],
-          datasets: [{
-            data: [18, 93, 8],
-            backgroundColor: ['#2980b9', '#f39c12', '#27ae60'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'right',
-              labels: { color: '#ccc', font: { size: 10 } }
-            }
-          }
-        }
-      });
 
       // Fetch Realtime Data
       fetchDashboardData();
