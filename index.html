@@ -64,7 +64,7 @@
       <div class="dashboard-content">
         <!-- Stat Cards -->
         <div class="stat-cards">
-          <div class="stat-card blue">
+          <div class="stat-card blue" style="cursor: pointer;" onclick="showUsersView()">
              <div class="stat-title">USERS</div>
              <div class="stat-value">119 <span class="icon">👥</span></div>
           </div>
@@ -80,7 +80,7 @@
              <div class="stat-title">Belum Scanning ODC</div>
              <div class="stat-value">288 <span class="icon">🔒</span></div>
           </div>
-          <div class="stat-card orange">
+          <div class="stat-card orange" style="cursor: pointer;" onclick="showGembokOpenView()">
              <div class="stat-title">GEMBOK OPEN</div>
              <div class="stat-value">10 <span class="icon">📖</span></div>
           </div>
@@ -189,6 +189,24 @@
               </thead>
               <tbody id="activeBorrowingsTableBody">
                 <!-- Active rows injected here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="usersView" class="card-section" style="display:none;">
+          <button onclick="backToDashboard()" class="btn-back" style="margin-bottom: 20px;">&larr; Kembali ke Dashboard</button>
+          <h2>DAFTAR TEKNISI TERDAFTAR</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Username</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="2" style="text-align:center;">Memuat data...</td></tr>
               </tbody>
             </table>
           </div>
@@ -536,9 +554,20 @@
       window.currentStoName = null;
       window.currentSaName = null;
       document.getElementById('stoDetailView').style.display = 'none';
+      
+      // Remove temporary back button from active section if it exists
+      const btnBackActive = document.getElementById('btnBackActive');
+      if (btnBackActive) btnBackActive.remove();
+      
+      const usersView = document.getElementById('usersView');
+      if(usersView) usersView.style.display = 'none';
+
       document.getElementById('dashboard').style.display = 'grid';
-      if (document.getElementById('activeBorrowingsTableBody').children.length > 0) {
+      if (document.getElementById('activeBorrowingsTableBody').children.length > 0 && 
+          document.getElementById('activeBorrowingsTableBody').children[0].innerText !== 'Tidak ada kunci yang sedang dipinjam saat ini.') {
         document.getElementById('activeBorrowingsSection').style.display = 'block';
+      } else {
+        document.getElementById('activeBorrowingsSection').style.display = 'none';
       }
     }
 
@@ -647,6 +676,66 @@
 
     function closeModal() {
       document.getElementById('historyModal').style.display = 'none';
+    }
+
+    async function showUsersView() {
+      // Sembunyikan view lain
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('activeBorrowingsSection').style.display = 'none';
+      document.getElementById('stoDetailView').style.display = 'none';
+      
+      // Tampilkan users view
+      const usersView = document.getElementById('usersView');
+      usersView.style.display = 'block';
+      
+      const tbody = document.getElementById('usersTableBody');
+      tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
+      
+      try {
+        const response = await fetch(API_URL + '?action=getUsersList');
+        const users = await response.json();
+        
+        if (users.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Belum ada user terdaftar.</td></tr>';
+          return;
+        }
+        
+        let html = '';
+        users.forEach((user, index) => {
+          html += `
+            <tr>
+              <td>${index + 1}</td>
+              <td style="font-weight:bold; color:var(--primary-color);">${user}</td>
+            </tr>
+          `;
+        });
+        tbody.innerHTML = html;
+        
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#e74c3c;">Gagal mengambil data user.</td></tr>';
+      }
+    }
+
+    function showGembokOpenView() {
+      // Sembunyikan view lain
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('stoDetailView').style.display = 'none';
+      document.getElementById('usersView').style.display = 'none';
+      
+      // Tampilkan tabel active borrowings
+      const activeSection = document.getElementById('activeBorrowingsSection');
+      activeSection.style.display = 'block';
+      
+      // Tambahkan tombol kembali jika belum ada
+      if (!document.getElementById('btnBackActive')) {
+        const btn = document.createElement('button');
+        btn.id = 'btnBackActive';
+        btn.className = 'btn-back';
+        btn.style.marginBottom = '20px';
+        btn.innerHTML = '&larr; Kembali ke Dashboard';
+        btn.onclick = backToDashboard;
+        activeSection.insertBefore(btn, activeSection.firstChild);
+      }
     }
 
     setInterval(() => {

@@ -11,6 +11,8 @@ function doGet(e) {
       result = getMasterData();
     } else if (action === 'getDashboardData') {
       result = getDashboardData();
+    } else if (action === 'getUsersList') {
+      result = getUsersList();
     } else if (action === 'getOdcHistory') {
       result = getOdcHistory(e.parameter.odc);
     } else if (action === 'getTechnicianHistory') {
@@ -409,4 +411,22 @@ function getTechnicianHistory(query) {
   }
   
   return { active: activeList, history: historyList };
+}
+
+function getUsersList() {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const sheet = ss.getSheetByName('Teknisi');
+  if (!sheet) return [];
+  
+  const techData = sheet.getDataRange().getValues();
+  const users = [];
+  
+  // Asumsi baris 1 adalah header (Username, Password)
+  for (let i = 1; i < techData.length; i++) {
+    const user = techData[i][0] ? techData[i][0].toString().trim() : '';
+    if (user) {
+      users.push(user);
+    }
+  }
+  return users;
 }
