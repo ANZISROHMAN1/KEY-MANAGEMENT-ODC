@@ -435,24 +435,43 @@ function getUsersList() {
 
 function getAllHistory() {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
-  const sheet = ss.getSheetByName('History');
-  if (!sheet) return [];
-  
-  const data = sheet.getDataRange().getValues();
   const history = [];
   
-  // Ambil 50 data terakhir agar tidak terlalu berat
-  for (let i = data.length - 1; i > 0; i--) {
-    history.push({
-      id: data[i][0],
-      sto: data[i][1],
-      odc: data[i][2],
-      user: data[i][3],
-      kegiatan: data[i][4],
-      waktuPinjam: data[i][6],
-      waktuKembali: data[i][8]
-    });
-    if (history.length >= 50) break;
+  // 1. Ambil data yang sedang dipinjam (Active Borrowings)
+  const activeSheet = ss.getSheetByName('ActiveBorrowings');
+  if (activeSheet) {
+    const activeData = activeSheet.getDataRange().getValues();
+    for (let i = activeData.length - 1; i > 0; i--) {
+      history.push({
+        id: activeData[i][0],
+        sto: activeData[i][1],
+        odc: activeData[i][2],
+        user: activeData[i][3],
+        kegiatan: activeData[i][4],
+        waktuPinjam: activeData[i][6],
+        waktuKembali: 'Belum Kembali'
+      });
+    }
   }
+
+  // 2. Ambil data yang sudah dikembalikan (History)
+  const historySheet = ss.getSheetByName('History');
+  if (historySheet) {
+    const historyData = historySheet.getDataRange().getValues();
+    // Ambil 50 data terakhir agar tidak terlalu berat
+    for (let i = historyData.length - 1; i > 0; i--) {
+      history.push({
+        id: historyData[i][0],
+        sto: historyData[i][1],
+        odc: historyData[i][2],
+        user: historyData[i][3],
+        kegiatan: historyData[i][4],
+        waktuPinjam: historyData[i][6],
+        waktuKembali: historyData[i][8] || 'Sudah Kembali'
+      });
+      if (history.length >= 100) break; // Total maksimal 100
+    }
+  }
+  
   return history;
 }
