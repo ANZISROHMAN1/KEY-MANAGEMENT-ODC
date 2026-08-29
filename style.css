@@ -22,9 +22,25 @@
   --font-family: 'Inter', sans-serif;
 }
 
+:root[data-theme="light"] {
+  --bg-dark: #f8fafc;
+  --bg-panel: #ffffff;
+  --bg-sidebar: #f1f5f9;
+  --bg-header: #ffffff;
+  
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  
+  --primary-color: #0099cc; /* Sedikit lebih gelap agar kontras di mode terang */
+  --primary-hover: #0077aa; 
+  --border-color: #cbd5e1;
+}
+
 body {
   font-family: var(--font-family);
   background-color: var(--bg-dark);
+  background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+  background-size: 24px 24px;
   color: var(--text-main);
   margin: 0;
   padding: 0;
@@ -183,6 +199,25 @@ body {
   display: flex;
   align-items: center;
   gap: 15px;
+}
+
+.btn-theme {
+  background: var(--bg-panel);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: 0.2s;
+}
+
+.btn-theme:hover {
+  background: var(--primary-color);
+  color: #000;
 }
 
 .search-bar {
@@ -386,17 +421,18 @@ body {
 }
 
 .odc-item {
-  background: rgba(255,255,255,0.03);
+  background: rgba(128,128,128,0.05); /* Netral untuk dark/light */
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 8px;
+  border-radius: 6px;
+  padding: 4px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 60px;
+  min-width: 45px;
+  max-width: 50px;
 }
 
 .odc-item:hover {
