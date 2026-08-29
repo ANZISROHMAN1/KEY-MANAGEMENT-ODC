@@ -22,16 +22,10 @@
       </div>
       <ul class="sidebar-menu">
         <li class="active">
-          <a href="#"><span class="icon">⏱</span> Dashboard</a>
+          <a href="#" onclick="backToDashboard()"><span class="icon">⏱</span> Dashboard</a>
         </li>
-        <li class="menu-item-has-children">
-          <a href="#"><span class="icon">🛠</span> Admin <span class="arrow-down">v</span></a>
-          <ul class="sub-menu">
-            <li><a href="#">Kunci</a></li>
-            <li><a href="#">User & Akses</a></li>
-            <li><a href="#">History</a></li>
-            <li><a href="#">Tiketing QC</a></li>
-          </ul>
+        <li>
+          <a href="#" onclick="showGlobalHistoryView()"><span class="icon">📝</span> History</a>
         </li>
       </ul>
       <div class="sidebar-user">
@@ -200,6 +194,29 @@
               </thead>
               <tbody id="usersTableBody">
                 <tr><td colspan="2" style="text-align:center;">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="globalHistoryView" class="card-section" style="display:none;">
+          <button onclick="backToDashboard()" class="btn-back" style="margin-bottom: 20px;">&larr; Kembali ke Dashboard</button>
+          <h2>HISTORY PEMINJAMAN KUNCI</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>STO</th>
+                  <th>ODC</th>
+                  <th>User</th>
+                  <th>Kegiatan</th>
+                  <th>Waktu Pinjam</th>
+                  <th>Waktu Kembali</th>
+                </tr>
+              </thead>
+              <tbody id="globalHistoryTableBody">
+                <tr><td colspan="7" style="text-align:center;">Memuat data...</td></tr>
               </tbody>
             </table>
           </div>
@@ -554,8 +571,16 @@
       
       const usersView = document.getElementById('usersView');
       if(usersView) usersView.style.display = 'none';
+      
+      const globalHistoryView = document.getElementById('globalHistoryView');
+      if(globalHistoryView) globalHistoryView.style.display = 'none';
 
       document.getElementById('dashboard').style.display = 'grid';
+      // Ensure Dashboard menu is active
+      const sidebarItems = document.querySelectorAll('.sidebar-menu li');
+      sidebarItems.forEach(item => item.classList.remove('active'));
+      if(sidebarItems.length > 0) sidebarItems[0].classList.add('active');
+
       if (document.getElementById('activeBorrowingsTableBody').children.length > 0 && 
           document.getElementById('activeBorrowingsTableBody').children[0].innerText !== 'Tidak ada kunci yang sedang dipinjam saat ini.') {
         document.getElementById('activeBorrowingsSection').style.display = 'block';
@@ -728,6 +753,57 @@
         btn.innerHTML = '&larr; Kembali ke Dashboard';
         btn.onclick = backToDashboard;
         activeSection.insertBefore(btn, activeSection.firstChild);
+      }
+    }
+
+    async function showGlobalHistoryView() {
+      // Sembunyikan view lain
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('activeBorrowingsSection').style.display = 'none';
+      document.getElementById('stoDetailView').style.display = 'none';
+      
+      const usersView = document.getElementById('usersView');
+      if (usersView) usersView.style.display = 'none';
+      
+      // Tampilkan history view
+      const historyView = document.getElementById('globalHistoryView');
+      historyView.style.display = 'block';
+      
+      // Update sidebar styling to make History active
+      const sidebarItems = document.querySelectorAll('.sidebar-menu li');
+      sidebarItems.forEach(item => item.classList.remove('active'));
+      sidebarItems[1].classList.add('active'); // history is 2nd item
+      
+      const tbody = document.getElementById('globalHistoryTableBody');
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
+      
+      try {
+        const response = await fetch(API_URL + '?action=getAllHistory');
+        const history = await response.json();
+        
+        if (history.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada history peminjaman.</td></tr>';
+          return;
+        }
+        
+        let html = '';
+        history.forEach(item => {
+          html += `
+            <tr>
+              <td>${item.id}</td>
+              <td style="font-weight:bold;">${item.sto}</td>
+              <td style="font-weight:bold;">${item.odc}</td>
+              <td style="color:var(--primary-color);">${item.user}</td>
+              <td>${item.kegiatan}</td>
+              <td>${item.waktuPinjam}</td>
+              <td>${item.waktuKembali}</td>
+            </tr>
+          `;
+        });
+        tbody.innerHTML = html;
+        
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#e74c3c;">Gagal mengambil data history.</td></tr>';
       }
     }
 

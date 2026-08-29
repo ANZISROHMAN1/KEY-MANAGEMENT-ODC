@@ -15,6 +15,8 @@ function doGet(e) {
       result = getUsersList();
     } else if (action === 'getOdcHistory') {
       result = getOdcHistory(e.parameter.odc);
+    } else if (action === 'getAllHistory') {
+      result = getAllHistory();
     } else if (action === 'getTechnicianHistory') {
       result = getTechnicianHistory(e.parameter.query);
     } else {
@@ -429,4 +431,28 @@ function getUsersList() {
     }
   }
   return users;
+}
+
+function getAllHistory() {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const sheet = ss.getSheetByName('History');
+  if (!sheet) return [];
+  
+  const data = sheet.getDataRange().getValues();
+  const history = [];
+  
+  // Ambil 50 data terakhir agar tidak terlalu berat
+  for (let i = data.length - 1; i > 0; i--) {
+    history.push({
+      id: data[i][0],
+      sto: data[i][1],
+      odc: data[i][2],
+      user: data[i][3],
+      kegiatan: data[i][4],
+      waktuPinjam: data[i][6],
+      waktuKembali: data[i][8]
+    });
+    if (history.length >= 50) break;
+  }
+  return history;
 }
