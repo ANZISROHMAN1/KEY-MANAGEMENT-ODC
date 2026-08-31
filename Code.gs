@@ -317,7 +317,21 @@ function handleLogin(data) {
     const pass = techData[i][1] ? techData[i][1].toString().trim() : '';
     
     if (user === data.username && pass === data.password) {
-      return { success: true, username: user };
+      // Check if user is also HSA
+      let isHsa = false;
+      let hsaStos = [];
+      const hsaSheet = ss.getSheetByName('Hsa');
+      if (hsaSheet) {
+        const hsaData = hsaSheet.getDataRange().getValues();
+        for (let j = 1; j < hsaData.length; j++) {
+          if (hsaData[j][0] && hsaData[j][0].toString() === user) {
+            isHsa = true;
+            hsaStos = hsaData[j][2] ? hsaData[j][2].toString().split(',').map(s => s.trim()) : [];
+            break;
+          }
+        }
+      }
+      return { success: true, username: user, isHsa: isHsa, hsaStos: hsaStos };
     }
   }
   

@@ -89,6 +89,7 @@
         <div class="tab active" id="tabBorrow" onclick="switchTab('borrow')">Pinjam Kunci</div>
         <div class="tab" id="tabEvidence" onclick="switchTab('evidence')">Pengerjaan</div>
         <div class="tab" id="tabReturn" onclick="switchTab('return')">Kembalikan Kunci</div>
+        <div class="tab" id="tabApproval" onclick="switchTab('approval')" style="display:none; background:var(--primary-color); color:white;">Approval HSA</div>
       </div>
 
       <div id="loader" class="loader" style="display:none;"></div>
@@ -282,6 +283,15 @@
         <button type="submit" class="btn-submit" id="btn_submit_e">Submit Pengerjaan</button>
       </form>
 
+      <!-- Approval Form (HSA Only) -->
+      <div id="approvalForm" style="display:none;">
+        <h3 style="color: var(--primary-color); margin-top: 0;">Pending Approvals (HSA)</h3>
+        <button class="btn-submit" onclick="loadPendingRequests()" style="margin-bottom: 15px; background: #f39c12; width: auto; padding: 8px 15px; font-size: 13px;">🔄 Refresh Data</button>
+        <div id="pendingList">
+          <p style="color: var(--text-muted); text-align: center;">Memuat data pending...</p>
+        </div>
+      </div>
+
     </div>
   </div>
   </div>
@@ -410,6 +420,14 @@
         });
         // Auto load history
         if (typeof searchHistory === 'function') searchHistory(true);
+        
+        // Show HSA tab if applicable
+        const isHsa = localStorage.getItem('isHsa') === 'true';
+        if (isHsa) {
+          document.getElementById('tabApproval').style.display = 'block';
+        } else {
+          document.getElementById('tabApproval').style.display = 'none';
+        }
       } else {
         document.getElementById('loginOverlay').style.display = 'flex';
         document.getElementById('appContainer').style.display = 'none';
@@ -437,6 +455,13 @@
         
         if (data.success) {
           localStorage.setItem('teknisi_user', data.username);
+          if (data.isHsa) {
+            localStorage.setItem('isHsa', 'true');
+            localStorage.setItem('hsaStos', JSON.stringify(data.hsaStos || []));
+          } else {
+            localStorage.setItem('isHsa', 'false');
+            localStorage.removeItem('hsaStos');
+          }
           showToast(`Selamat datang, ${data.username}!`, 'success');
           document.getElementById('loginForm').reset();
           checkAuth();
@@ -611,19 +636,104 @@
         currentStream = null;
       }
       
-      const forms = ['borrow', 'evidence', 'return'];
-      forms.forEach(f => {
-        const tabEl = document.getElementById('tab' + f.charAt(0).toUpperCase() + f.slice(1));
-        const formEl = document.getElementById(f + 'Form');
-        
-        if (f === tab) {
-          tabEl.classList.add('active');
-          formEl.style.display = 'block';
-        } else {
-          tabEl.classList.remove('active');
-          formEl.style.display = 'none';
+      document.getElementById('borrowForm').style.display = (tab === 'borrow') ? 'block' : 'none';
+      document.getElementById('returnForm').style.display = (tab === 'return') ? 'block' : 'none';
+      document.getElementById('evidenceForm').style.display = (tab === 'evidence') ? 'block' : 'none';
+      const approvalForm = document.getElementById('approvalForm');
+      if (approvalForm) approvalForm.style.display = (tab === 'approval') ? 'block' : 'none';
+      
+      document.getElementById('tabBorrow').className = (tab === 'borrow') ? 'tab active' : 'tab';
+      document.getElementById('tabReturn').className = (tab === 'return') ? 'tab active' : 'tab';
+      document.getElementById('tabEvidence').className = (tab === 'evidence') ? 'tab active' : 'tab';
+      const tabApp = document.getElementById('tabApproval');
+      if (tabApp) {
+        tabApp.className = (tab === 'approval') ? 'tab active' : 'tab';
+        if (tab === 'approval') loadPendingRequests();
+      }
+      
+      if (tab === 'borrow') populateOdc('b');
+      if (tab === 'return') populateOdc('r');
+      if (tab === 'evidence') populateOdc('e');
+    }
+
+    // =====================================
+    // HSA API Logic
+    // =====================================
+    async function loadPendingRequests() {
+      const list = document.getElementById('pendingList');
+      list.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Memuat data...</p>';
+      
+      try {
+        const stosStr = localStorage.getItem('hsaStos');
+        const stos = stosStr ? JSON.parse(stosStr) : [];
+        if (stos.length === 0) {
+          list.innerHTML = '<p style="color:var(--red-status); text-align:center;">Anda belum ditugaskan di STO manapun.</p>';
+          return;
         }
-      });
+        
+        const res = await fetch(API_URL + '?action=getPendingHsa&stos=' + encodeURIComponent(stos.join(',')));
+        const data = await res.json();
+        
+        if (data.length === 0) {
+          list.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Tidak ada request pending di area STO Anda.</p>';
+          return;
+        }
+        
+        let html = '';
+        data.forEach(req => {
+          html += `
+            <div style="background:var(--glass-bg); border-left:4px solid #f39c12; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid var(--border-color);">
+              <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <h4 style="margin:0; color:var(--text-main);">${req.odc} (${req.sto})</h4>
+                <span style="font-weight:bold; color:var(--primary-color); font-size:12px;">ID: ${req.id}</span>
+              </div>
+              <p style="margin:0 0 5px 0; font-size:14px; color:var(--text-muted);"><strong>Requester:</strong> ${req.user}</p>
+              <p style="margin:0 0 5px 0; font-size:14px; color:var(--text-muted);"><strong>Kegiatan:</strong> ${req.kegiatan}</p>
+              <p style="margin:0 0 10px 0; font-size:14px; color:var(--text-muted);"><strong>Waktu Request:</strong> ${req.waktuPinjam}</p>
+              <div style="display:flex; gap:10px;">
+                <button onclick="actionRequest(event, '${req.id}', 'Approve')" style="flex:1; background:var(--green-status); color:white; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer;">✅ Approve</button>
+                <button onclick="actionRequest(event, '${req.id}', 'Reject')" style="flex:1; background:var(--red-status); color:white; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer;">❌ Reject</button>
+              </div>
+            </div>
+          `;
+        });
+        list.innerHTML = html;
+      } catch(err) {
+        list.innerHTML = '<p style="color:var(--red-status); text-align:center;">Gagal memuat data.</p>';
+      }
+    }
+
+    async function actionRequest(event, id, actionType) {
+      if(!confirm(`Apakah Anda yakin ingin ${actionType} tiket ${id}?`)) return;
+      
+      const btnApprove = event.target;
+      const originalText = btnApprove.innerText;
+      btnApprove.innerText = 'Memproses...';
+      btnApprove.disabled = true;
+      
+      try {
+        const hsaName = localStorage.getItem('teknisi_user');
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ 
+            action: 'actionHsa', 
+            payload: { id: id, hsa: hsaName, status: actionType === 'Approve' ? 'Approved' : 'Rejected' } 
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Berhasil ${actionType} tiket ${id}`, 'success');
+          loadPendingRequests();
+        } else {
+          showToast(data.message, 'error');
+          btnApprove.innerText = originalText;
+          btnApprove.disabled = false;
+        }
+      } catch (err) {
+        showToast('Kesalahan jaringan', 'error');
+        btnApprove.innerText = originalText;
+        btnApprove.disabled = false;
+      }
     }
 
     function populateSto(prefix) {
