@@ -245,32 +245,32 @@
 
         <label style="font-weight:600; color:var(--text-main); margin-bottom:10px; display:block;">Foto Evidence (Bisa Pilih Lebih dari 1 Foto)</label>
         <div class="evidence-grid">
-          <div class="evidence-box" onclick="document.getElementById('e_ev1').click()">
-            <span class="ev-label">EVIDENCE 1</span>
+          <div class="evidence-box" onclick="triggerUpload(1)">
+            <span class="ev-label">EVIDENCE 1 (Pekerjaan)</span>
             <div class="ev-content" id="e_ev1_content">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
               <span>Upload Image</span>
             </div>
             <input type="file" id="e_ev1" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'e_ev1_content')">
           </div>
-          <div class="evidence-box" onclick="document.getElementById('e_ev2').click()">
-            <span class="ev-label">EVIDENCE 2</span>
+          <div class="evidence-box" onclick="triggerUpload(2)">
+            <span class="ev-label">EVIDENCE 2 (Depan ODC)</span>
             <div class="ev-content" id="e_ev2_content">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
               <span>Upload Image</span>
             </div>
             <input type="file" id="e_ev2" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'e_ev2_content')">
           </div>
-          <div class="evidence-box" onclick="document.getElementById('e_ev3').click()">
-            <span class="ev-label">EVIDENCE 3</span>
+          <div class="evidence-box" onclick="triggerUpload(3)">
+            <span class="ev-label">EVIDENCE 3 (Dalam ODC)</span>
             <div class="ev-content" id="e_ev3_content">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
               <span>Upload Image</span>
             </div>
             <input type="file" id="e_ev3" accept="image/*" style="display:none;" onchange="handleSingleUpload(this, 'e_ev3_content')">
           </div>
-          <div class="evidence-box" onclick="document.getElementById('e_ev4').click()">
-            <span class="ev-label">EVIDENCE 4</span>
+          <div class="evidence-box" onclick="triggerUpload(4)">
+            <span class="ev-label">EVIDENCE 4 (ODC Terkunci)</span>
             <div class="ev-content" id="e_ev4_content">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
               <span>Upload Image</span>
@@ -721,6 +721,17 @@
       } else {
         status.style.display = 'none';
       }
+    }
+
+    function triggerUpload(index) {
+      if (index > 1) {
+        const prevInput = document.getElementById(`e_ev${index - 1}`);
+        if (!prevInput.files || !prevInput.files[0]) {
+          showToast(`Silakan upload EVIDENCE ${index - 1} terlebih dahulu!`, 'error');
+          return;
+        }
+      }
+      document.getElementById(`e_ev${index}`).click();
     }
 
     function handleSingleUpload(input, contentId) {
