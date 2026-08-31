@@ -43,6 +43,26 @@
           <label>Password Baru</label>
           <input type="password" id="r_password" required placeholder="Buat password">
         </div>
+        <div class="form-group">
+          <label>NIK</label>
+          <input type="text" id="r_nik" required placeholder="Nomor Induk Kependudukan">
+        </div>
+        <div class="form-group">
+          <label>STO</label>
+          <input type="text" id="r_sto" required placeholder="Contoh: CBD">
+        </div>
+        <div class="form-group">
+          <label>ID Telegram</label>
+          <input type="text" id="r_telegram" required placeholder="Contoh: 123456789">
+        </div>
+        <div class="form-group">
+          <label>No WA</label>
+          <input type="text" id="r_wa" required placeholder="Contoh: 081234567890">
+        </div>
+        <div class="form-group">
+          <label>Foto Register</label>
+          <input type="file" id="r_foto" accept="image/*" required>
+        </div>
         <button type="submit" class="btn-submit" id="btn_submit_register" style="margin-top: 10px; background: #28a745;">Daftar Akun</button>
         <p style="text-align: center; margin-top: 15px; font-size: 14px; color: var(--text-muted);">
           Sudah punya akun? <a href="#" onclick="toggleAuthMode('login'); return false;" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Masuk di sini</a>
@@ -450,17 +470,36 @@
       e.preventDefault();
       const user = document.getElementById('r_username').value;
       const pass = document.getElementById('r_password').value;
+      const nik = document.getElementById('r_nik').value;
+      const sto = document.getElementById('r_sto').value;
+      const telegram = document.getElementById('r_telegram').value;
+      const wa = document.getElementById('r_wa').value;
+      const fotoFile = document.getElementById('r_foto').files[0];
+      
+      if (!fotoFile) {
+        showToast('Foto register wajib dilampirkan', 'error');
+        return;
+      }
       
       const btn = document.getElementById('btn_submit_register');
       btn.disabled = true;
       btn.innerText = 'Mendaftar...';
       
       try {
+        const fotoBase64 = await resizeAndCompressImage(fotoFile);
         const res = await fetch(API_URL, {
           method: 'POST',
           body: JSON.stringify({
             action: 'register',
-            payload: { username: user, password: pass }
+            payload: { 
+              username: user, 
+              password: pass,
+              nik: nik,
+              sto: sto,
+              telegram: telegram,
+              wa: wa,
+              foto: fotoBase64
+            }
           })
         });
         const data = await res.json();

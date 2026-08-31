@@ -315,11 +315,11 @@ function handleRegister(data) {
   if (!sheet) {
     // Auto-create the sheet if it doesn't exist
     sheet = ss.insertSheet('Teknisi');
-    sheet.appendRow(['Username', 'Password']);
+    sheet.appendRow(['Username', 'Password', 'NIK', 'STO', 'ID Telegram', 'No WA', 'Foto URL']);
   }
   
-  const username = data.username.toString().trim();
-  const password = data.password.toString().trim();
+  const username = data.username ? data.username.toString().trim() : '';
+  const password = data.password ? data.password.toString().trim() : '';
   
   if (!username || !password) {
     return { success: false, message: 'Username dan Password tidak boleh kosong!' };
@@ -333,7 +333,13 @@ function handleRegister(data) {
     }
   }
   
-  sheet.appendRow([username, password]);
+  let fotoUrl = '';
+  if (data.foto) {
+    const fileName = 'REG_' + username + '_' + new Date().getTime() + '.png';
+    fotoUrl = uploadImageToDrive(data.foto, fileName);
+  }
+  
+  sheet.appendRow([username, password, data.nik || '', data.sto || '', data.telegram || '', data.wa || '', fotoUrl]);
   return { success: true, username: username };
 }
 
