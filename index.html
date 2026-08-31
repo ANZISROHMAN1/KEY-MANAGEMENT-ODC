@@ -27,6 +27,9 @@
         <li>
           <a href="#" onclick="showGlobalHistoryView()"><span class="icon">📝</span> History</a>
         </li>
+        <li>
+          <a href="#" onclick="showApprovedBaView()"><span class="icon">📄</span> Approval BA</a>
+        </li>
       </ul>
     </aside>
 
@@ -172,6 +175,30 @@
           </div>
         </div>
 
+        <div id="approvedBaView" class="card-section" style="display:none;">
+          <button onclick="backToDashboard()" class="btn-back" style="margin-bottom: 20px;">&larr; Kembali ke Dashboard</button>
+          <h2>BERITA ACARA (APPROVED)</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>STO</th>
+                  <th>ODC</th>
+                  <th>PIC</th>
+                  <th>Kegiatan</th>
+                  <th>Waktu Pinjam</th>
+                  <th>HSA Approver</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="approvedBaTableBody">
+                <tr><td colspan="8" style="text-align:center;">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div> <!-- dashboard-content -->
     </main>
   </div>
@@ -202,10 +229,13 @@
         </div>
         
         <table style="width: 100%; margin-bottom: 20px; font-size: 14px;">
-          <tr><td style="width: 150px; font-weight: bold;">Ticket ID</td><td>: <span id="ba_ticketId"></span></td></tr>
+          <tr><td style="width: 150px; font-weight: bold;">Site ID (Ticket ID)</td><td>: <span id="ba_ticketId"></span></td></tr>
           <tr><td style="font-weight: bold;">Site Owner / STO</td><td>: <span id="ba_sto"></span></td></tr>
-          <tr><td style="font-weight: bold;">Site ID / ODC</td><td>: <span id="ba_odc"></span></td></tr>
-          <tr><td style="font-weight: bold;">Detail PIC</td><td>: <span id="ba_user"></span></td></tr>
+          <tr><td style="font-weight: bold;">ODC</td><td>: <span id="ba_odc"></span></td></tr>
+          <tr><td style="font-weight: bold;">Nama Requester</td><td>: <span id="ba_user"></span></td></tr>
+          <tr><td style="font-weight: bold;">NIK Teknisi</td><td>: <span id="ba_nik"></span></td></tr>
+          <tr><td style="font-weight: bold;">Nama HSA</td><td>: <span id="ba_hsa_name"></span></td></tr>
+          <tr><td style="font-weight: bold;">Nama TIF</td><td>: <span id="ba_tif_name"></span></td></tr>
           <tr><td style="font-weight: bold;">Kategori Pekerjaan</td><td>: <span id="ba_kegiatan"></span></td></tr>
         </table>
         
@@ -231,14 +261,21 @@
         </p>
         
         <div style="margin-top: 40px; display: flex; justify-content: space-between;">
-          <div style="text-align: center; width: 45%;">
+          <div style="text-align: center; width: 30%;">
             <p style="margin: 0;">Disetujui oleh HSA (K3),</p>
             <div style="color: green; font-size: 24px; font-weight: bold; transform: rotate(-10deg); margin: 20px 0;">APPROVED</div>
             <p style="margin: 0; text-decoration: underline; font-weight: bold;"><span id="ba_hsa"></span></p>
             <p style="margin: 0; font-size: 12px;">HSA Approver</p>
           </div>
           
-          <div style="text-align: center; width: 45%;">
+          <div style="text-align: center; width: 30%;">
+            <p style="margin: 0;">Disetujui oleh TIF,</p>
+            <div style="color: green; font-size: 24px; font-weight: bold; transform: rotate(-10deg); margin: 20px 0; visibility: hidden;">APPROVED</div>
+            <p style="margin: 0; text-decoration: underline; font-weight: bold;"><span id="ba_tif_sign">.......................................</span></p>
+            <p style="margin: 0; font-size: 12px;">Telkom Infra</p>
+          </div>
+          
+          <div style="text-align: center; width: 30%;">
             <p style="margin: 0;"><span id="ba_date"></span></p>
             <p style="margin: 0;">Pemohon,</p>
             <div style="height: 60px;"></div>
@@ -547,6 +584,9 @@
       
       const globalHistoryView = document.getElementById('globalHistoryView');
       if(globalHistoryView) globalHistoryView.style.display = 'none';
+      
+      const approvedBaView = document.getElementById('approvedBaView');
+      if(approvedBaView) approvedBaView.style.display = 'none';
 
       document.getElementById('dashboard').style.display = 'grid';
       // Ensure Dashboard menu is active
@@ -678,11 +718,14 @@
       document.getElementById('ba_sto').innerText = data.sto || '-';
       document.getElementById('ba_odc').innerText = odcName;
       document.getElementById('ba_user').innerText = data.user || '-';
+      document.getElementById('ba_nik').innerText = data.nik || '-';
+      document.getElementById('ba_hsa_name').innerText = data.hsaApprover || '-';
+      document.getElementById('ba_tif_name').innerText = 'Admin TIF'; // Atau kosong jika tidak diketahui
       document.getElementById('ba_user_sign').innerText = data.user || '-';
+      document.getElementById('ba_hsa').innerText = data.hsaApprover || '-';
       document.getElementById('ba_kegiatan').innerText = data.kegiatan || '-';
       document.getElementById('ba_waktuPinjam').innerText = data.waktuPinjam || '-';
       document.getElementById('ba_estimasi').innerText = data.estimasi + ' Jam' || '-';
-      document.getElementById('ba_hsa').innerText = data.hsaApprover || '-';
       document.getElementById('ba_status').innerText = 'APPROVED';
       
       const today = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -780,6 +823,9 @@
       const usersView = document.getElementById('usersView');
       if (usersView) usersView.style.display = 'none';
       
+      const approvedBaView = document.getElementById('approvedBaView');
+      if (approvedBaView) approvedBaView.style.display = 'none';
+      
       // Tampilkan history view
       const historyView = document.getElementById('globalHistoryView');
       historyView.style.display = 'block';
@@ -819,6 +865,51 @@
         
       } catch (err) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#e74c3c;">Gagal mengambil data history.</td></tr>';
+      }
+    }
+
+    async function showApprovedBaView() {
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('stoDetailView').style.display = 'none';
+      document.getElementById('activeBorrowingsSection').style.display = 'none';
+      document.getElementById('odcHistorySection').style.display = 'none';
+      document.getElementById('usersView').style.display = 'none';
+      document.getElementById('globalHistoryView').style.display = 'none';
+      
+      const view = document.getElementById('approvedBaView');
+      const tbody = document.getElementById('approvedBaTableBody');
+      view.style.display = 'block';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
+      
+      try {
+        const res = await fetch(API_URL + '?action=getApprovedBa');
+        const data = await res.json();
+        
+        if (!data || data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Tidak ada Berita Acara (Approved).</td></tr>';
+        } else {
+          let html = '';
+          data.forEach(item => {
+            const borrowDataStr = btoa(encodeURIComponent(JSON.stringify(item)));
+            html += `
+              <tr>
+                <td>${item.id}</td>
+                <td>${item.sto}</td>
+                <td style="font-weight:bold; color:#3498db;">${item.odc}</td>
+                <td>${item.user}</td>
+                <td>${item.kegiatan}</td>
+                <td>${item.waktuPinjam}</td>
+                <td>${item.hsaApprover}</td>
+                <td>
+                  <a href="#" onclick="showBaModal('${borrowDataStr}', '${item.odc}')" class="link-btn" style="color: #27ae60;">📝 Lihat BA</a>
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Gagal memuat BA.</td></tr>';
       }
     }
 

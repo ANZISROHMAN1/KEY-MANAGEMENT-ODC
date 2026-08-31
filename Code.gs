@@ -21,6 +21,8 @@ function doGet(e) {
       result = getTechnicianHistory(e.parameter.query);
     } else if (action === 'getPendingHsa') {
       result = getPendingHsa(e.parameter.stos);
+    } else if (action === 'getApprovedBa') {
+      result = getApprovedBa();
     } else {
       result = { error: 'Invalid action' };
     }
@@ -173,17 +175,32 @@ function getMasterData() {
 
 function getActiveBorrowings() {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  
+  // Build NIK Map
+  const techSheet = ss.getSheetByName('Teknisi');
+  const nikMap = {};
+  if (techSheet) {
+    const techData = techSheet.getDataRange().getValues();
+    for (let i = 1; i < techData.length; i++) {
+      if (techData[i][0]) {
+        nikMap[techData[i][0].toString().trim()] = techData[i][2] || '-';
+      }
+    }
+  }
+
   const sheet = ss.getSheetByName('ActiveBorrowings');
   if (!sheet) return [];
   const data = sheet.getDataRange().getValues();
   
   const active = [];
   for (let i = 1; i < data.length; i++) {
+    const userName = data[i][3] ? data[i][3].toString().trim() : '';
     active.push({
       id: data[i][0],
       sto: data[i][1],
       odc: data[i][2],
-      user: data[i][3],
+      user: userName,
+      nik: nikMap[userName] || '-',
       kegiatan: data[i][4],
       estimasi: data[i][5],
       waktuPinjam: data[i][6],
@@ -408,20 +425,35 @@ function getTechnicianHistory(query) {
   const activeSheet = ss.getSheetByName('ActiveBorrowings');
   let activeList = [];
   if (activeSheet) {
+    // Build NIK Map
+    const techSheet = ss.getSheetByName('Teknisi');
+    const nikMap = {};
+    if (techSheet) {
+      const techData = techSheet.getDataRange().getValues();
+      for (let i = 1; i < techData.length; i++) {
+        if (techData[i][0]) {
+          nikMap[techData[i][0].toString().trim()] = techData[i][2] || '-';
+        }
+      }
+    }
+
     const activeData = activeSheet.getDataRange().getValues();
     for (let i = 1; i < activeData.length; i++) {
       const id = (activeData[i][0] || '').toString().toLowerCase();
-      const user = (activeData[i][3] || '').toString().toLowerCase();
-      if (id.includes(query) || user.includes(query)) {
+      const userName = (activeData[i][3] || '').toString().trim();
+      const userLower = userName.toLowerCase();
+      if (id.includes(query) || userLower.includes(query)) {
         activeList.push({
           id: activeData[i][0],
           sto: activeData[i][1],
           odc: activeData[i][2],
-          user: activeData[i][3],
+          user: userName,
+          nik: nikMap[userName] || '-',
           kegiatan: activeData[i][4],
           estimasi: activeData[i][5],
           waktuPinjam: activeData[i][6],
-          status: activeData[i][8] || 'Sedang Dipinjam'
+          status: activeData[i][8] || 'Sedang Dipinjam',
+          hsaApprover: activeData[i][9] || '-'
         });
       }
     }
@@ -592,4 +624,9 @@ function actionHsa(payload) {
   activeSheet.getRange(rowIndex, 10).setValue(payload.hsa);
   
   return { success: true };
+}
+
+function getApprovedBa() {
+  const active = getActiveBorrowings();
+  return active.filter(item => item.status === 'Approved');
 }
