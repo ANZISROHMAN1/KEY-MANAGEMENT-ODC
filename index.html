@@ -187,6 +187,69 @@
     </div>
   </div>
 
+  <!-- BA Modal -->
+  <div id="baModal" class="modal">
+    <div class="modal-content" style="max-width: 800px; border-radius: 0;">
+      <div style="text-align: right; margin-bottom: 10px;">
+        <button onclick="printBa()" class="btn-submit" style="display:inline-block; width:auto; padding: 5px 15px; margin-right: 10px;">Print / PDF</button>
+        <span class="close-btn" onclick="closeModal()" style="float:none; display:inline-block;">&times;</span>
+      </div>
+      
+      <div id="baPrintArea" style="background: white; padding: 40px; color: black; font-family: 'Times New Roman', Times, serif;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 20px;">
+          <img src="logo.png" alt="Logo" style="height: 50px;">
+          <h2 style="margin: 0; text-transform: uppercase;">BERITA ACARA (SMART PERMIT)</h2>
+        </div>
+        
+        <table style="width: 100%; margin-bottom: 20px; font-size: 14px;">
+          <tr><td style="width: 150px; font-weight: bold;">Ticket ID</td><td>: <span id="ba_ticketId"></span></td></tr>
+          <tr><td style="font-weight: bold;">Site Owner / STO</td><td>: <span id="ba_sto"></span></td></tr>
+          <tr><td style="font-weight: bold;">Site ID / ODC</td><td>: <span id="ba_odc"></span></td></tr>
+          <tr><td style="font-weight: bold;">Detail PIC</td><td>: <span id="ba_user"></span></td></tr>
+          <tr><td style="font-weight: bold;">Kategori Pekerjaan</td><td>: <span id="ba_kegiatan"></span></td></tr>
+        </table>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;" border="1">
+          <thead>
+            <tr style="background-color: #f2f2f2;">
+              <th style="padding: 8px;">Waktu Request</th>
+              <th style="padding: 8px;">Durasi / Estimasi</th>
+              <th style="padding: 8px;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 8px; text-align: center;"><span id="ba_waktuPinjam"></span></td>
+              <td style="padding: 8px; text-align: center;"><span id="ba_estimasi"></span></td>
+              <td style="padding: 8px; text-align: center; color: green; font-weight: bold;"><span id="ba_status"></span></td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <p style="font-size: 12px; font-style: italic; color: #555; text-align: justify;">
+          Disclaimer: Dokumen permit ini mengikat kepada nama-nama dan instansi yang tercantum. Segala bentuk penyalahgunaan dokumen tersebut akan diproses secara hukum. Segera musnahkan hard copy dokumen setelah selesai pekerjaan.
+        </p>
+        
+        <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+          <div style="text-align: center; width: 45%;">
+            <p style="margin: 0;">Disetujui oleh HSA (K3),</p>
+            <div style="color: green; font-size: 24px; font-weight: bold; transform: rotate(-10deg); margin: 20px 0;">APPROVED</div>
+            <p style="margin: 0; text-decoration: underline; font-weight: bold;"><span id="ba_hsa"></span></p>
+            <p style="margin: 0; font-size: 12px;">HSA Approver</p>
+          </div>
+          
+          <div style="text-align: center; width: 45%;">
+            <p style="margin: 0;"><span id="ba_date"></span></p>
+            <p style="margin: 0;">Pemohon,</p>
+            <div style="height: 60px;"></div>
+            <p style="margin: 0; text-decoration: underline; font-weight: bold;"><span id="ba_user_sign"></span></p>
+            <p style="margin: 0; font-size: 12px;">Teknisi</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Initialize Dummy Charts
     document.addEventListener("DOMContentLoaded", function() {
@@ -538,6 +601,7 @@
             <td>
               ${data.selfiePinjam ? `<a href="${data.selfiePinjam}" target="_blank" class="link-btn">📷 Selfie</a>` : ''}
               ${data.dasarEvidence ? `<br><a href="${data.dasarEvidence}" target="_blank" class="link-btn">📄 Evidence</a>` : ''}
+              <br><a href="#" onclick="showBaModal('${borrowDataStr}', '${odcName}')" class="link-btn" style="color: #27ae60;">📝 Berita Acara</a>
             </td>
           </tr>
         `;
@@ -604,6 +668,36 @@
 
     function closeModal() {
       document.getElementById('historyModal').style.display = 'none';
+      const baModal = document.getElementById('baModal');
+      if (baModal) baModal.style.display = 'none';
+    }
+
+    function showBaModal(borrowDataStr, odcName) {
+      const data = JSON.parse(decodeURIComponent(atob(borrowDataStr)));
+      document.getElementById('ba_ticketId').innerText = data.id || '-';
+      document.getElementById('ba_sto').innerText = data.sto || '-';
+      document.getElementById('ba_odc').innerText = odcName;
+      document.getElementById('ba_user').innerText = data.user || '-';
+      document.getElementById('ba_user_sign').innerText = data.user || '-';
+      document.getElementById('ba_kegiatan').innerText = data.kegiatan || '-';
+      document.getElementById('ba_waktuPinjam').innerText = data.waktuPinjam || '-';
+      document.getElementById('ba_estimasi').innerText = data.estimasi + ' Jam' || '-';
+      document.getElementById('ba_hsa').innerText = data.hsaApprover || '-';
+      document.getElementById('ba_status').innerText = 'APPROVED';
+      
+      const today = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('ba_date').innerText = 'Bogor, ' + today;
+      
+      document.getElementById('baModal').style.display = 'block';
+    }
+
+    function printBa() {
+      const printContents = document.getElementById('baPrintArea').innerHTML;
+      const originalContents = document.body.innerHTML;
+      document.body.innerHTML = printContents;
+      window.print();
+      document.body.innerHTML = originalContents;
+      window.location.reload();
     }
 
     async function showUsersView() {
