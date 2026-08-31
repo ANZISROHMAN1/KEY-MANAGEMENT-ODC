@@ -315,7 +315,7 @@ function handleRegister(data) {
   if (!sheet) {
     // Auto-create the sheet if it doesn't exist
     sheet = ss.insertSheet('Teknisi');
-    sheet.appendRow(['Username', 'Password', 'NIK', 'STO', 'ID Telegram', 'No WA', 'Foto URL']);
+    sheet.appendRow(['Username', 'Password', 'NIK', 'STO', 'ID Telegram', 'No WA', 'Foto URL', 'Waktu Register']);
   }
   
   const username = data.username ? data.username.toString().trim() : '';
@@ -339,7 +339,8 @@ function handleRegister(data) {
     fotoUrl = uploadImageToDrive(data.foto, fileName);
   }
   
-  sheet.appendRow([username, password, data.nik || '', data.sto || '', data.telegram || '', data.wa || '', fotoUrl]);
+  const waktuRegister = new Date().toLocaleString('id-ID');
+  sheet.appendRow([username, password, data.nik || '', data.sto || '', data.telegram || '', data.wa || '', fotoUrl, waktuRegister]);
   return { success: true, username: username };
 }
 
@@ -429,11 +430,19 @@ function getUsersList() {
   const techData = sheet.getDataRange().getValues();
   const users = [];
   
-  // Asumsi baris 1 adalah header (Username, Password)
+  // Asumsi baris 1 adalah header
   for (let i = 1; i < techData.length; i++) {
     const user = techData[i][0] ? techData[i][0].toString().trim() : '';
     if (user) {
-      users.push(user);
+      users.push({
+        username: user,
+        nik: techData[i][2] || '-',
+        sto: techData[i][3] || '-',
+        telegram: techData[i][4] || '-',
+        wa: techData[i][5] || '-',
+        fotoUrl: techData[i][6] || '',
+        waktuRegister: techData[i][7] || '-'
+      });
     }
   }
   return users;

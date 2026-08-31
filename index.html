@@ -140,6 +140,12 @@
                 <tr>
                   <th>#</th>
                   <th>Username</th>
+                  <th>NIK</th>
+                  <th>STO</th>
+                  <th>ID Telegram</th>
+                  <th>No WA</th>
+                  <th>Waktu Register</th>
+                  <th>Foto</th>
                 </tr>
               </thead>
               <tbody id="usersTableBody">
@@ -617,23 +623,34 @@
       usersView.style.display = 'block';
       
       const tbody = document.getElementById('usersTableBody');
-      tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       try {
         const response = await fetch(API_URL + '?action=getUsersList');
         const users = await response.json();
         
         if (users.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Belum ada user terdaftar.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Belum ada user terdaftar.</td></tr>';
           return;
         }
         
         let html = '';
         users.forEach((user, index) => {
+          let fotoLink = '-';
+          if (user.fotoUrl) {
+            fotoLink = `<a href="${user.fotoUrl}" target="_blank" style="color:var(--primary-color); text-decoration:none;">Lihat Foto</a>`;
+          }
+          
           html += `
             <tr>
               <td>${index + 1}</td>
-              <td style="font-weight:bold; color:var(--primary-color);">${user}</td>
+              <td style="font-weight:bold; color:var(--primary-color);">${user.username}</td>
+              <td>${user.nik}</td>
+              <td>${user.sto}</td>
+              <td>${user.telegram}</td>
+              <td>${user.wa}</td>
+              <td>${user.waktuRegister}</td>
+              <td>${fotoLink}</td>
             </tr>
           `;
         });
