@@ -937,17 +937,12 @@
     }
 
     async function showApprovedBaView() {
-      document.getElementById('dashboard').style.display = 'none';
-      document.getElementById('stoDetailView').style.display = 'none';
-      document.getElementById('activeBorrowingsSection').style.display = 'none';
-      document.getElementById('odcHistorySection').style.display = 'none';
-      document.getElementById('usersView').style.display = 'none';
-      document.getElementById('globalHistoryView').style.display = 'none';
-      
+      hideAllViewsForApprovals();
       const view = document.getElementById('approvedBaView');
       const tbody = document.getElementById('approvedBaTableBody');
       view.style.display = 'block';
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
+      document.querySelectorAll('.sidebar-menu li')[1].classList.add('active'); // Approval BA menu
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       try {
         const res = await fetch(API_URL + '?action=getApprovedBa');
@@ -985,6 +980,25 @@
       } catch (err) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:red;">Gagal memuat BA.</td></tr>';
       }
+    }
+
+    function hideAllViewsForApprovals() {
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('stoDetailView').style.display = 'none';
+      document.getElementById('activeBorrowingsSection').style.display = 'none';
+      document.getElementById('odcHistorySection').style.display = 'none';
+      const usersView = document.getElementById('usersView');
+      if (usersView) usersView.style.display = 'none';
+      const globalHistoryView = document.getElementById('globalHistoryView');
+      if (globalHistoryView) globalHistoryView.style.display = 'none';
+      const approvedBaView = document.getElementById('approvedBaView');
+      if (approvedBaView) approvedBaView.style.display = 'none';
+      const pendingHsaView = document.getElementById('pendingHsaView');
+      if (pendingHsaView) pendingHsaView.style.display = 'none';
+      const pendingTifView = document.getElementById('pendingTifView');
+      if (pendingTifView) pendingTifView.style.display = 'none';
+      
+      document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
     }
 
     async function showPendingHsaView() {
