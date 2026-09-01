@@ -942,7 +942,7 @@
       const view = document.getElementById('approvedBaView');
       const tbody = document.getElementById('approvedBaTableBody');
       view.style.display = 'block';
-      document.querySelectorAll('.sidebar-menu li')[1].classList.add('active'); // Approval BA menu
+      document.querySelectorAll('.sidebar-menu li')[2].classList.add('active'); // Approval BA menu is index 2
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       try {
@@ -1007,7 +1007,7 @@
       const view = document.getElementById('pendingHsaView');
       const tbody = document.getElementById('pendingHsaTableBody');
       view.style.display = 'block';
-      document.querySelectorAll('.sidebar-menu li')[2].classList.add('active'); // Pending HSA menu
+      document.querySelectorAll('.sidebar-menu li')[3].classList.add('active'); // Pending HSA menu is index 3
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       try {
@@ -1051,7 +1051,7 @@
       const view = document.getElementById('pendingTifView');
       const tbody = document.getElementById('pendingTifTableBody');
       view.style.display = 'block';
-      document.querySelectorAll('.sidebar-menu li')[3].classList.add('active'); // Pending TIF menu
+      document.querySelectorAll('.sidebar-menu li')[4].classList.add('active'); // Pending TIF menu is index 4
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       try {
