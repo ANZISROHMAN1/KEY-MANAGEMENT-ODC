@@ -155,7 +155,7 @@ function generateTicketId(sto, odc, isEvidence) {
 
 function getMasterData() {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
-  const sheet = ss.getSheets()[0];
+  const sheet = ss.getSheetByName('DB ODC') || ss.getSheets()[0];
   const data = sheet.getDataRange().getValues();
   
   const sas = {};
