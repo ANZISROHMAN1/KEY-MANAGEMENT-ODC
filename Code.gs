@@ -19,8 +19,8 @@ function doGet(e) {
       result = getAllHistory();
     } else if (action === 'getTechnicianHistory') {
       result = getTechnicianHistory(e.parameter.query);
-    } else if (action === 'getPendingHsa') {
-      result = getPendingHsa(e.parameter.stos);
+    } else if (action === 'getPendingApprovals') {
+      result = getPendingApprovals(e.parameter.status);
     } else if (action === 'getApprovedBa') {
       result = getApprovedBa();
     } else {
@@ -53,8 +53,8 @@ function doPost(e) {
       result = handleRegister(data.payload);
     } else if (action === 'loginHsa') {
       result = loginHsa(data.payload);
-    } else if (action === 'actionHsa') {
-      result = actionHsa(data.payload);
+    } else if (action === 'actionApproval') {
+      result = actionApproval(data.payload);
     } else {
       result = { success: false, message: 'Invalid action' };
     }
@@ -70,7 +70,7 @@ function initSheets() {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
   if (!ss.getSheetByName('ActiveBorrowings')) {
     const sheet = ss.insertSheet('ActiveBorrowings');
-    sheet.appendRow(['ID', 'STO', 'ODC', 'User', 'Kegiatan', 'Estimasi', 'Waktu Pinjam', 'Selfie Pinjam URL', 'Status', 'HSA Approver', 'Dasar Kegiatan URL']);
+    sheet.appendRow(['ID', 'STO', 'ODC', 'User', 'Kegiatan', 'Estimasi', 'Waktu Pinjam', 'Selfie Pinjam URL', 'Status', 'HSA Approver', 'Dasar Kegiatan URL', 'Dasar Evidence URL', 'TIF Approver']);
   }
   if (!ss.getSheetByName('History')) {
     const sheet = ss.insertSheet('History');
@@ -208,7 +208,8 @@ function getActiveBorrowings() {
       status: data[i][8] || '',
       hsaApprover: data[i][9] || '',
       dasarKegiatan: data[i][10] || '',
-      dasarEvidence: data[i][11] || ''
+      dasarEvidence: data[i][11] || '',
+      tifApprover: data[i][12] || ''
     });
   }
   return active;
@@ -285,8 +286,7 @@ function submitBorrow(data) {
   const id = generateTicketId(data.sto, data.odc, false);
   const time = data.waktuPinjam ? new Date(data.waktuPinjam).toLocaleString('id-ID', {timeZone: 'Asia/Jakarta'}) : new Date().toLocaleString('id-ID', {timeZone: 'Asia/Jakarta'});
   
-  // Headers: ['ID', 'STO', 'ODC', 'User', 'Kegiatan', 'Estimasi', 'Waktu Pinjam', 'Selfie Pinjam URL', 'Status', 'HSA Approver', 'Dasar Kegiatan URL']
-  sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, data.estimasi, time, selfieUrl, 'Pending HSA', '', dasarUrl]);
+  sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, data.estimasi, time, selfieUrl, 'Pending HSA', '', dasarUrl, '', '']);
   return { success: true, id: id };
 }
 
@@ -313,7 +313,7 @@ function submitReturn(data) {
   const selfieUrl = uploadImageToDrive(data.selfie, fileName);
   const time = new Date().toLocaleString();
   
-  historySheet.appendRow([record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7], time, selfieUrl, record[8] || '', record[9] || '']);
+  historySheet.appendRow([record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7], time, selfieUrl]);
   activeSheet.deleteRow(rowIndex);
   
   return { success: true };
@@ -328,13 +328,11 @@ function handleLogin(data) {
   }
   
   const techData = sheet.getDataRange().getValues();
-  // Assuming row 1 is header (Username, Password)
   for (let i = 1; i < techData.length; i++) {
     const user = techData[i][0] ? techData[i][0].toString().trim() : '';
     const pass = techData[i][1] ? techData[i][1].toString().trim() : '';
     
     if (user === data.username && pass === data.password) {
-      // Check if user is also HSA
       let isHsa = false;
       let hsaStos = [];
       const hsaSheet = ss.getSheetByName('Hsa');
@@ -360,7 +358,6 @@ function handleRegister(data) {
   let sheet = ss.getSheetByName('Teknisi');
   
   if (!sheet) {
-    // Auto-create the sheet if it doesn't exist
     sheet = ss.insertSheet('Teknisi');
     sheet.appendRow(['Username', 'Password', 'NIK', 'STO', 'ID Telegram', 'No WA', 'Foto URL', 'Waktu Register']);
   }
@@ -408,9 +405,7 @@ function getOdcHistory(odc) {
         waktuPinjam: data[i][6],
         waktuKembali: data[i][8],
         selfiePinjam: data[i][7],
-        selfieKembali: data[i][9],
-        dasarKegiatan: data[i][10] || '',
-        dasarEvidence: data[i][11] || ''
+        selfieKembali: data[i][9]
       });
     }
   }
@@ -425,7 +420,6 @@ function getTechnicianHistory(query) {
   const activeSheet = ss.getSheetByName('ActiveBorrowings');
   let activeList = [];
   if (activeSheet) {
-    // Build NIK Map
     const techSheet = ss.getSheetByName('Teknisi');
     const nikMap = {};
     if (techSheet) {
@@ -453,7 +447,8 @@ function getTechnicianHistory(query) {
           estimasi: activeData[i][5],
           waktuPinjam: activeData[i][6],
           status: activeData[i][8] || 'Sedang Dipinjam',
-          hsaApprover: activeData[i][9] || '-'
+          hsaApprover: activeData[i][9] || '-',
+          tifApprover: activeData[i][12] || '-'
         });
       }
     }
@@ -478,7 +473,7 @@ function getTechnicianHistory(query) {
           status: 'Sudah Kembali'
         });
       }
-      if (historyList.length >= 20) break; // Limit to 20 recent records
+      if (historyList.length >= 20) break;
     }
   }
   
@@ -493,7 +488,6 @@ function getUsersList() {
   const techData = sheet.getDataRange().getValues();
   const users = [];
   
-  // Asumsi baris 1 adalah header
   for (let i = 1; i < techData.length; i++) {
     const user = techData[i][0] ? techData[i][0].toString().trim() : '';
     if (user) {
@@ -515,7 +509,6 @@ function getAllHistory() {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
   const history = [];
   
-  // 1. Ambil data yang sedang dipinjam (Active Borrowings)
   const activeSheet = ss.getSheetByName('ActiveBorrowings');
   if (activeSheet) {
     const activeData = activeSheet.getDataRange().getValues();
@@ -532,11 +525,9 @@ function getAllHistory() {
     }
   }
 
-  // 2. Ambil data yang sudah dikembalikan (History)
   const historySheet = ss.getSheetByName('History');
   if (historySheet) {
     const historyData = historySheet.getDataRange().getValues();
-    // Ambil 50 data terakhir agar tidak terlalu berat
     for (let i = historyData.length - 1; i > 0; i--) {
       history.push({
         id: historyData[i][0],
@@ -547,16 +538,12 @@ function getAllHistory() {
         waktuPinjam: historyData[i][6],
         waktuKembali: historyData[i][8] || 'Sudah Kembali'
       });
-      if (history.length >= 100) break; // Total maksimal 100
+      if (history.length >= 100) break;
     }
   }
   
   return history;
 }
-
-// ==========================================
-// HSA Approval Functions
-// ==========================================
 
 function loginHsa(payload) {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
@@ -573,39 +560,16 @@ function loginHsa(payload) {
   return { success: false, message: 'Username atau Password salah!' };
 }
 
-function getPendingHsa(stosParam) {
-  if (!stosParam) return [];
-  const allowedStos = stosParam.split(',').map(s => s.trim());
-  
-  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
-  const activeSheet = ss.getSheetByName('ActiveBorrowings');
-  if (!activeSheet) return [];
-  
-  const data = activeSheet.getDataRange().getValues();
-  const pending = [];
-  
-  for (let i = 1; i < data.length; i++) {
-    const sto = (data[i][1] || '').toString().trim();
-    const status = (data[i][8] || '').toString().trim();
-    
-    if (status === 'Pending HSA' && allowedStos.includes(sto)) {
-      pending.push({
-        id: data[i][0],
-        sto: sto,
-        odc: data[i][2],
-        user: data[i][3],
-        kegiatan: data[i][4],
-        waktuPinjam: data[i][6]
-      });
-    }
-  }
-  return pending;
+function getPendingApprovals(statusFilter) {
+  const active = getActiveBorrowings();
+  return active.filter(item => item.status === statusFilter);
 }
 
-function actionHsa(payload) {
+function actionApproval(payload) {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
   const activeSheet = ss.getSheetByName('ActiveBorrowings');
-  if (!activeSheet) return { success: false, message: 'Database tidak ditemukan' };
+  
+  if (!activeSheet) return { success: false, message: 'ActiveBorrowings sheet missing' };
   
   const data = activeSheet.getDataRange().getValues();
   let rowIndex = -1;
@@ -619,9 +583,22 @@ function actionHsa(payload) {
   
   if (rowIndex === -1) return { success: false, message: 'Tiket tidak ditemukan' };
   
-  // Update status (col I = index 8 + 1 = 9) and approver (col J = index 9 + 1 = 10)
-  activeSheet.getRange(rowIndex, 9).setValue(payload.status);
-  activeSheet.getRange(rowIndex, 10).setValue(payload.hsa);
+  let newStatus = '';
+  if (payload.actionType === 'Approve') {
+    if (payload.role === 'HSA') {
+      newStatus = 'Pending TIF';
+      activeSheet.getRange(rowIndex, 10).setValue(payload.name);
+    } else if (payload.role === 'TIF') {
+      newStatus = 'Approved';
+      activeSheet.getRange(rowIndex, 13).setValue(payload.name);
+    }
+  } else {
+    newStatus = 'Rejected';
+    if (payload.role === 'HSA') activeSheet.getRange(rowIndex, 10).setValue(payload.name);
+    if (payload.role === 'TIF') activeSheet.getRange(rowIndex, 13).setValue(payload.name);
+  }
+  
+  activeSheet.getRange(rowIndex, 9).setValue(newStatus);
   
   return { success: true };
 }

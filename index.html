@@ -30,6 +30,12 @@
         <li>
           <a href="#" onclick="showApprovedBaView()"><span class="icon">📄</span> Approval BA</a>
         </li>
+        <li>
+          <a href="#" onclick="showPendingHsaView()"><span class="icon">⏳</span> Approval HSA</a>
+        </li>
+        <li>
+          <a href="#" onclick="showPendingTifView()"><span class="icon">⏳</span> Approval TIF</a>
+        </li>
       </ul>
     </aside>
 
@@ -189,10 +195,58 @@
                   <th>Kegiatan</th>
                   <th>Waktu Pinjam</th>
                   <th>HSA Approver</th>
+                  <th>TIF Approver</th>
                   <th>Aksi</th>
                 </tr>
               </thead>
               <tbody id="approvedBaTableBody">
+                <tr><td colspan="9" style="text-align:center;">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="pendingHsaView" class="card-section" style="display:none;">
+          <button onclick="backToDashboard()" class="btn-back" style="margin-bottom: 20px;">&larr; Kembali ke Dashboard</button>
+          <h2>MENUNGGU APPROVAL HSA</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>STO</th>
+                  <th>ODC</th>
+                  <th>PIC</th>
+                  <th>Kegiatan</th>
+                  <th>Waktu Pinjam</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="pendingHsaTableBody">
+                <tr><td colspan="7" style="text-align:center;">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="pendingTifView" class="card-section" style="display:none;">
+          <button onclick="backToDashboard()" class="btn-back" style="margin-bottom: 20px;">&larr; Kembali ke Dashboard</button>
+          <h2>MENUNGGU APPROVAL TIF</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>STO</th>
+                  <th>ODC</th>
+                  <th>PIC</th>
+                  <th>Kegiatan</th>
+                  <th>Waktu Pinjam</th>
+                  <th>HSA Approver</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="pendingTifTableBody">
                 <tr><td colspan="8" style="text-align:center;">Memuat data...</td></tr>
               </tbody>
             </table>
@@ -588,6 +642,12 @@
       const approvedBaView = document.getElementById('approvedBaView');
       if(approvedBaView) approvedBaView.style.display = 'none';
 
+      const pendingHsaView = document.getElementById('pendingHsaView');
+      if(pendingHsaView) pendingHsaView.style.display = 'none';
+
+      const pendingTifView = document.getElementById('pendingTifView');
+      if(pendingTifView) pendingTifView.style.display = 'none';
+
       document.getElementById('dashboard').style.display = 'grid';
       // Ensure Dashboard menu is active
       const sidebarItems = document.querySelectorAll('.sidebar-menu li');
@@ -820,11 +880,20 @@
       document.getElementById('activeBorrowingsSection').style.display = 'none';
       document.getElementById('stoDetailView').style.display = 'none';
       
-      const usersView = document.getElementById('usersView');
-      if (usersView) usersView.style.display = 'none';
+      const globalHistoryView = document.getElementById('globalHistoryView');
+      if (globalHistoryView) globalHistoryView.style.display = 'none';
       
       const approvedBaView = document.getElementById('approvedBaView');
       if (approvedBaView) approvedBaView.style.display = 'none';
+      
+      const pendingHsaView = document.getElementById('pendingHsaView');
+      if (pendingHsaView) pendingHsaView.style.display = 'none';
+      
+      const pendingTifView = document.getElementById('pendingTifView');
+      if (pendingTifView) pendingTifView.style.display = 'none';
+      
+      // Update UI menus
+      document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
       
       // Tampilkan history view
       const historyView = document.getElementById('globalHistoryView');
@@ -832,7 +901,6 @@
       
       // Update sidebar styling to make History active
       const sidebarItems = document.querySelectorAll('.sidebar-menu li');
-      sidebarItems.forEach(item => item.classList.remove('active'));
       sidebarItems[1].classList.add('active'); // history is 2nd item
       
       const tbody = document.getElementById('globalHistoryTableBody');
@@ -886,12 +954,12 @@
         const data = await res.json();
         
         if (data.error || !Array.isArray(data)) {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--red-status);">Gagal memuat BA: Endpoint backend belum diperbarui. (Harap update Code.gs di Google Apps Script)</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--red-status);">Gagal memuat BA: Endpoint backend belum diperbarui. (Harap update Code.gs di Google Apps Script)</td></tr>';
           return;
         }
 
         if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Tidak ada Berita Acara (Approved).</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Tidak ada Berita Acara (Approved).</td></tr>';
         } else {
           let html = '';
           data.forEach(item => {
@@ -905,6 +973,7 @@
                 <td>${item.kegiatan}</td>
                 <td>${item.waktuPinjam}</td>
                 <td>${item.hsaApprover}</td>
+                <td>${item.tifApprover || '-'}</td>
                 <td>
                   <a href="#" onclick="showBaModal('${borrowDataStr}', '${item.odc}')" class="link-btn" style="color: #27ae60;">📝 Lihat BA</a>
                 </td>
@@ -914,7 +983,126 @@
           tbody.innerHTML = html;
         }
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Gagal memuat BA.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:red;">Gagal memuat BA.</td></tr>';
+      }
+    }
+
+    async function showPendingHsaView() {
+      hideAllViewsForApprovals();
+      const view = document.getElementById('pendingHsaView');
+      const tbody = document.getElementById('pendingHsaTableBody');
+      view.style.display = 'block';
+      document.querySelectorAll('.sidebar-menu li')[2].classList.add('active'); // Pending HSA menu
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
+      
+      try {
+        const res = await fetch(API_URL + '?action=getPendingApprovals&status=Pending+HSA');
+        const data = await res.json();
+        
+        if (data.error || !Array.isArray(data)) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--red-status);">Gagal memuat data. Update Backend.</td></tr>';
+          return;
+        }
+
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Tidak ada tiket yang menunggu approval HSA.</td></tr>';
+        } else {
+          let html = '';
+          data.forEach(item => {
+            html += `
+              <tr>
+                <td>${item.id}</td>
+                <td>${item.sto}</td>
+                <td style="font-weight:bold; color:#f39c12;">${item.odc}</td>
+                <td>${item.user}</td>
+                <td>${item.kegiatan}</td>
+                <td>${item.waktuPinjam}</td>
+                <td>
+                  <button onclick="handleActionApproval('${item.id}', 'HSA', 'Approve')" class="btn-submit" style="background:#27ae60; padding:4px 8px; width:auto; display:inline-block; margin-right:5px; font-size:11px;">Approve</button>
+                  <button onclick="handleActionApproval('${item.id}', 'HSA', 'Reject')" class="btn-submit" style="background:var(--red-status); padding:4px 8px; width:auto; display:inline-block; font-size:11px;">Reject</button>
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Gagal memuat tiket pending HSA.</td></tr>';
+      }
+    }
+
+    async function showPendingTifView() {
+      hideAllViewsForApprovals();
+      const view = document.getElementById('pendingTifView');
+      const tbody = document.getElementById('pendingTifTableBody');
+      view.style.display = 'block';
+      document.querySelectorAll('.sidebar-menu li')[3].classList.add('active'); // Pending TIF menu
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
+      
+      try {
+        const res = await fetch(API_URL + '?action=getPendingApprovals&status=Pending+TIF');
+        const data = await res.json();
+        
+        if (data.error || !Array.isArray(data)) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--red-status);">Gagal memuat data. Update Backend.</td></tr>';
+          return;
+        }
+
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Tidak ada tiket yang menunggu approval TIF.</td></tr>';
+        } else {
+          let html = '';
+          data.forEach(item => {
+            html += `
+              <tr>
+                <td>${item.id}</td>
+                <td>${item.sto}</td>
+                <td style="font-weight:bold; color:#e67e22;">${item.odc}</td>
+                <td>${item.user}</td>
+                <td>${item.kegiatan}</td>
+                <td>${item.waktuPinjam}</td>
+                <td>${item.hsaApprover}</td>
+                <td>
+                  <button onclick="handleActionApproval('${item.id}', 'TIF', 'Approve')" class="btn-submit" style="background:#27ae60; padding:4px 8px; width:auto; display:inline-block; margin-right:5px; font-size:11px;">Approve</button>
+                  <button onclick="handleActionApproval('${item.id}', 'TIF', 'Reject')" class="btn-submit" style="background:var(--red-status); padding:4px 8px; width:auto; display:inline-block; font-size:11px;">Reject</button>
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Gagal memuat tiket pending TIF.</td></tr>';
+      }
+    }
+
+    async function handleActionApproval(id, role, actionType) {
+      const approverName = prompt(`Masukkan Nama Anda (${role}) untuk ${actionType} tiket ${id}:`);
+      if (!approverName || approverName.trim() === '') {
+        alert('Nama harus diisi untuk proses approval!');
+        return;
+      }
+      
+      if (!confirm(`Apakah Anda yakin ingin melakukan ${actionType} pada tiket ini sebagai ${role}?`)) return;
+      
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'actionApproval',
+            payload: { id: id, role: role, name: approverName.trim(), actionType: actionType }
+          })
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert('Berhasil!');
+          if (role === 'HSA') showPendingHsaView();
+          else showPendingTifView();
+        } else {
+          alert('Gagal: ' + result.message);
+        }
+      } catch (err) {
+        alert('Terjadi kesalahan jaringan.');
       }
     }
 
