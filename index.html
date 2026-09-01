@@ -1010,7 +1010,7 @@
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       try {
-        const res = await fetch(API_URL + '?action=getPendingApprovals&status=Pending+HSA');
+        const res = await fetch(API_URL + '?action=getPendingApprovals&status=Pending%20HSA');
         const data = await res.json();
         
         if (data.error || !Array.isArray(data)) {
@@ -1054,7 +1054,7 @@
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       try {
-        const res = await fetch(API_URL + '?action=getPendingApprovals&status=Pending+TIF');
+        const res = await fetch(API_URL + '?action=getPendingApprovals&status=Pending%20TIF');
         const data = await res.json();
         
         if (data.error || !Array.isArray(data)) {
