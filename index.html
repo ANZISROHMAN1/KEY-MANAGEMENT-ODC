@@ -401,7 +401,8 @@
       const stoDetailView = document.getElementById('stoDetailView');
       const isDetailViewOpen = stoDetailView.style.display === 'block';
       
-      if (!isDetailViewOpen) {
+      const isDashboardActive = document.querySelector('.sidebar-menu li:nth-child(1)').classList.contains('active');
+      if (isDashboardActive && !isDetailViewOpen) {
         dashboard.style.display = 'grid';
       }
       dashboard.innerHTML = '';
@@ -484,7 +485,7 @@
           tableBody.appendChild(row);
         });
       } else {
-        if (!isDetailViewOpen) activeSection.style.display = 'block';
+        if (isDashboardActive && !isDetailViewOpen) activeSection.style.display = 'block';
         tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888;">Tidak ada kunci yang sedang dipinjam saat ini.</td></tr>';
       }
       
