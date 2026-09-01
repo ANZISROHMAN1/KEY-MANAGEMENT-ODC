@@ -885,7 +885,12 @@
         const res = await fetch(API_URL + '?action=getApprovedBa');
         const data = await res.json();
         
-        if (!data || data.length === 0) {
+        if (data.error || !Array.isArray(data)) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--red-status);">Gagal memuat BA: Endpoint backend belum diperbarui. (Harap update Code.gs di Google Apps Script)</td></tr>';
+          return;
+        }
+
+        if (data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Tidak ada Berita Acara (Approved).</td></tr>';
         } else {
           let html = '';
