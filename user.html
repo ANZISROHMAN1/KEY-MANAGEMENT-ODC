@@ -37,27 +37,27 @@
       <form id="registerForm" onsubmit="handleRegisterSubmit(event)" style="display: none;">
         <div class="form-group">
           <label>Username Baru</label>
-          <input type="text" id="r_username" required placeholder="Pilih username">
+          <input type="text" id="reg_username" required placeholder="Pilih username">
         </div>
         <div class="form-group">
           <label>Password Baru</label>
-          <input type="password" id="r_password" required placeholder="Buat password">
+          <input type="password" id="reg_password" required placeholder="Buat password">
         </div>
         <div class="form-group">
           <label>NIK</label>
-          <input type="text" id="r_nik" required placeholder="Nomor Induk Karyawan">
+          <input type="text" id="reg_nik" required placeholder="Nomor Induk Karyawan">
         </div>
         <div class="form-group">
           <label>STO</label>
-          <input type="text" id="r_sto" required placeholder="Contoh: CBD">
+          <input type="text" id="reg_sto" required placeholder="Contoh: CBD">
         </div>
         <div class="form-group">
           <label>ID Telegram</label>
-          <input type="text" id="r_telegram" required placeholder="Contoh: 123456789">
+          <input type="text" id="reg_telegram" required placeholder="Contoh: 123456789">
         </div>
         <div class="form-group">
           <label>No WA</label>
-          <input type="text" id="r_wa" required placeholder="Contoh: 081234567890">
+          <input type="text" id="reg_wa" required placeholder="Contoh: 081234567890">
         </div>
         <div class="form-group">
           <label>Foto Register</label>
@@ -509,12 +509,12 @@
 
     async function handleRegisterSubmit(e) {
       e.preventDefault();
-      const user = document.getElementById('r_username').value;
-      const pass = document.getElementById('r_password').value;
-      const nik = document.getElementById('r_nik').value;
-      const sto = document.getElementById('r_sto').value;
-      const telegram = document.getElementById('r_telegram').value;
-      const wa = document.getElementById('r_wa').value;
+      const user = document.getElementById('reg_username').value;
+      const pass = document.getElementById('reg_password').value;
+      const nik = document.getElementById('reg_nik').value;
+      const sto = document.getElementById('reg_sto').value;
+      const telegram = document.getElementById('reg_telegram').value;
+      const wa = document.getElementById('reg_wa').value;
       const fotoFile = document.getElementById('r_foto').files[0];
       
       if (!fotoFile) {
