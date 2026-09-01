@@ -624,12 +624,6 @@
       if (tab === 'evidence') populateOdc('e');
     }
 
-      } catch (err) {
-        showToast('Kesalahan jaringan', 'error');
-        btnApprove.innerText = originalText;
-        btnApprove.disabled = false;
-      }
-    }
 
     function populateSto(prefix) {
       const select = document.getElementById(prefix + '_sto');
