@@ -643,10 +643,14 @@ function actionApproval(payload) {
     const kegiatan = rowData[4];
     const estimasi = rowData[5];
     
+    const contact = getTechnicianContact(user);
+    
     const msg = `🟢 <b>KUNCI DIPINJAM</b>\n\n` +
                 `<b>ID:</b> ${ticketId}\n` +
                 `<b>ODC:</b> ${odc}\n` +
                 `<b>Teknisi:</b> ${user}\n` +
+                `<b>ID Telegram:</b> ${contact.telegram}\n` +
+                `<b>No WA:</b> ${contact.wa}\n` +
                 `<b>Kegiatan:</b> ${kegiatan}\n` +
                 `<b>Estimasi Waktu:</b> ${estimasi} Jam\n\n` +
                 `<i>Timer sedang berjalan. Peringatan akan dikirim 10 menit sebelum waktu habis.</i>`;
@@ -654,6 +658,23 @@ function actionApproval(payload) {
   }
   
   return { success: true };
+}
+
+function getTechnicianContact(username) {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const sheet = ss.getSheetByName('Teknisi');
+  if (!sheet) return { telegram: '-', wa: '-' };
+  
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] && data[i][0].toString().trim() === username.toString().trim()) {
+      return { 
+        telegram: data[i][4] || '-', 
+        wa: data[i][5] || '-' 
+      };
+    }
+  }
+  return { telegram: '-', wa: '-' };
 }
 
 // ==========================================
@@ -688,10 +709,13 @@ function checkExpiringTimers() {
             const ticketId = data[i][0];
             const user = data[i][3];
             const odc = data[i][2];
+            const contact = getTechnicianContact(user);
             const msg = `⚠️ <b>PERINGATAN WAKTU HABIS</b>\n\n` +
                         `<b>ID:</b> ${ticketId}\n` +
                         `<b>ODC:</b> ${odc}\n` +
-                        `<b>Teknisi:</b> ${user}\n\n` +
+                        `<b>Teknisi:</b> ${user}\n` +
+                        `<b>ID Telegram:</b> ${contact.telegram}\n` +
+                        `<b>No WA:</b> ${contact.wa}\n\n` +
                         `Waktu peminjaman tersisa kurang dari 10 menit! Segera selesaikan pekerjaan dan kembalikan kunci.`;
             sendTelegramMessage(msg);
             
