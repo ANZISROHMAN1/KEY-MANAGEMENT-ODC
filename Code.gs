@@ -4,9 +4,9 @@ const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1kJMH5vweXd4YU8j
 // PENGATURAN TELEGRAM BOT
 // ==========================================
 // Ganti dengan Token Bot dari @BotFather
-const TELEGRAM_BOT_TOKEN = 'ISI_BOT_TOKEN_ANDA_DISINI'; 
+const TELEGRAM_BOT_TOKEN = '8944833527:AAEnIP7ZCii1Q2GF-RKC1s_sKtIX9DlTE1A'; 
 // Ganti dengan Chat ID Grup atau Pribadi Anda (bisa didapatkan dari @userinfobot atau sejenisnya)
-const TELEGRAM_CHAT_ID = 'ISI_CHAT_ID_ANDA_DISINI'; 
+const TELEGRAM_CHAT_ID = '-5572220998'; 
 
 function sendTelegramMessage(text) {
   if (TELEGRAM_BOT_TOKEN === 'ISI_BOT_TOKEN_ANDA_DISINI' || TELEGRAM_CHAT_ID === 'ISI_CHAT_ID_ANDA_DISINI') {
