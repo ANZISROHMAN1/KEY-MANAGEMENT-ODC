@@ -324,7 +324,7 @@
           
           <div style="text-align: center; width: 30%;">
             <p style="margin: 0;">Disetujui oleh TIF,</p>
-            <div style="color: green; font-size: 24px; font-weight: bold; transform: rotate(-10deg); margin: 20px 0; visibility: hidden;">APPROVED</div>
+            <div id="ba_tif_stamp" style="color: green; font-size: 24px; font-weight: bold; transform: rotate(-10deg); margin: 20px 0; visibility: hidden;">APPROVED</div>
             <p style="margin: 0; text-decoration: underline; font-weight: bold;"><span id="ba_tif_sign">.......................................</span></p>
             <p style="margin: 0; font-size: 12px;">Telkom Infra</p>
           </div>
@@ -781,7 +781,11 @@
       document.getElementById('ba_user').innerText = data.user || '-';
       document.getElementById('ba_nik').innerText = data.nik || '-';
       document.getElementById('ba_hsa_name').innerText = data.hsaApprover || '-';
-      document.getElementById('ba_tif_name').innerText = 'Admin TIF'; // Atau kosong jika tidak diketahui
+      const tifName = (data.tifApprover && data.tifApprover !== '-') ? data.tifApprover : 'Admin TIF';
+      document.getElementById('ba_tif_name').innerText = tifName;
+      document.getElementById('ba_tif_sign').innerText = tifName;
+      const tifStamp = document.getElementById('ba_tif_stamp');
+      if (tifStamp) tifStamp.style.visibility = 'visible';
       document.getElementById('ba_user_sign').innerText = data.user || '-';
       document.getElementById('ba_hsa').innerText = data.hsaApprover || '-';
       document.getElementById('ba_kegiatan').innerText = data.kegiatan || '-';

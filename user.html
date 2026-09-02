@@ -1094,6 +1094,39 @@
             
             const overdueBadge = isOverdue ? `<span style="background:var(--red-status); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:bold; margin-left: 8px; display:inline-flex; align-items:center; gap:4px; animation: pulse 2s infinite;">⚠️ Waktu Habis</span>` : '';
             const wPinjamText = (!item.waktuPinjam || item.waktuPinjam.includes('Invalid')) ? '<span style="color:var(--text-muted); font-style:italic;">Belum tercatat</span>' : item.waktuPinjam;
+            
+            let sisaWaktuHtml = '';
+            if (!isNaN(borrowTimeMs)) {
+              if (estimasi > 0) {
+                const now = new Date().getTime();
+                const diffMs = alarmTimeMs - now;
+                if (diffMs > 0) {
+                  const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                  sisaWaktuHtml = `<div style="margin-top:8px; margin-bottom:8px; padding:8px; background:rgba(46, 204, 113, 0.1); border-left:4px solid var(--green-status); border-radius:4px; font-size:12px; color:var(--green-status); display:flex; align-items:center; gap:6px;">⏳ Sisa Waktu: <strong>${diffHrs} jam ${diffMins} menit</strong></div>`;
+                } else {
+                  const overdueMs = Math.abs(diffMs);
+                  const overdueHrs = Math.floor(overdueMs / (1000 * 60 * 60));
+                  const overdueMins = Math.floor((overdueMs % (1000 * 60 * 60)) / (1000 * 60));
+                  sisaWaktuHtml = `<div style="margin-top:8px; margin-bottom:8px; padding:8px; background:rgba(255, 77, 77, 0.1); border-left:4px solid var(--red-status); border-radius:4px; font-size:12px; color:var(--red-status); display:flex; align-items:center; gap:6px;">⚠️ Terlewat: <strong>${overdueHrs} jam ${overdueMins} menit</strong></div>`;
+                }
+              } else {
+                const now = new Date().getTime();
+                const elapsedMs = now - borrowTimeMs;
+                if (elapsedMs >= 0) {
+                  const elapHrs = Math.floor(elapsedMs / (1000 * 60 * 60));
+                  const elapMins = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
+                  sisaWaktuHtml = `<div style="margin-top:8px; margin-bottom:8px; padding:8px; background:rgba(52, 152, 219, 0.1); border-left:4px solid var(--primary-color); border-radius:4px; font-size:12px; color:var(--primary-color); display:flex; align-items:center; gap:6px;">🕒 Waktu Berjalan: <strong>${elapHrs} jam ${elapMins} menit</strong></div>`;
+                } else {
+                  sisaWaktuHtml = `<div style="color:red">DEBUG: elapsedMs < 0 (${elapsedMs})</div>`;
+                }
+              }
+            } else {
+               sisaWaktuHtml = `<div style="color:red">DEBUG: borrowTimeMs is NaN</div>`;
+            }
+            if (!sisaWaktuHtml) {
+               sisaWaktuHtml = `<div style="color:red">DEBUG: Empty for unknown reason</div>`;
+            }
 
             html += `
               <li style="background:var(--glass-bg); padding:20px; border-radius:12px; margin-bottom:15px; border:1px solid ${isOverdue ? 'var(--red-status)' : 'var(--primary-color)'}; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
@@ -1156,6 +1189,7 @@
                 <div style="font-size:13px; line-height: 1.6; color:var(--text-main); border-top:1px solid var(--glass-border); padding-top:12px;">
                   <div style="display:flex; justify-content:space-between;"><span>Teknisi:</span> <strong>${item.user}</strong></div>
                   <div style="display:flex; justify-content:space-between;"><span>Kegiatan:</span> <strong>${item.kegiatan}</strong></div>
+                  ${sisaWaktuHtml}
                   <div style="display:flex; justify-content:space-between;"><span>Waktu Pinjam:</span> <strong>${wPinjamText}</strong></div>
                 </div>
               </li>
@@ -1233,7 +1267,11 @@
       document.getElementById('ba_user').innerText = data.user || '-';
       document.getElementById('ba_nik').innerText = data.nik || '-';
       document.getElementById('ba_hsa_name').innerText = data.hsaApprover || '-';
-      document.getElementById('ba_tif_name').innerText = 'Admin TIF';
+      const tifName = (data.tifApprover && data.tifApprover !== '-') ? data.tifApprover : 'Admin TIF';
+      document.getElementById('ba_tif_name').innerText = tifName;
+      document.getElementById('ba_tif_sign').innerText = tifName;
+      const tifStamp = document.getElementById('ba_tif_stamp');
+      if (tifStamp) tifStamp.style.visibility = 'visible';
       document.getElementById('ba_user_sign').innerText = data.user || '-';
       document.getElementById('ba_hsa').innerText = data.hsaApprover || '-';
       document.getElementById('ba_kegiatan').innerText = data.kegiatan || '-';
@@ -1313,7 +1351,7 @@
           
           <div style="text-align: center; width: 30%;">
             <p style="margin: 0;">Disetujui oleh TIF,</p>
-            <div style="color: green; font-size: 24px; font-weight: bold; transform: rotate(-10deg); margin: 20px 0; visibility: hidden;">APPROVED</div>
+            <div id="ba_tif_stamp" style="color: green; font-size: 24px; font-weight: bold; transform: rotate(-10deg); margin: 20px 0; visibility: hidden;">APPROVED</div>
             <p style="margin: 0; text-decoration: underline; font-weight: bold;"><span id="ba_tif_sign">.......................................</span></p>
             <p style="margin: 0; font-size: 12px;">Telkom Infra</p>
           </div>
