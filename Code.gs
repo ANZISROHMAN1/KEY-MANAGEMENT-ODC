@@ -1,5 +1,39 @@
 const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1kJMH5vweXd4YU8j6urk2pk6iuGcLaUeSCzCWT6szmLM/edit';
 
+// ==========================================
+// PENGATURAN TELEGRAM BOT
+// ==========================================
+// Ganti dengan Token Bot dari @BotFather
+const TELEGRAM_BOT_TOKEN = 'ISI_BOT_TOKEN_ANDA_DISINI'; 
+// Ganti dengan Chat ID Grup atau Pribadi Anda (bisa didapatkan dari @userinfobot atau sejenisnya)
+const TELEGRAM_CHAT_ID = 'ISI_CHAT_ID_ANDA_DISINI'; 
+
+function sendTelegramMessage(text) {
+  if (TELEGRAM_BOT_TOKEN === 'ISI_BOT_TOKEN_ANDA_DISINI' || TELEGRAM_CHAT_ID === 'ISI_CHAT_ID_ANDA_DISINI') {
+    return; // Abaikan jika token/chat id belum diisi
+  }
+  
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const payload = {
+    chat_id: TELEGRAM_CHAT_ID,
+    text: text,
+    parse_mode: 'HTML'
+  };
+  
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+  
+  try {
+    UrlFetchApp.fetch(url, options);
+  } catch (e) {
+    console.error('Error sending Telegram message: ' + e.message);
+  }
+}
+
 function doGet(e) {
   initSheets();
   
@@ -600,7 +634,106 @@ function actionApproval(payload) {
   
   activeSheet.getRange(rowIndex, 9).setValue(newStatus);
   
+  // Kirim Notifikasi Telegram jika status menjadi Approved
+  if (newStatus === 'Approved') {
+    const rowData = activeSheet.getRange(rowIndex, 1, 1, 13).getValues()[0];
+    const ticketId = rowData[0];
+    const odc = rowData[2];
+    const user = rowData[3];
+    const kegiatan = rowData[4];
+    const estimasi = rowData[5];
+    
+    const msg = `🟢 <b>KUNCI DIPINJAM</b>\n\n` +
+                `<b>ID:</b> ${ticketId}\n` +
+                `<b>ODC:</b> ${odc}\n` +
+                `<b>Teknisi:</b> ${user}\n` +
+                `<b>Kegiatan:</b> ${kegiatan}\n` +
+                `<b>Estimasi Waktu:</b> ${estimasi} Jam\n\n` +
+                `<i>Timer sedang berjalan. Peringatan akan dikirim 10 menit sebelum waktu habis.</i>`;
+    sendTelegramMessage(msg);
+  }
+  
   return { success: true };
+}
+
+// ==========================================
+// TELEGRAM TRIGGER & SCHEDULER
+// ==========================================
+
+function checkExpiringTimers() {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const activeSheet = ss.getSheetByName('ActiveBorrowings');
+  if (!activeSheet) return;
+  
+  // Asumsikan Kolom 14 (N) adalah flag 'TelegramWarned'
+  const data = activeSheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    const status = data[i][8];
+    if (status === 'Approved' || status === 'Sedang Dipinjam') {
+      const warned = data[i][13]; // Kolom N (index 13)
+      if (warned !== 'Yes') {
+        const waktuPinjam = data[i][6];
+        const estimasi = parseInt(data[i][5]) || 0;
+        
+        if (waktuPinjam && estimasi > 0) {
+          const borrowTimeMs = parseIdDateForServer(waktuPinjam).getTime();
+          const alarmTimeMs = borrowTimeMs + (estimasi * 60 * 60 * 1000);
+          const nowMs = new Date().getTime();
+          
+          const diffMs = alarmTimeMs - nowMs;
+          const diffMinutes = Math.floor(diffMs / (1000 * 60));
+          
+          // Kirim peringatan jika sisa waktu <= 10 menit (tapi tidak lebih dari 1 jam kelewat agar tidak spam)
+          if (diffMinutes <= 10 && diffMinutes >= -60) {
+            const ticketId = data[i][0];
+            const user = data[i][3];
+            const odc = data[i][2];
+            const msg = `⚠️ <b>PERINGATAN WAKTU HABIS</b>\n\n` +
+                        `<b>ID:</b> ${ticketId}\n` +
+                        `<b>ODC:</b> ${odc}\n` +
+                        `<b>Teknisi:</b> ${user}\n\n` +
+                        `Waktu peminjaman tersisa kurang dari 10 menit! Segera selesaikan pekerjaan dan kembalikan kunci.`;
+            sendTelegramMessage(msg);
+            
+            // Tandai sudah diperingatkan
+            activeSheet.getRange(i + 1, 14).setValue('Yes');
+          }
+        }
+      }
+    }
+  }
+}
+
+function parseIdDateForServer(dateStr) {
+  if (!dateStr) return new Date();
+  let cleanStr = dateStr.toString().replace(/\./g, ':');
+  let parts = cleanStr.split(/[\s,]+/);
+  if (parts.length < 2) return new Date(cleanStr);
+  
+  let dParts = parts[0].split('/');
+  if (dParts.length === 3) {
+    let day = parseInt(dParts[0]), month = parseInt(dParts[1]) - 1, year = parseInt(dParts[2]);
+    let tParts = parts[1].split(':');
+    let hours = parseInt(tParts[0]) || 0, minutes = parseInt(tParts[1]) || 0, seconds = parseInt(tParts[2]) || 0;
+    return new Date(year, month, day, hours, minutes, seconds);
+  }
+  return new Date(dateStr);
+}
+
+function setupTrigger() {
+  // Hapus trigger lama jika ada
+  const triggers = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'checkExpiringTimers') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  
+  // Buat trigger baru setiap 5 menit
+  ScriptApp.newTrigger('checkExpiringTimers')
+    .timeBased()
+    .everyMinutes(5)
+    .create();
 }
 
 function getApprovedBa() {
