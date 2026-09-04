@@ -120,14 +120,45 @@ function initSheets() {
   }
   if (!ss.getSheetByName('Hsa')) {
     const sheet = ss.insertSheet('Hsa');
-    sheet.appendRow(['Username', 'Password', 'STO List (Comma Separated)']);
-    sheet.appendRow(['admin_hsa', '123456', 'BOO, CBD']); // Default dummy HSA
+    sheet.appendRow(['Username', 'Password', 'STO List (Comma Separated)', 'Telegram ID']);
+    sheet.appendRow(['admin_hsa', '123456', 'BOO, CBD', '@contoh_hsa']); // Default dummy HSA
   }
   if (!ss.getSheetByName('Tif')) {
     const sheet = ss.insertSheet('Tif');
-    sheet.appendRow(['Username', 'Password']);
-    sheet.appendRow(['admin_tif', '123456']); // Default dummy TIF
+    sheet.appendRow(['Username', 'Password', 'Telegram ID']);
+    sheet.appendRow(['admin_tif', '123456', '@contoh_tif']); // Default dummy TIF
   }
+}
+
+function getAdminTelegramTags(sto) {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  let hsaTag = '';
+  let tifTag = '';
+
+  const hsaSheet = ss.getSheetByName('Hsa');
+  if (hsaSheet) {
+    const data = hsaSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      const stos = data[i][2] ? data[i][2].toString().toUpperCase() : '';
+      if (stos.split(',').map(s => s.trim()).includes(sto.toUpperCase())) {
+        if (data[i][3]) {
+           hsaTag += data[i][3].toString().trim() + ' ';
+        }
+      }
+    }
+  }
+
+  const tifSheet = ss.getSheetByName('Tif');
+  if (tifSheet) {
+    const data = tifSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][2]) {
+        tifTag += data[i][2].toString().trim() + ' ';
+      }
+    }
+  }
+
+  return { hsa: hsaTag.trim(), tif: tifTag.trim() };
 }
 
 function submitEvidence(data) {
@@ -333,6 +364,15 @@ function submitBorrow(data) {
   
   // Send Telegram Notification
   const contact = getTechnicianContact(data.user);
+  const adminTags = getAdminTelegramTags(data.sto);
+  
+  let tagText = '';
+  if (adminTags.hsa || adminTags.tif) {
+    tagText = '\n<b>Tags:</b> ';
+    if (adminTags.hsa) tagText += adminTags.hsa + ' (HSA) ';
+    if (adminTags.tif) tagText += adminTags.tif + ' (TIF)';
+  }
+
   const msg = `🔔 <b>REQUEST PINJAM KUNCI</b>\n\n` +
               `<b>ID:</b> ${id}\n` +
               `<b>STO:</b> ${data.sto}\n` +
@@ -342,11 +382,13 @@ function submitBorrow(data) {
               `<b>No WA:</b> ${contact.wa}\n` +
               `<b>Kegiatan:</b> ${data.kegiatan}\n` +
               `<b>Estimasi Waktu:</b> ${data.estimasi} Jam\n\n` +
-              `<i>Status: Menunggu Approval</i>`;
+              `<i>Status: Menunggu Approval</i>${tagText}`;
   sendTelegramMessage(msg);
 
   return { success: true, id: id };
 }
+
+
 
 function submitReturn(data) {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
@@ -460,6 +502,7 @@ function registerAdmin(data) {
   const username = data.username ? data.username.toString().trim() : '';
   const password = data.password ? data.password.toString().trim() : '';
   const stos = data.stos ? data.stos.toString().trim() : '';
+  const telegram = data.telegram ? data.telegram.toString().trim() : '';
   
   if (!username || !password) {
     return { success: false, message: 'Username dan Password tidak boleh kosong!' };
@@ -474,9 +517,9 @@ function registerAdmin(data) {
   }
   
   if (role === 'Hsa') {
-    sheet.appendRow([username, password, stos]);
+    sheet.appendRow([username, password, stos, telegram]);
   } else {
-    sheet.appendRow([username, password]);
+    sheet.appendRow([username, password, telegram]);
   }
   
   return { success: true, message: 'Registrasi berhasil! Silakan login.' };

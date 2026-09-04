@@ -51,6 +51,10 @@
           <label>STO (Area)</label>
           <input type="text" id="regSto" placeholder="Contoh: BOO, CBD, GNK" autocomplete="off">
         </div>
+        <div class="form-group">
+          <label>Telegram ID</label>
+          <input type="text" id="regTelegram" placeholder="Contoh: @anzis_19" autocomplete="off">
+        </div>
         <button class="btn-submit" onclick="doRegister()" id="btnRegister" style="background: #10b981;">DAFTAR AKUN</button>
         <p style="margin-top: 15px; font-size: 13px; color: var(--text-muted);">
           Sudah punya akun? <a href="#" onclick="toggleAuthMode('login'); return false;" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Login di sini</a>
@@ -1308,6 +1312,7 @@
       const user = document.getElementById('regUser').value;
       const pass = document.getElementById('regPass').value;
       const sto = document.getElementById('regSto').value;
+      const telegram = document.getElementById('regTelegram').value;
       const msg = document.getElementById('loginMessage');
       const btn = document.getElementById('btnRegister');
       
@@ -1326,7 +1331,7 @@
           method: 'POST',
           body: JSON.stringify({
             action: 'registerAdmin',
-            payload: { role: currentLoginType, username: user, password: pass, stos: sto }
+            payload: { role: currentLoginType, username: user, password: pass, stos: sto, telegram: telegram }
           })
         });
         
@@ -1339,6 +1344,7 @@
             document.getElementById('regUser').value = '';
             document.getElementById('regPass').value = '';
             document.getElementById('regSto').value = '';
+            document.getElementById('regTelegram').value = '';
           }, 1500);
         } else {
           msg.style.color = 'var(--stat-red)';
