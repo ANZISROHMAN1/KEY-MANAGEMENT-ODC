@@ -85,6 +85,9 @@
         <li id="menuApprovalTif">
           <a href="#" onclick="showPendingTifView()"><span class="icon">⏳</span> Approval TIF</a>
         </li>
+        <li style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+          <a href="#" onclick="adminLogout()" style="color: var(--stat-red); font-weight: bold;"><span class="icon">🚪</span> Logout</a>
+        </li>
       </ul>
     </aside>
 
@@ -1402,6 +1405,24 @@
       
       btn.innerText = 'LOGIN';
       btn.disabled = false;
+    }
+
+    function adminLogout() {
+      sessionStorage.removeItem('adminLoggedIn');
+      sessionStorage.removeItem('adminRole');
+      sessionStorage.removeItem('adminUsername');
+      
+      // Sembunyikan main container dan tampilkan login overlay
+      document.getElementById('app-container').style.display = 'none';
+      document.getElementById('loginOverlay').style.display = 'flex';
+      
+      // Hapus data yang ada di halaman (opsional)
+      document.getElementById('countUsers').innerText = '...';
+      document.getElementById('countGembokOpen').innerText = '...';
+      
+      // Clear input fields
+      document.getElementById('loginUser').value = '';
+      document.getElementById('loginPass').value = '';
     }
 
     // Check login state on load
