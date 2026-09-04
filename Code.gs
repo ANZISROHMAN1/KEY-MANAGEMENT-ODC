@@ -87,6 +87,10 @@ function doPost(e) {
       result = handleRegister(data.payload);
     } else if (action === 'loginHsa') {
       result = loginHsa(data.payload);
+    } else if (action === 'loginTif') {
+      result = loginTif(data.payload);
+    } else if (action === 'registerAdmin') {
+      result = registerAdmin(data.payload);
     } else if (action === 'actionApproval') {
       result = actionApproval(data.payload);
     } else {
@@ -118,6 +122,11 @@ function initSheets() {
     const sheet = ss.insertSheet('Hsa');
     sheet.appendRow(['Username', 'Password', 'STO List (Comma Separated)']);
     sheet.appendRow(['admin_hsa', '123456', 'BOO, CBD']); // Default dummy HSA
+  }
+  if (!ss.getSheetByName('Tif')) {
+    const sheet = ss.insertSheet('Tif');
+    sheet.appendRow(['Username', 'Password']);
+    sheet.appendRow(['admin_tif', '123456']); // Default dummy TIF
   }
 }
 
@@ -321,6 +330,21 @@ function submitBorrow(data) {
   const time = data.waktuPinjam ? new Date(data.waktuPinjam).toLocaleString('id-ID', {timeZone: 'Asia/Jakarta'}) : new Date().toLocaleString('id-ID', {timeZone: 'Asia/Jakarta'});
   
   sheet.appendRow([id, data.sto, data.odc, data.user, data.kegiatan, data.estimasi, time, selfieUrl, 'Pending HSA', '', dasarUrl, '', '']);
+  
+  // Send Telegram Notification
+  const contact = getTechnicianContact(data.user);
+  const msg = `🔔 <b>REQUEST PINJAM KUNCI</b>\n\n` +
+              `<b>ID:</b> ${id}\n` +
+              `<b>STO:</b> ${data.sto}\n` +
+              `<b>ODC:</b> ${data.odc}\n` +
+              `<b>Teknisi:</b> ${data.user}\n` +
+              `<b>ID Telegram:</b> ${contact.telegram}\n` +
+              `<b>No WA:</b> ${contact.wa}\n` +
+              `<b>Kegiatan:</b> ${data.kegiatan}\n` +
+              `<b>Estimasi Waktu:</b> ${data.estimasi} Jam\n\n` +
+              `<i>Status: Menunggu Approval</i>`;
+  sendTelegramMessage(msg);
+
   return { success: true, id: id };
 }
 
@@ -418,8 +442,44 @@ function handleRegister(data) {
   }
   
   const waktuRegister = new Date().toLocaleString('id-ID');
-  sheet.appendRow([username, password, data.nik || '', data.sto || '', data.telegram || '', data.wa || '', fotoUrl, waktuRegister]);
-  return { success: true, username: username };
+  sheet.appendRow([username, password, data.nik || '', data.sto || '', data.telegram || '', data.wa || '', fotoUrl, new Date().toLocaleString()]);
+  
+  return { success: true, message: 'Registrasi berhasil! Silakan login.' };
+}
+
+function registerAdmin(data) {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const role = data.role === 'HSA' ? 'Hsa' : 'Tif';
+  const sheetName = role;
+  
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    return { success: false, message: `Database ${role} tidak ditemukan` };
+  }
+  
+  const username = data.username ? data.username.toString().trim() : '';
+  const password = data.password ? data.password.toString().trim() : '';
+  const stos = data.stos ? data.stos.toString().trim() : '';
+  
+  if (!username || !password) {
+    return { success: false, message: 'Username dan Password tidak boleh kosong!' };
+  }
+  
+  const adminData = sheet.getDataRange().getValues();
+  for (let i = 1; i < adminData.length; i++) {
+    const user = adminData[i][0] ? adminData[i][0].toString().trim() : '';
+    if (user.toLowerCase() === username.toLowerCase()) {
+      return { success: false, message: 'Username sudah terdaftar! Silakan gunakan username lain.' };
+    }
+  }
+  
+  if (role === 'Hsa') {
+    sheet.appendRow([username, password, stos]);
+  } else {
+    sheet.appendRow([username, password]);
+  }
+  
+  return { success: true, message: 'Registrasi berhasil! Silakan login.' };
 }
 
 function getOdcHistory(odc) {
@@ -553,6 +613,7 @@ function getAllHistory() {
         odc: activeData[i][2],
         user: activeData[i][3],
         kegiatan: activeData[i][4],
+        estimasi: activeData[i][5],
         waktuPinjam: activeData[i][6],
         waktuKembali: 'Belum Kembali'
       });
@@ -569,6 +630,7 @@ function getAllHistory() {
         odc: historyData[i][2],
         user: historyData[i][3],
         kegiatan: historyData[i][4],
+        estimasi: historyData[i][5],
         waktuPinjam: historyData[i][6],
         waktuKembali: historyData[i][8] || 'Sudah Kembali'
       });
@@ -588,7 +650,21 @@ function loginHsa(payload) {
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] && data[i][0].toString() === payload.user && data[i][1] && data[i][1].toString() === payload.pass) {
       const stos = data[i][2] ? data[i][2].toString().split(',').map(s => s.trim()) : [];
-      return { success: true, username: data[i][0], stos: stos };
+      return { success: true, username: data[i][0], stos: stos, role: 'HSA' };
+    }
+  }
+  return { success: false, message: 'Username atau Password salah!' };
+}
+
+function loginTif(payload) {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const sheet = ss.getSheetByName('Tif');
+  if (!sheet) return { success: false, message: 'Database TIF tidak ditemukan' };
+  
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] && data[i][0].toString() === payload.user && data[i][1] && data[i][1].toString() === payload.pass) {
+      return { success: true, username: data[i][0], role: 'TIF' };
     }
   }
   return { success: false, message: 'Username atau Password salah!' };
@@ -664,6 +740,7 @@ function getTechnicianContact(username) {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
   const sheet = ss.getSheetByName('Teknisi');
   if (!sheet) return { telegram: '-', wa: '-' };
+  if (!username) return { telegram: '-', wa: '-' };
   
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
@@ -686,41 +763,57 @@ function checkExpiringTimers() {
   const activeSheet = ss.getSheetByName('ActiveBorrowings');
   if (!activeSheet) return;
   
-  // Asumsikan Kolom 14 (N) adalah flag 'TelegramWarned'
   const data = activeSheet.getDataRange().getValues();
+  const nowMs = new Date().getTime();
+  
   for (let i = 1; i < data.length; i++) {
     const status = data[i][8];
     if (status === 'Approved' || status === 'Sedang Dipinjam') {
       const warned = data[i][13]; // Kolom N (index 13)
-      if (warned !== 'Yes') {
-        const waktuPinjam = data[i][6];
-        const estimasi = parseInt(data[i][5]) || 0;
+      const lastOverdueWarningMs = parseInt(data[i][14]) || 0; // Kolom O (index 14)
+      const waktuPinjam = data[i][6];
+      const estimasi = parseInt(data[i][5]) || 0;
+      
+      if (waktuPinjam && estimasi > 0) {
+        const borrowTimeMs = parseIdDateForServer(waktuPinjam).getTime();
+        const alarmTimeMs = borrowTimeMs + (estimasi * 60 * 60 * 1000);
         
-        if (waktuPinjam && estimasi > 0) {
-          const borrowTimeMs = parseIdDateForServer(waktuPinjam).getTime();
-          const alarmTimeMs = borrowTimeMs + (estimasi * 60 * 60 * 1000);
-          const nowMs = new Date().getTime();
-          
-          const diffMs = alarmTimeMs - nowMs;
-          const diffMinutes = Math.floor(diffMs / (1000 * 60));
-          
-          // Kirim peringatan jika sisa waktu <= 10 menit (tapi tidak lebih dari 1 jam kelewat agar tidak spam)
-          if (diffMinutes <= 10 && diffMinutes >= -60) {
-            const ticketId = data[i][0];
-            const user = data[i][3];
-            const odc = data[i][2];
-            const contact = getTechnicianContact(user);
-            const msg = `⚠️ <b>PERINGATAN WAKTU HABIS</b>\n\n` +
+        const diffMs = alarmTimeMs - nowMs;
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        
+        const ticketId = data[i][0];
+        const user = data[i][3];
+        const odc = data[i][2];
+        const contact = getTechnicianContact(user);
+        
+        // 1. Peringatan 10 Menit sebelum habis (Hanya sekali)
+        if (warned !== 'Yes' && diffMinutes <= 10 && diffMinutes >= 0) {
+          const msg = `⚠️ <b>PERINGATAN WAKTU HABIS</b>\n\n` +
+                      `<b>ID:</b> ${ticketId}\n` +
+                      `<b>ODC:</b> ${odc}\n` +
+                      `<b>Teknisi:</b> ${user}\n` +
+                      `<b>ID Telegram:</b> ${contact.telegram}\n` +
+                      `<b>No WA:</b> ${contact.wa}\n\n` +
+                      `Waktu peminjaman tersisa kurang dari 10 menit! Segera selesaikan pekerjaan dan kembalikan kunci.`;
+          sendTelegramMessage(msg);
+          activeSheet.getRange(i + 1, 14).setValue('Yes');
+        }
+        
+        // 2. Peringatan Overdue Setiap 1 Jam setelah waktu habis
+        if (diffMinutes < 0) {
+          const timeSinceLastWarning = nowMs - lastOverdueWarningMs;
+          if (timeSinceLastWarning >= 3600000) { // 3600000 ms = 1 Jam
+            const overdueHours = Math.abs(Math.floor(diffMinutes / 60));
+            let keterlambatanText = overdueHours > 0 ? `(Terlambat ${overdueHours} Jam)` : '(Waktu Habis)';
+            const msg = `🚨 <b>ALARM: KUNCI BELUM DIKEMBALIKAN!</b>\n\n` +
                         `<b>ID:</b> ${ticketId}\n` +
                         `<b>ODC:</b> ${odc}\n` +
                         `<b>Teknisi:</b> ${user}\n` +
                         `<b>ID Telegram:</b> ${contact.telegram}\n` +
                         `<b>No WA:</b> ${contact.wa}\n\n` +
-                        `Waktu peminjaman tersisa kurang dari 10 menit! Segera selesaikan pekerjaan dan kembalikan kunci.`;
+                        `Waktu peminjaman sudah habis ${keterlambatanText}. Segera kembalikan kunci ODC!`;
             sendTelegramMessage(msg);
-            
-            // Tandai sudah diperingatkan
-            activeSheet.getRange(i + 1, 14).setValue('Yes');
+            activeSheet.getRange(i + 1, 15).setValue(nowMs.toString());
           }
         }
       }

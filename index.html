@@ -11,8 +11,57 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  
-  <div class="app-layout">
+  <!-- Login Overlay -->
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-box">
+      <img src="logo.png?v=2" alt="Logo O-Key">
+      <h2 id="authTitle">Admin Login</h2>
+      <div class="login-type-selector">
+        <div id="tabHSA" class="active" onclick="switchLoginType('HSA')">HSA</div>
+        <div id="tabTIF" onclick="switchLoginType('TIF')">TIF</div>
+      </div>
+      
+      <!-- Login Section -->
+      <div id="loginSection">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="loginUser" placeholder="Masukkan Username" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPass" placeholder="Masukkan Password">
+        </div>
+        <button class="btn-submit" onclick="doLogin()" id="btnLogin">LOGIN</button>
+        <p style="margin-top: 15px; font-size: 13px; color: var(--text-muted);">
+          Belum punya akun? <a href="#" onclick="toggleAuthMode('register'); return false;" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Daftar di sini</a>
+        </p>
+      </div>
+
+      <!-- Register Section -->
+      <div id="registerSection" style="display: none;">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="regUser" placeholder="Masukkan Username" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="regPass" placeholder="Masukkan Password">
+        </div>
+        <div class="form-group" id="regStoGroup">
+          <label>STO (Area)</label>
+          <input type="text" id="regSto" placeholder="Contoh: BOO, CBD, GNK" autocomplete="off">
+        </div>
+        <button class="btn-submit" onclick="doRegister()" id="btnRegister" style="background: #10b981;">DAFTAR AKUN</button>
+        <p style="margin-top: 15px; font-size: 13px; color: var(--text-muted);">
+          Sudah punya akun? <a href="#" onclick="toggleAuthMode('login'); return false;" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Login di sini</a>
+        </p>
+      </div>
+
+      <p id="loginMessage" style="color:var(--stat-red); margin-top:10px; font-size:14px;"></p>
+    </div>
+  </div>
+
+  <div id="app-container" class="app-layout" style="display:none;">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
@@ -33,7 +82,7 @@
         <li>
           <a href="#" onclick="showPendingHsaView()"><span class="icon">⏳</span> Approval HSA</a>
         </li>
-        <li>
+        <li id="menuApprovalTif">
           <a href="#" onclick="showPendingTifView()"><span class="icon">⏳</span> Approval TIF</a>
         </li>
       </ul>
@@ -920,15 +969,71 @@
           return;
         }
         
+        const parseIdDate = (dateStr) => {
+          if (!dateStr) return new Date(NaN);
+          const parts = dateStr.split(', ');
+          if (parts.length === 2) {
+            const dateParts = parts[0].split('/');
+            const timeParts = parts[1].split('.');
+            if (dateParts.length === 3 && timeParts.length >= 2) {
+              const day = parseInt(dateParts[0], 10);
+              const month = parseInt(dateParts[1], 10) - 1;
+              const year = parseInt(dateParts[2], 10);
+              const hours = parseInt(timeParts[0], 10);
+              const minutes = parseInt(timeParts[1], 10);
+              const seconds = timeParts[2] ? parseInt(timeParts[2], 10) : 0;
+              return new Date(year, month, day, hours, minutes, seconds);
+            }
+          }
+          const dtParts = dateStr.split(' ');
+          if (dtParts.length >= 2) {
+            const dateParts = dtParts[0].split('/');
+            const timeParts = dtParts[1].split('.');
+            if (dateParts.length === 3 && timeParts.length >= 2) {
+              const day = parseInt(dateParts[0], 10);
+              const month = parseInt(dateParts[1], 10) - 1;
+              const year = parseInt(dateParts[2], 10);
+              const hours = parseInt(timeParts[0], 10);
+              const minutes = parseInt(timeParts[1], 10);
+              const seconds = timeParts[2] ? parseInt(timeParts[2], 10) : 0;
+              return new Date(year, month, day, hours, minutes, seconds);
+            }
+          }
+          return new Date(dateStr);
+        };
+
         let html = '';
         history.forEach(item => {
+          let sisaWaktuHtml = '';
+          
+          if (item.waktuKembali === 'Belum Kembali' && item.estimasi) {
+            const borrowTimeMs = parseIdDate(item.waktuPinjam).getTime();
+            const estimasi = parseInt(item.estimasi) || 0;
+            if (!isNaN(borrowTimeMs) && estimasi > 0) {
+              const alarmTimeMs = borrowTimeMs + (estimasi * 60 * 60 * 1000);
+              const now = new Date().getTime();
+              const diffMs = alarmTimeMs - now;
+              
+              if (diffMs > 0) {
+                const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                sisaWaktuHtml = `<div style="margin-top:8px; padding:4px 8px; background:rgba(46, 204, 113, 0.1); border-left:3px solid var(--green-status); border-radius:4px; font-size:11px; color:var(--green-status); display:inline-flex; align-items:center; gap:4px;">⏳ ${diffHrs}j ${diffMins}m tersisa</div>`;
+              } else {
+                const overdueMs = Math.abs(diffMs);
+                const overdueHrs = Math.floor(overdueMs / (1000 * 60 * 60));
+                const overdueMins = Math.floor((overdueMs % (1000 * 60 * 60)) / (1000 * 60));
+                sisaWaktuHtml = `<div style="margin-top:8px; padding:4px 8px; background:rgba(255, 77, 77, 0.1); border-left:3px solid var(--red-status); border-radius:4px; font-size:11px; color:var(--red-status); display:inline-flex; align-items:center; gap:4px;">⚠️ Terlewat ${overdueHrs}j ${overdueMins}m</div>`;
+              }
+            }
+          }
+
           html += `
             <tr>
               <td>${item.id}</td>
               <td style="font-weight:bold;">${item.sto}</td>
               <td style="font-weight:bold;">${item.odc}</td>
               <td style="color:var(--primary-color);">${item.user}</td>
-              <td>${item.kegiatan}</td>
+              <td>${item.kegiatan}${sisaWaktuHtml}</td>
               <td>${item.waktuPinjam}</td>
               <td>${item.waktuKembali}</td>
             </tr>
@@ -1162,10 +1267,163 @@
     })();
 
     setInterval(() => {
-      if(document.getElementById('historyModal').style.display !== 'block') {
+      if(document.getElementById('historyModal') && document.getElementById('historyModal').style.display !== 'block' && sessionStorage.getItem('adminLoggedIn') === 'true') {
          fetchDashboardData();
       }
     }, 30000);
+
+    // --- Login Logic ---
+    let currentLoginType = 'HSA';
+    function switchLoginType(type) {
+      currentLoginType = type;
+      document.getElementById('tabHSA').classList.remove('active');
+      document.getElementById('tabTIF').classList.remove('active');
+      document.getElementById('tab' + type).classList.add('active');
+      
+      if (type === 'HSA') {
+        document.getElementById('regStoGroup').style.display = 'block';
+      } else {
+        document.getElementById('regStoGroup').style.display = 'none';
+      }
+    }
+
+    function toggleAuthMode(mode) {
+      const msg = document.getElementById('loginMessage');
+      msg.innerText = '';
+      if (mode === 'register') {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('registerSection').style.display = 'block';
+        document.getElementById('authTitle').innerText = 'Daftar Admin Baru';
+      } else {
+        document.getElementById('loginSection').style.display = 'block';
+        document.getElementById('registerSection').style.display = 'none';
+        document.getElementById('authTitle').innerText = 'Admin Login';
+      }
+    }
+
+    async function doRegister() {
+      const user = document.getElementById('regUser').value;
+      const pass = document.getElementById('regPass').value;
+      const sto = document.getElementById('regSto').value;
+      const msg = document.getElementById('loginMessage');
+      const btn = document.getElementById('btnRegister');
+      
+      if (!user || !pass) {
+        msg.style.color = 'var(--stat-red)';
+        msg.innerText = 'Username dan Password harus diisi!';
+        return;
+      }
+      
+      btn.innerText = 'Loading...';
+      btn.disabled = true;
+      msg.innerText = '';
+      
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'registerAdmin',
+            payload: { role: currentLoginType, username: user, password: pass, stos: sto }
+          })
+        });
+        
+        const result = await res.json();
+        if (result.success) {
+          msg.style.color = 'var(--stat-green)';
+          msg.innerText = result.message;
+          setTimeout(() => {
+            toggleAuthMode('login');
+            document.getElementById('regUser').value = '';
+            document.getElementById('regPass').value = '';
+            document.getElementById('regSto').value = '';
+          }, 1500);
+        } else {
+          msg.style.color = 'var(--stat-red)';
+          msg.innerText = result.message || 'Registrasi gagal.';
+        }
+      } catch (e) {
+        msg.style.color = 'var(--stat-red)';
+        msg.innerText = 'Kesalahan jaringan.';
+      }
+      
+      btn.innerText = 'DAFTAR AKUN';
+      btn.disabled = false;
+    }
+
+    async function doLogin() {
+      const user = document.getElementById('loginUser').value;
+      const pass = document.getElementById('loginPass').value;
+      const msg = document.getElementById('loginMessage');
+      const btn = document.getElementById('btnLogin');
+      
+      if (!user || !pass) {
+        msg.innerText = 'Username dan Password harus diisi!';
+        return;
+      }
+      
+      btn.innerText = 'Loading...';
+      btn.disabled = true;
+      msg.innerText = '';
+      
+      const actionParam = currentLoginType === 'HSA' ? 'loginHsa' : 'loginTif';
+      
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: actionParam,
+            payload: { user: user, pass: pass }
+          })
+        });
+        
+        const result = await res.json();
+        if (result.success) {
+          const role = result.role || currentLoginType;
+          sessionStorage.setItem('adminLoggedIn', 'true');
+          sessionStorage.setItem('adminRole', role);
+          sessionStorage.setItem('adminUsername', result.username);
+          
+          document.getElementById('loginOverlay').style.display = 'none';
+          document.getElementById('app-container').style.display = 'flex';
+          
+          if (role === 'HSA') {
+            document.getElementById('menuApprovalTif').style.display = 'none';
+          } else {
+            document.getElementById('menuApprovalTif').style.display = 'block';
+          }
+
+          fetchDashboardData(); // Load data after login
+        } else {
+          msg.innerText = result.message || 'Login gagal.';
+        }
+      } catch (e) {
+        msg.innerText = 'Kesalahan jaringan.';
+      }
+      
+      btn.innerText = 'LOGIN';
+      btn.disabled = false;
+    }
+
+    // Check login state on load
+    window.addEventListener('load', () => {
+      if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+        const role = sessionStorage.getItem('adminRole');
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('app-container').style.display = 'flex';
+        
+        if (role === 'HSA') {
+          document.getElementById('menuApprovalTif').style.display = 'none';
+        } else {
+          document.getElementById('menuApprovalTif').style.display = 'block';
+        }
+
+        fetchDashboardData();
+      } else {
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('app-container').style.display = 'none';
+      }
+    });
+
   </script>
 </body>
 </html>
