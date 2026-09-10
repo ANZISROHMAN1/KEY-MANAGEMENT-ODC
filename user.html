@@ -593,7 +593,8 @@
         for (const sa in rawData) {
           for (const sto in rawData[sa]) {
             if (!masterData[sto]) masterData[sto] = [];
-            masterData[sto] = masterData[sto].concat(rawData[sa][sto]);
+            const odcs = rawData[sa][sto].map(item => typeof item === 'object' ? item.name : item);
+            masterData[sto] = masterData[sto].concat(odcs);
           }
         }
 
@@ -997,11 +998,18 @@
     }
 
     async function autofillForm(btn, prefix) {
-      const ticketId = document.getElementById(prefix + '_ticket_id').value.trim().toLowerCase();
+      let ticketId = document.getElementById(prefix + '_ticket_id').value.trim().toLowerCase();
       if (!ticketId) {
         showToast('Masukkan ID Tiket terlebih dahulu!', 'error');
         return;
       }
+
+      // Handle the case where user inputs #EVD- but the active borrowing ID uses #
+      if (ticketId.startsWith('#evd-')) {
+        ticketId = '#' + ticketId.substring(5);
+        document.getElementById(prefix + '_ticket_id').value = ticketId.toUpperCase();
+      }
+
       
       const originalText = btn.innerText;
       btn.innerText = 'Mencari...';

@@ -398,6 +398,48 @@
   </div>
 
   <script>
+    function getOdcIconSvg(odc, size) {
+      let iconColor = odc.status === 'red' ? '#e74c3c' : '#2ecc71';
+      let type = 'default';
+      
+      if (odc.adaGembok === 'TIDAK') {
+        type = 'tidak_ada';
+      } else if (odc.kondisiGembok === 'RUSAK') {
+        type = 'rusak';
+      } else if (odc.gembokWasaka === 'YA') {
+        type = 'wasaka';
+      }
+
+      let svgContent = '';
+      
+      if (type === 'tidak_ada') {
+        svgContent = `
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+        `;
+      } else if (type === 'rusak') {
+        svgContent = `
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          <line x1="3" y1="3" x2="21" y2="21"></line>
+        `;
+      } else if (type === 'wasaka') {
+        svgContent = `
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          <path d="M9 16l2 2 4-4" stroke="#fff"></path>
+        `;
+      } else {
+        // Default Bagus
+        svgContent = `
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        `;
+      }
+      
+      return \`<svg width="\${size}" height="\${size}" viewBox="0 0 24 24" fill="\${iconColor}" stroke="#1e222d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">\${svgContent}</svg>\`;
+    }
+
     // Initialize Dummy Charts
     document.addEventListener("DOMContentLoaded", function() {
       // Common Options for Doughnut charts
@@ -487,10 +529,8 @@
           let iconColor = sto.status === 'red' ? '#e74c3c' : '#2ecc71';
           let iconSvg = `
             <svg width="28" height="28" viewBox="0 0 24 24" fill="${iconColor}" stroke="#1e222d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-              <rect x="6" y="6" width="12" height="8" fill="#fff" stroke="none"></rect>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>`;
 
           const stoCard = document.createElement('div');
@@ -580,14 +620,7 @@
           activeOdcs.push({ name: odc.name, details: odc.borrowDetails, borrowDataStr: borrowDataStr });
         }
         
-        let iconColor = odc.status === 'red' ? '#e74c3c' : '#2ecc71';
-        let iconSvg = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="${iconColor}" stroke="#1e222d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-            <line x1="8" y1="21" x2="16" y2="21"></line>
-            <line x1="12" y1="17" x2="12" y2="21"></line>
-            <rect x="6" y="6" width="12" height="8" fill="#fff" stroke="none"></rect>
-          </svg>`;
+        let iconSvg = getOdcIconSvg(odc, 14);
 
         const odcCard = document.createElement('div');
         odcCard.className = `odc-item status-${odc.status}`;
