@@ -238,10 +238,24 @@ function getMasterData() {
     const odc = data[i][7];
     const sa = data[i][8] || 'OTHER';
     
+    const adaGembok = data[i][9] ? data[i][9].toString().toUpperCase().trim() : '';
+    const gembokWasaka = data[i][10] ? data[i][10].toString().toUpperCase().trim() : '';
+    const kondisiGembok = data[i][11] ? data[i][11].toString().toUpperCase().trim() : '';
+    const gembokSecure = data[i][12] ? data[i][12].toString().toUpperCase().trim() : '';
+    
     if (sto && odc) {
       if (!sas[sa]) sas[sa] = {};
       if (!sas[sa][sto]) sas[sa][sto] = [];
-      if (!sas[sa][sto].includes(odc)) sas[sa][sto].push(odc);
+      const exists = sas[sa][sto].find(item => (typeof item === 'object' ? item.name === odc : item === odc));
+      if (!exists) {
+        sas[sa][sto].push({
+          name: odc,
+          adaGembok: adaGembok,
+          gembokWasaka: gembokWasaka,
+          kondisiGembok: kondisiGembok,
+          gembokSecure: gembokSecure
+        });
+      }
     }
   }
   return sas;
@@ -303,7 +317,8 @@ function getDashboardData() {
     for (const sto in sas[sa]) {
       dashboard[sa].stos[sto] = { name: sto, status: 'green', odcs: [] };
       
-      sas[sa][sto].forEach(odc => {
+      sas[sa][sto].forEach(item => {
+        const odc = typeof item === 'object' ? item.name : item;
         const activeRecord = activeMap[odc];
         const isBorrowed = activeRecord && activeRecord.status === 'Approved';
         
@@ -312,7 +327,11 @@ function getDashboardData() {
         dashboard[sa].stos[sto].odcs.push({
           name: odc,
           status: isBorrowed ? 'red' : 'green',
-          borrowDetails: isBorrowed ? activeRecord : null
+          borrowDetails: isBorrowed ? activeRecord : null,
+          adaGembok: item.adaGembok || '',
+          gembokWasaka: item.gembokWasaka || '',
+          kondisiGembok: item.kondisiGembok || '',
+          gembokSecure: item.gembokSecure || ''
         });
       });
     }

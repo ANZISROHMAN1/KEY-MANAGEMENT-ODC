@@ -406,6 +406,8 @@
         type = 'tidak_ada';
       } else if (odc.kondisiGembok === 'RUSAK') {
         type = 'rusak';
+      } else if (odc.gembokSecure === 'YA') {
+        type = 'secure';
       } else if (odc.gembokWasaka === 'YA') {
         type = 'wasaka';
       }
@@ -439,6 +441,14 @@
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           <path d="M9 16l2 2 4-4" stroke="#fff"></path>
+        `;
+      } else if (type === 'secure') {
+        baseColor = '#3498db'; // Blue
+        label = 'SECURE';
+        svgContent = `
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          <circle cx="12" cy="16" r="2" fill="#fff" stroke="none"></circle>
         `;
       }
       
