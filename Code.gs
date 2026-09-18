@@ -469,6 +469,7 @@ function submitReturn(data) {
   
   historySheet.appendRow([record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7], time, selfieUrl]);
   activeSheet.deleteRow(rowIndex);
+  invalidateHistoryCache();
   
   return { success: true };
 }
@@ -579,7 +580,30 @@ function registerAdmin(data) {
   return { success: true, message: 'Registrasi berhasil! Silakan login.' };
 }
 
+function getHistoryCacheVersion() {
+  const cache = CacheService.getScriptCache();
+  let v = cache.get('HIST_VER');
+  if (!v) {
+    v = new Date().getTime().toString();
+    try { cache.put('HIST_VER', v, 21600); } catch(e){}
+  }
+  return v;
+}
+
+function invalidateHistoryCache() {
+  const cache = CacheService.getScriptCache();
+  try { cache.put('HIST_VER', new Date().getTime().toString(), 21600); } catch(e){}
+}
+
 function getOdcHistory(odc) {
+  const cache = CacheService.getScriptCache();
+  const v = getHistoryCacheVersion();
+  const cacheKey = 'HIST_ODC_' + odc + '_' + v;
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    try { return JSON.parse(cached); } catch(e){}
+  }
+
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
   const sheet = ss.getSheetByName('History');
   if (!sheet) return [];
@@ -600,6 +624,8 @@ function getOdcHistory(odc) {
       });
     }
   }
+  
+  try { cache.put(cacheKey, JSON.stringify(history), 1800); } catch(e){}
   return history;
 }
 
@@ -735,6 +761,7 @@ function getAllHistory() {
     }
   }
   
+  try { cache.put(cacheKey, JSON.stringify(history), 1800); } catch(e){}
   return history;
 }
 
