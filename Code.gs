@@ -41,7 +41,12 @@ function doGet(e) {
   let result = {};
 
   try {
-    if (action === 'getMasterData') {
+    if (action === 'getInitialData') {
+      result = {
+        dashboard: getDashboardData(),
+        users: getUsersList()
+      };
+    } else if (action === 'getMasterData') {
       result = getMasterData();
     } else if (action === 'getDashboardData') {
       result = getDashboardData();
@@ -105,6 +110,9 @@ function doPost(e) {
 }
 
 function initSheets() {
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty('SHEETS_INITIALIZED') === 'true') return;
+
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
   if (!ss.getSheetByName('ActiveBorrowings')) {
     const sheet = ss.insertSheet('ActiveBorrowings');
@@ -128,6 +136,8 @@ function initSheets() {
     sheet.appendRow(['Username', 'Password', 'Telegram ID']);
     sheet.appendRow(['admin_tif', '123456', '@contoh_tif']); // Default dummy TIF
   }
+  
+  props.setProperty('SHEETS_INITIALIZED', 'true');
 }
 
 function getAdminTelegramTags(sto) {
@@ -228,6 +238,14 @@ function generateTicketId(sto, odc, isEvidence) {
 }
 
 function getMasterData() {
+  const cache = CacheService.getScriptCache();
+  const cachedData = cache.get("MASTER_DATA");
+  if (cachedData) {
+    try {
+      return JSON.parse(cachedData);
+    } catch(e) {}
+  }
+
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
   const sheet = ss.getSheetByName('DB ODC') || ss.getSheets()[0];
   const data = sheet.getDataRange().getValues();
@@ -269,6 +287,11 @@ function getMasterData() {
       }
     }
   }
+  
+  try {
+    cache.put("MASTER_DATA", JSON.stringify(sas), 60); // Cache for 1 minute
+  } catch(e) {}
+  
   return sas;
 }
 

@@ -476,29 +476,20 @@
       };
 
       // Fetch Realtime Data
-      fetchDashboardData();
-      fetchTotalUsers();
+      fetchInitialData();
     });
 
-    async function fetchTotalUsers() {
+    async function fetchInitialData() {
       try {
-        const response = await fetch(API_URL + '?action=getUsersList');
-        const users = await response.json();
-        const el = document.getElementById('countUsers');
-        if (el) el.innerText = users.length;
-      } catch (err) {
-        console.error('Error fetching total users:', err);
-      }
-    }
-
-    // --- Existing Dashboard Logic (Adapted) ---
-    async function fetchDashboardData() {
-      try {
-        const response = await fetch(API_URL + '?action=getDashboardData');
+        const response = await fetch(API_URL + '?action=getInitialData');
         const data = await response.json();
-        renderDashboard(data);
+        
+        const countEl = document.getElementById('countUsers');
+        if (countEl) countEl.innerText = data.users.length;
+        
+        renderDashboard(data.dashboard);
       } catch (err) {
-        console.error('Error fetching dashboard:', err);
+        console.error('Error fetching initial data:', err);
         const dashboard = document.getElementById('dashboard');
         if (dashboard.innerHTML.trim() === '') {
           document.getElementById('loader').style.display = 'none';
