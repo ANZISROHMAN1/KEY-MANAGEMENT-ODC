@@ -653,7 +653,7 @@
         odcCard.style.alignItems = 'center';
         odcCard.style.justifyContent = 'space-between';
         odcCard.style.borderTop = `3px solid ${design.color}`;
-        odcCard.onclick = (e) => handleOdcClick(e, odc.name, odc.status, borrowDataStr);
+        odcCard.onclick = (e) => handleOdcClick(e, odc.name, odc.status, borrowDataStr, odc.gembokDiganti);
         odcCard.innerHTML = `
           <div style="font-size:8px; color:${design.color}; font-weight:800; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">${design.label}</div>
           <div class="monitor-icon" style="margin-bottom:5px;">${design.svg}</div>
@@ -666,7 +666,7 @@
         let alertHtml = '';
         activeOdcs.forEach((item, index) => {
           alertHtml += `
-            <div onclick="handleOdcClick(null, '${item.name}', 'red', '${item.borrowDataStr}')" class="alert-box" title="Klik untuk melihat riwayat ODC ini">
+            <div onclick="handleOdcClick(null, '${item.name}', 'red', '${item.borrowDataStr}', '${item.gembokDiganti || ''}')" class="alert-box" title="Klik untuk melihat riwayat ODC ini">
               <div>
                 <strong>${item.name}</strong> dipinjam oleh <strong>${item.details.user}</strong>
                 <span class="badge-hint">Klik untuk lihat riwayat</span>
@@ -781,7 +781,7 @@
       }
     }
 
-    async function handleOdcClick(event, odcName, status, borrowDataStr) {
+    async function handleOdcClick(event, odcName, status, borrowDataStr, gembokDiganti = '') {
       if (event && event.stopPropagation) event.stopPropagation();
       
       const historySection = document.getElementById('odcHistorySection');
@@ -826,26 +826,41 @@
         `;
       }
       
-      fetchHistory(odcName, activeRowHtml);
+      fetchHistory(odcName, activeRowHtml, gembokDiganti);
     }
 
-    async function fetchHistory(odcName, activeRowHtml = '') {
+    async function fetchHistory(odcName, activeRowHtml = '', gembokDiganti = '') {
       try {
         const response = await fetch(API_URL + '?action=getOdcHistory&odc=' + encodeURIComponent(odcName));
         const historyList = await response.json();
-        renderHistory(odcName, historyList, activeRowHtml);
+        renderHistory(odcName, historyList, activeRowHtml, gembokDiganti);
       } catch (err) {
         document.getElementById('odcHistoryTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:#e74c3c;">Gagal mengambil riwayat.</td></tr>';
       }
     }
 
-    function renderHistory(odcName, historyList, activeRowHtml) {
+    function renderHistory(odcName, historyList, activeRowHtml, gembokDiganti = '') {
       const tbody = document.getElementById('odcHistoryTableBody');
       let html = activeRowHtml;
       
       let index = activeRowHtml ? 2 : 1;
+
+      if (gembokDiganti) {
+        html += `
+          <tr style="background: rgba(46, 204, 113, 0.1);">
+            <td>${index++}</td>
+            <td>${gembokDiganti}</td>
+            <td>-</td>
+            <td>-</td>
+            <td style="font-weight:bold; color:#2ecc71;">${odcName}</td>
+            <td style="font-weight:bold;">Penggantian Gembok</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+        `;
+      }
       
-      if (historyList.length === 0 && !activeRowHtml) {
+      if (historyList.length === 0 && !activeRowHtml && !gembokDiganti) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#888;">Belum ada riwayat peminjaman.</td></tr>';
         return;
       }

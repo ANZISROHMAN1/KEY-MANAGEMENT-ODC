@@ -243,6 +243,16 @@ function getMasterData() {
     const kondisiGembok = data[i][11] ? data[i][11].toString().toUpperCase().trim() : '';
     const gembokSecure = data[i][12] ? data[i][12].toString().toUpperCase().trim() : '';
     
+    let gembokDigantiStr = '';
+    const rawGembokDiganti = data[i][13];
+    if (rawGembokDiganti) {
+      if (rawGembokDiganti instanceof Date) {
+        gembokDigantiStr = Utilities.formatDate(rawGembokDiganti, Session.getScriptTimeZone(), "dd/MM/yyyy");
+      } else {
+        gembokDigantiStr = rawGembokDiganti.toString().trim();
+      }
+    }
+    
     if (sto && odc) {
       if (!sas[sa]) sas[sa] = {};
       if (!sas[sa][sto]) sas[sa][sto] = [];
@@ -253,7 +263,8 @@ function getMasterData() {
           adaGembok: adaGembok,
           gembokWasaka: gembokWasaka,
           kondisiGembok: kondisiGembok,
-          gembokSecure: gembokSecure
+          gembokSecure: gembokSecure,
+          gembokDiganti: gembokDigantiStr
         });
       }
     }
@@ -331,7 +342,8 @@ function getDashboardData() {
           adaGembok: item.adaGembok || '',
           gembokWasaka: item.gembokWasaka || '',
           kondisiGembok: item.kondisiGembok || '',
-          gembokSecure: item.gembokSecure || ''
+          gembokSecure: item.gembokSecure || '',
+          gembokDiganti: item.gembokDiganti || ''
         });
       });
     }
