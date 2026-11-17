@@ -78,6 +78,9 @@
           <a href="#" onclick="backToDashboard()"><span class="icon">⏱</span> Dashboard</a>
         </li>
         <li>
+          <a href="#" onclick="showMonitoringGembokView('all')"><span class="icon">🔐</span> Monitoring Gembok</a>
+        </li>
+        <li>
           <a href="#" onclick="showGlobalHistoryView()"><span class="icon">📝</span> History</a>
         </li>
         <li>
@@ -120,6 +123,14 @@
              <div class="stat-title">GEMBOK OPEN</div>
              <div class="stat-value"><span id="countGembokOpen">...</span> <span class="icon">📖</span></div>
           </div>
+          <div class="stat-card red" style="cursor: pointer;" onclick="showMonitoringGembokView('rusak')">
+             <div class="stat-title">GEMBOK RUSAK</div>
+             <div class="stat-value"><span id="countGembokRusak">...</span> <span class="icon">⚠️</span></div>
+          </div>
+          <div class="stat-card green" style="cursor: pointer;" onclick="showMonitoringGembokView('diperbarui')">
+             <div class="stat-title">TELAH DIPERBARUI</div>
+             <div class="stat-value"><span id="countGembokDiperbarui">...</span> <span class="icon">✅</span></div>
+          </div>
         </div>
 
         <hr style="border-color: var(--border-color); margin: 30px 0;">
@@ -146,7 +157,11 @@
           
           <!-- ODC History Section -->
           <div id="odcHistorySection" class="card-section" style="display:none;">
-            <h2 id="odcHistoryTitle">Riwayat ODC</h2>
+            <div id="gembokStatusBanner" style="margin-bottom: 15px;"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+              <h2 id="odcHistoryTitle" style="margin: 0;">Riwayat ODC</h2>
+              <button onclick="openModalGembokEvidence()" class="btn-submit" style="width: auto; margin: 0; padding: 6px 14px; font-size: 13px; background: #2ecc71; border-radius: 6px; cursor: pointer;">+ Catat Pergantian Kunci</button>
+            </div>
             <div class="table-responsive">
               <table>
                 <thead>
@@ -209,6 +224,47 @@
               </thead>
               <tbody id="usersTableBody">
                 <tr><td colspan="2" style="text-align:center;">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Monitoring Gembok View -->
+        <div id="monitoringGembokView" class="card-section" style="display:none;">
+          <button onclick="backToDashboard()" class="btn-back" style="margin-bottom: 20px;">&larr; Kembali ke Dashboard</button>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h2 style="margin: 0;">MONITORING STATUS & PERGANTIAN GEMBOK</h2>
+              <p style="margin: 5px 0 0; color: var(--text-muted); font-size: 13px;">Monitoring kondisi fisik gembok ODC (Rusak vs Telah Diperbarui) beserta bukti foto evidence.</p>
+            </div>
+            <button onclick="openModalGembokEvidence()" class="btn-submit" style="background: #2ecc71; width: auto; margin: 0; padding: 8px 18px; font-size: 13px; cursor: pointer;">+ Catat Pergantian Kunci</button>
+          </div>
+
+          <!-- Filter Pills -->
+          <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button id="btnFilterGembokAll" onclick="filterGembokTable('all')" class="link-btn" style="background: var(--primary-color); color: white; padding: 6px 14px; border-radius: 20px; border: none; cursor: pointer;">Semua ODC (<span id="filterCountAll">0</span>)</button>
+            <button id="btnFilterGembokRusak" onclick="filterGembokTable('rusak')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 14px; border-radius: 20px; cursor: pointer;">⚠️ Gembok Rusak (<span id="filterCountRusak">0</span>)</button>
+            <button id="btnFilterGembokDiperbarui" onclick="filterGembokTable('diperbarui')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 14px; border-radius: 20px; cursor: pointer;">✅ Telah Diperbarui (<span id="filterCountDiperbarui">0</span>)</button>
+          </div>
+
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>STO</th>
+                  <th>Kode ODC</th>
+                  <th>Status Fisik</th>
+                  <th>Tanggal Diperbarui</th>
+                  <th>Petugas</th>
+                  <th>Catatan</th>
+                  <th>Evidence Foto</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="monitoringGembokTableBody">
+                <tr><td colspan="9" style="text-align:center;">Memuat data monitoring...</td></tr>
               </tbody>
             </table>
           </div>
@@ -397,6 +453,78 @@
     </div>
   </div>
 
+  <!-- Modal Evidence Pergantian Gembok -->
+  <div id="gembokEvidenceModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <span class="close-btn" onclick="closeGembokEvidenceModal()">&times;</span>
+      <h2 style="margin-top: 0; color: var(--primary-color); font-size: 20px;">Submit Evidence Pergantian Kunci</h2>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">
+        Catat tanggal pergantian kunci/gembok dan upload foto evidence untuk kemudahan tracking kunci ODC.
+      </p>
+
+      <form id="adminGembokForm" onsubmit="handleAdminGembokSubmit(event)">
+        <div class="form-group">
+          <label>Kode ODC</label>
+          <input type="text" id="ag_odc" required placeholder="Contoh: PAG-FAC" style="font-weight: bold; color: var(--primary-color);">
+        </div>
+
+        <div class="form-group">
+          <label>Kode STO (Area)</label>
+          <input type="text" id="ag_sto" placeholder="Contoh: PAG">
+        </div>
+
+        <div class="form-group">
+          <label>Tanggal Pergantian</label>
+          <input type="date" id="ag_tanggal" required>
+        </div>
+
+        <div class="form-group">
+          <label>Petugas / Teknisi</label>
+          <input type="text" id="ag_petugas" required placeholder="Nama teknisi / petugas pengganti">
+        </div>
+
+        <div class="form-group">
+          <label>Keterangan / Status Gembok</label>
+          <input type="text" id="ag_keterangan" placeholder="Contoh: Gembok baru terpasang (Kondisi Bagus/Secure)">
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin: 10px 0;">
+          <input type="checkbox" id="ag_secure" style="width: 18px; height: 18px; cursor: pointer;">
+          <label for="ag_secure" style="margin: 0; cursor: pointer; font-size: 13px;">Gembok Tipe Secure</label>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+          <!-- Foto Sebelum -->
+          <div style="background: var(--bg-color); border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; text-align: center;">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #e74c3c;">1. Foto SEBELUM Diganti<br><span style="font-weight: normal; font-size: 11px; color: var(--text-muted);">(Gembok Rusak / Lama)</span></label>
+            <input type="file" id="ag_photo_before_file" accept="image/*" required style="width: 100%; font-size: 11px;" onchange="handleAdminPhotoPreview(event, 'before')">
+            <input type="hidden" id="ag_photo_before_base64">
+            <div id="ag_preview_before_box" style="display: none; margin-top: 8px;">
+              <img id="ag_preview_before_img" src="" style="max-width: 100%; max-height: 120px; border-radius: 6px; object-fit: cover;">
+              <p style="color: #2ecc71; font-size: 11px; margin: 4px 0 0; font-weight: bold;">Foto 1 Siap ✓</p>
+            </div>
+          </div>
+
+          <!-- Foto Sesudah -->
+          <div style="background: var(--bg-color); border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; text-align: center;">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #2ecc71;">2. Foto SESUDAH Diganti<br><span style="font-weight: normal; font-size: 11px; color: var(--text-muted);">(Gembok Baru Terpasang)</span></label>
+            <input type="file" id="ag_photo_after_file" accept="image/*" required style="width: 100%; font-size: 11px;" onchange="handleAdminPhotoPreview(event, 'after')">
+            <input type="hidden" id="ag_photo_after_base64">
+            <div id="ag_preview_after_box" style="display: none; margin-top: 8px;">
+              <img id="ag_preview_after_img" src="" style="max-width: 100%; max-height: 120px; border-radius: 6px; object-fit: cover;">
+              <p style="color: #2ecc71; font-size: 11px; margin: 4px 0 0; font-weight: bold;">Foto 2 Siap ✓</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" onclick="closeGembokEvidenceModal()" class="btn-submit" style="background: var(--text-muted); width: auto; padding: 8px 16px; margin: 0; cursor: pointer;">Batal</button>
+          <button type="submit" id="btnSubmitAdminGembok" class="btn-submit" style="background: #2ecc71; width: auto; padding: 8px 20px; margin: 0; cursor: pointer;">Simpan Evidence</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     function getOdcStatusDesign(odc, size) {
       let isBorrowed = odc.status === 'red';
@@ -516,6 +644,9 @@
       dashboard.innerHTML = '';
       
       let activeBorrowingsList = [];
+      let allOdcsList = [];
+      let totalGembokRusak = 0;
+      let totalGembokDiperbarui = 0;
       
       for (const saName in data) {
         const sa = data[saName];
@@ -534,6 +665,13 @@
             if (odc.status === 'red' && odc.borrowDetails) {
               activeBorrowingsList.push(odc.borrowDetails);
             }
+            if (odc.kondisiGembok === 'RUSAK' || odc.adaGembok === 'TIDAK') {
+              totalGembokRusak++;
+            }
+            if (odc.gembokDiganti || odc.fotoGembok) {
+              totalGembokDiperbarui++;
+            }
+            allOdcsList.push({ ...odc, sto: stoName, sa: saName });
           });
           
           let iconColor = sto.status === 'red' ? '#e74c3c' : '#2ecc71';
@@ -576,6 +714,12 @@
       if (countGembokOpenEl) {
         countGembokOpenEl.innerText = activeBorrowingsList.length;
       }
+
+      window.allOdcsList = allOdcsList;
+      const countGembokRusakEl = document.getElementById('countGembokRusak');
+      if (countGembokRusakEl) countGembokRusakEl.innerText = totalGembokRusak;
+      const countGembokDiperbaruiEl = document.getElementById('countGembokDiperbarui');
+      if (countGembokDiperbaruiEl) countGembokDiperbaruiEl.innerText = totalGembokDiperbarui;
       
       if (activeBorrowingsList.length > 0) {
         if (!isDetailViewOpen) activeSection.style.display = 'block';
@@ -629,7 +773,17 @@
         let borrowDataStr = btoa(encodeURIComponent(borrowData));
         
         if (odc.status === 'red' && odc.borrowDetails) {
-          activeOdcs.push({ name: odc.name, details: odc.borrowDetails, borrowDataStr: borrowDataStr });
+          activeOdcs.push({ 
+            name: odc.name, 
+            details: odc.borrowDetails, 
+            borrowDataStr: borrowDataStr,
+            gembokDiganti: odc.gembokDiganti,
+            fotoGembok: odc.fotoGembok,
+            petugasGembok: odc.petugasGembok,
+            kondisiGembok: odc.kondisiGembok,
+            gembokSecure: odc.gembokSecure,
+            adaGembok: odc.adaGembok
+          });
         }
         
         let design = getOdcStatusDesign(odc, 18);
@@ -644,7 +798,7 @@
         odcCard.style.alignItems = 'center';
         odcCard.style.justifyContent = 'space-between';
         odcCard.style.borderTop = `3px solid ${design.color}`;
-        odcCard.onclick = (e) => handleOdcClick(e, odc.name, odc.status, borrowDataStr, odc.gembokDiganti);
+        odcCard.onclick = (e) => handleOdcClick(e, odc.name, odc.status, borrowDataStr, odc.gembokDiganti, odc.fotoGembok, odc.petugasGembok, stoName, odc.kondisiGembok, odc.gembokSecure, odc.adaGembok, odc.fotoSebelum, odc.fotoSesudah);
         odcCard.innerHTML = `
           <div style="font-size:8px; color:${design.color}; font-weight:800; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">${design.label}</div>
           <div class="monitor-icon" style="margin-bottom:5px;">${design.svg}</div>
@@ -657,7 +811,7 @@
         let alertHtml = '';
         activeOdcs.forEach((item, index) => {
           alertHtml += `
-            <div onclick="handleOdcClick(null, '${item.name}', 'red', '${item.borrowDataStr}', '${item.gembokDiganti || ''}')" class="alert-box" title="Klik untuk melihat riwayat ODC ini">
+            <div onclick="handleOdcClick(null, '${item.name}', 'red', '${item.borrowDataStr}', '${item.gembokDiganti || ''}', '${item.fotoGembok || ''}', '${item.petugasGembok || ''}', '${stoName}', '${item.kondisiGembok || ''}', '${item.gembokSecure || ''}', '${item.adaGembok || ''}')" class="alert-box" title="Klik untuk melihat riwayat ODC ini">
               <div>
                 <strong>${item.name}</strong> dipinjam oleh <strong>${item.details.user}</strong>
                 <span class="badge-hint">Klik untuk lihat riwayat</span>
@@ -758,6 +912,9 @@
       const pendingTifView = document.getElementById('pendingTifView');
       if(pendingTifView) pendingTifView.style.display = 'none';
 
+      const monitoringView = document.getElementById('monitoringGembokView');
+      if(monitoringView) monitoringView.style.display = 'none';
+
       document.getElementById('dashboard').style.display = 'grid';
       // Ensure Dashboard menu is active
       const sidebarItems = document.querySelectorAll('.sidebar-menu li');
@@ -772,13 +929,65 @@
       }
     }
 
-    async function handleOdcClick(event, odcName, status, borrowDataStr, gembokDiganti = '') {
+    async function handleOdcClick(event, odcName, status, borrowDataStr, gembokDiganti = '', fotoGembok = '', petugasGembok = '', stoName = '', kondisiGembok = '', gembokSecure = '', adaGembok = '', fotoSebelum = '', fotoSesudah = '') {
       if (event && event.stopPropagation) event.stopPropagation();
       
       const historySection = document.getElementById('odcHistorySection');
       const title = document.getElementById('odcHistoryTitle');
       const tbody = document.getElementById('odcHistoryTableBody');
       
+      window.currentSelectedOdc = odcName;
+      window.currentSelectedSto = stoName;
+      window.currentGembokDiganti = gembokDiganti;
+      window.currentFotoGembok = fotoGembok;
+      window.currentFotoSebelum = fotoSebelum;
+      window.currentFotoSesudah = fotoSesudah;
+      window.currentPetugasGembok = petugasGembok;
+      window.currentKondisiGembok = kondisiGembok;
+      window.currentGembokSecure = gembokSecure;
+      window.currentAdaGembok = adaGembok;
+
+      // Render Gembok Monitoring Status Banner
+      const bannerEl = document.getElementById('gembokStatusBanner');
+      if (bannerEl) {
+        if (gembokDiganti) {
+          bannerEl.innerHTML = `
+            <div style="background: rgba(46, 204, 113, 0.12); border: 1px solid #2ecc71; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <span style="color: #2ecc71; font-weight: bold; font-size: 14px;">✅ Status Gembok: TELAH DIPERBARUI (${gembokSecure === 'YA' ? 'SECURE' : 'BAGUS'})</span>
+                <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-muted);">Diperbarui pada: <strong>${gembokDiganti}</strong> ${petugasGembok ? `oleh <strong>${petugasGembok}</strong>` : ''}</p>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                ${fotoSebelum ? `<a href="${fotoSebelum}" target="_blank" class="link-btn" style="background: #e74c3c; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; border-radius: 4px;">📷 Foto Sebelum</a>` : ''}
+                ${fotoSesudah || fotoGembok ? `<a href="${fotoSesudah || fotoGembok}" target="_blank" class="link-btn" style="background: #2ecc71; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; border-radius: 4px;">📷 Foto Sesudah</a>` : ''}
+                <button onclick="openModalGembokEvidence('${odcName}')" class="link-btn" style="background: transparent; border: 1px solid #2ecc71; color: #2ecc71; padding: 5px 12px; font-size: 12px; cursor: pointer; border-radius: 4px;">✏️ Update Data / Foto</button>
+              </div>
+            </div>
+          `;
+        } else if (kondisiGembok === 'RUSAK' || adaGembok === 'TIDAK') {
+          const labelRusak = adaGembok === 'TIDAK' ? 'NO GEMBOK' : 'RUSAK';
+          bannerEl.innerHTML = `
+            <div style="background: rgba(231, 76, 60, 0.12); border: 1px solid #e74c3c; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <span style="color: #e74c3c; font-weight: bold; font-size: 14px;">⚠️ Status Gembok: ${labelRusak} (Perlu Diperbarui)</span>
+                <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-muted);">Gembok ODC ini terdata rusak atau belum ada. Silakan upload foto sebelum & sesudah setelah diganti.</p>
+              </div>
+              <button onclick="openModalGembokEvidence('${odcName}')" class="btn-submit" style="background: #2ecc71; width: auto; margin: 0; padding: 8px 16px; font-size: 13px; cursor: pointer; border-radius: 6px;">+ Submit Evidence Gembok Baru</button>
+            </div>
+          `;
+        } else {
+          bannerEl.innerHTML = `
+            <div style="background: rgba(52, 152, 219, 0.12); border: 1px solid #3498db; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <span style="color: #3498db; font-weight: bold; font-size: 14px;">ℹ️ Status Gembok: ${gembokSecure === 'YA' ? 'SECURE' : 'BAGUS'}</span>
+                <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-muted);">Gembok dalam kondisi baik. Klik di kanan jika melakukan penggantian kunci baru.</p>
+              </div>
+              <button onclick="openModalGembokEvidence('${odcName}')" class="btn-submit" style="background: #3498db; width: auto; margin: 0; padding: 6px 14px; font-size: 12px; cursor: pointer; border-radius: 6px;">+ Catat Pergantian Kunci</button>
+            </div>
+          `;
+        }
+      }
+
       historySection.style.display = 'block';
       title.innerText = `LOG ${odcName}`;
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
@@ -817,26 +1026,41 @@
         `;
       }
       
-      fetchHistory(odcName, activeRowHtml, gembokDiganti);
+      fetchHistory(odcName, activeRowHtml, gembokDiganti, fotoGembok, petugasGembok, fotoSebelum, fotoSesudah);
     }
 
-    async function fetchHistory(odcName, activeRowHtml = '', gembokDiganti = '') {
+    async function fetchHistory(odcName, activeRowHtml = '', gembokDiganti = '', fotoGembok = '', petugasGembok = '', fotoSebelum = '', fotoSesudah = '') {
       try {
         const response = await fetch(API_URL + '?action=getOdcHistory&odc=' + encodeURIComponent(odcName));
         const historyList = await response.json();
-        renderHistory(odcName, historyList, activeRowHtml, gembokDiganti);
+        renderHistory(odcName, historyList, activeRowHtml, gembokDiganti, fotoGembok, petugasGembok, fotoSebelum, fotoSesudah);
       } catch (err) {
         document.getElementById('odcHistoryTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:#e74c3c;">Gagal mengambil riwayat.</td></tr>';
       }
     }
 
-    function renderHistory(odcName, historyList, activeRowHtml, gembokDiganti = '') {
+    function renderHistory(odcName, historyList, activeRowHtml, gembokDiganti = '', fotoGembok = '', petugasGembok = '', fotoSebelum = '', fotoSesudah = '') {
       const tbody = document.getElementById('odcHistoryTableBody');
       let html = activeRowHtml;
       
       let index = activeRowHtml ? 2 : 1;
 
       if (gembokDiganti) {
+        let aksiHtml = '';
+        let photoLinks = [];
+        if (fotoSebelum) {
+          photoLinks.push(`<a href="${fotoSebelum}" target="_blank" class="link-btn" style="background:#e74c3c; color:white; font-size:11px; padding:3px 7px; text-decoration:none; border-radius:4px;">📷 Sebelum</a>`);
+        }
+        if (fotoSesudah || fotoGembok) {
+          photoLinks.push(`<a href="${fotoSesudah || fotoGembok}" target="_blank" class="link-btn" style="background:#2ecc71; color:white; font-size:11px; padding:3px 7px; text-decoration:none; border-radius:4px;">📷 Sesudah</a>`);
+        }
+
+        if (photoLinks.length > 0) {
+          aksiHtml = photoLinks.join(' ') + ` <button onclick="openModalGembokEvidence('${odcName}')" class="link-btn" style="background:transparent; border:1px solid #2ecc71; color:#2ecc71; font-size:11px; padding:2px 5px; margin-left:3px; cursor:pointer; border-radius:4px;" title="Ganti/Upload Ulang">✏️</button>`;
+        } else {
+          aksiHtml = `<button onclick="openModalGembokEvidence('${odcName}')" class="link-btn" style="background:#f39c12; color:white; font-size:11px; padding:4px 8px; cursor:pointer; border:none; border-radius:4px;">+ Upload Evidence</button>`;
+        }
+
         html += `
           <tr style="background: rgba(46, 204, 113, 0.1);">
             <td>${index++}</td>
@@ -845,8 +1069,8 @@
             <td>-</td>
             <td style="font-weight:bold; color:#2ecc71;">${odcName}</td>
             <td style="font-weight:bold;">Penggantian Gembok</td>
-            <td>-</td>
-            <td>-</td>
+            <td>${petugasGembok || '-'}</td>
+            <td>${aksiHtml}</td>
           </tr>
         `;
       }
@@ -889,6 +1113,159 @@
       });
       
       tbody.innerHTML = html;
+    }
+
+    function openModalGembokEvidence(odcName = '') {
+      const modal = document.getElementById('gembokEvidenceModal');
+      const targetOdc = odcName || window.currentSelectedOdc || '';
+      document.getElementById('ag_odc').value = targetOdc;
+      document.getElementById('ag_sto').value = window.currentSelectedSto || (targetOdc.includes('-') ? targetOdc.split('-')[0] : '');
+      
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('ag_tanggal').value = today;
+
+      const adminUser = sessionStorage.getItem('adminUser') || localStorage.getItem('odc_admin') || '';
+      if (window.currentPetugasGembok) {
+        document.getElementById('ag_petugas').value = window.currentPetugasGembok;
+      } else if (adminUser) {
+        document.getElementById('ag_petugas').value = adminUser;
+      }
+
+      document.getElementById('ag_photo_before_file').value = '';
+      document.getElementById('ag_photo_before_base64').value = '';
+      document.getElementById('ag_preview_before_box').style.display = 'none';
+
+      document.getElementById('ag_photo_after_file').value = '';
+      document.getElementById('ag_photo_after_base64').value = '';
+      document.getElementById('ag_preview_after_box').style.display = 'none';
+
+      modal.style.display = 'block';
+    }
+
+    function closeGembokEvidenceModal() {
+      document.getElementById('gembokEvidenceModal').style.display = 'none';
+    }
+
+    function handleAdminPhotoPreview(event, type) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressed = canvas.toDataURL('image/jpeg', 0.7);
+          if (type === 'before') {
+            document.getElementById('ag_photo_before_base64').value = compressed;
+            document.getElementById('ag_preview_before_img').src = compressed;
+            document.getElementById('ag_preview_before_box').style.display = 'block';
+          } else {
+            document.getElementById('ag_photo_after_base64').value = compressed;
+            document.getElementById('ag_preview_after_img').src = compressed;
+            document.getElementById('ag_preview_after_box').style.display = 'block';
+          }
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function handleAdminGembokSubmit(e) {
+      e.preventDefault();
+      const odc = document.getElementById('ag_odc').value.trim();
+      const sto = document.getElementById('ag_sto').value.trim();
+      const rawTanggal = document.getElementById('ag_tanggal').value;
+      const petugas = document.getElementById('ag_petugas').value.trim();
+      const keterangan = document.getElementById('ag_keterangan').value.trim();
+      const isSecure = document.getElementById('ag_secure').checked;
+      const photoBefore = document.getElementById('ag_photo_before_base64').value;
+      const photoAfter = document.getElementById('ag_photo_after_base64').value;
+
+      if (!photoBefore) {
+        alert('Silakan pilih foto SEBELUM diganti terlebih dahulu!');
+        return;
+      }
+      if (!photoAfter) {
+        alert('Silakan pilih foto SESUDAH diganti (gembok baru) terlebih dahulu!');
+        return;
+      }
+
+      let tanggal = '';
+      if (rawTanggal) {
+        const p = rawTanggal.split('-');
+        if (p.length === 3) tanggal = `${p[2]}/${p[1]}/${p[0]}`;
+      }
+
+      const btn = document.getElementById('btnSubmitAdminGembok');
+      btn.disabled = true;
+      btn.innerText = 'Menyimpan...';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'submitPergantianGembok',
+            payload: {
+              odc: odc,
+              sto: sto,
+              tanggal: tanggal,
+              petugas: petugas,
+              keterangan: keterangan,
+              isSecure: isSecure,
+              photoBefore: photoBefore,
+              photoAfter: photoAfter
+            }
+          })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          alert('Berhasil menyimpan evidence pergantian kunci untuk ' + odc);
+          closeGembokEvidenceModal();
+          
+          window.currentGembokDiganti = tanggal;
+          window.currentFotoGembok = result.fotoUrl;
+          window.currentFotoSebelum = result.fotoSebelumUrl;
+          window.currentFotoSesudah = result.fotoSesudahUrl;
+          window.currentPetugasGembok = petugas;
+
+          await fetchInitialData();
+          if (window.currentSelectedOdc === odc) {
+            handleOdcClick(null, odc, 'green', '', tanggal, result.fotoUrl, petugas, sto, 'BAGUS', isSecure ? 'YA' : '', 'YA', result.fotoSebelumUrl, result.fotoSesudahUrl);
+          }
+        } else {
+          alert('Gagal: ' + (result.message || 'Terjadi kesalahan'));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Terjadi kesalahan jaringan');
+      }
+
+      btn.disabled = false;
+      btn.innerText = 'Simpan Evidence';
     }
 
     function closeModal() {
@@ -1001,6 +1378,121 @@
         btn.onclick = backToDashboard;
         activeSection.insertBefore(btn, activeSection.firstChild);
       }
+    }
+
+    function showMonitoringGembokView(filter = 'all') {
+      // Sembunyikan view lain
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('activeBorrowingsSection').style.display = 'none';
+      document.getElementById('stoDetailView').style.display = 'none';
+      const usersView = document.getElementById('usersView');
+      if (usersView) usersView.style.display = 'none';
+      const globalHistoryView = document.getElementById('globalHistoryView');
+      if (globalHistoryView) globalHistoryView.style.display = 'none';
+      const approvedBaView = document.getElementById('approvedBaView');
+      if (approvedBaView) approvedBaView.style.display = 'none';
+      const pendingHsaView = document.getElementById('pendingHsaView');
+      if (pendingHsaView) pendingHsaView.style.display = 'none';
+      const pendingTifView = document.getElementById('pendingTifView');
+      if (pendingTifView) pendingTifView.style.display = 'none';
+
+      // Tampilkan monitoring view
+      const monitoringView = document.getElementById('monitoringGembokView');
+      monitoringView.style.display = 'block';
+
+      // Update active menu in sidebar
+      document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
+      const menuGembok = document.querySelector('.sidebar-menu li:nth-child(2)');
+      if (menuGembok) menuGembok.classList.add('active');
+
+      filterGembokTable(filter);
+    }
+
+    function filterGembokTable(filter = 'all') {
+      const list = window.allOdcsList || [];
+      const tbody = document.getElementById('monitoringGembokTableBody');
+      if (!tbody) return;
+
+      const totalAll = list.length;
+      const totalRusak = list.filter(o => o.kondisiGembok === 'RUSAK' || o.adaGembok === 'TIDAK').length;
+      const totalDiperbarui = list.filter(o => o.gembokDiganti || o.fotoGembok).length;
+
+      const filterCountAll = document.getElementById('filterCountAll');
+      if (filterCountAll) filterCountAll.innerText = totalAll;
+      const filterCountRusak = document.getElementById('filterCountRusak');
+      if (filterCountRusak) filterCountRusak.innerText = totalRusak;
+      const filterCountDiperbarui = document.getElementById('filterCountDiperbarui');
+      if (filterCountDiperbarui) filterCountDiperbarui.innerText = totalDiperbarui;
+
+      // Update active filter button styling
+      ['all', 'rusak', 'diperbarui'].forEach(f => {
+        const btn = document.getElementById('btnFilterGembok' + f.charAt(0).toUpperCase() + f.slice(1));
+        if (btn) {
+          if (f === filter) {
+            btn.style.background = 'var(--primary-color)';
+            btn.style.color = '#fff';
+            btn.style.border = 'none';
+          } else {
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--text-main)';
+            btn.style.border = '1px solid var(--border-color)';
+          }
+        }
+      });
+
+      let filtered = list;
+      if (filter === 'rusak') {
+        filtered = list.filter(o => o.kondisiGembok === 'RUSAK' || o.adaGembok === 'TIDAK');
+      } else if (filter === 'diperbarui') {
+        filtered = list.filter(o => o.gembokDiganti || o.fotoGembok);
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#888;">Tidak ada data ODC untuk kategori ini.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      filtered.forEach((o, i) => {
+        let badgeColor = '#2ecc71';
+        let statusLabel = 'BAGUS';
+        if (o.adaGembok === 'TIDAK') {
+          badgeColor = '#f39c12';
+          statusLabel = 'NO GEMBOK';
+        } else if (o.kondisiGembok === 'RUSAK') {
+          badgeColor = '#e74c3c';
+          statusLabel = 'RUSAK';
+        } else if (o.gembokSecure === 'YA') {
+          badgeColor = '#3498db';
+          statusLabel = 'SECURE';
+        }
+
+        const isDiperbarui = !!(o.gembokDiganti || o.fotoGembok);
+
+        let evidenceCol = '-';
+        let eLinks = [];
+        if (o.fotoSebelum) eLinks.push(`<a href="${o.fotoSebelum}" target="_blank" class="link-btn" style="background:#e74c3c; color:white; padding:3px 7px; font-size:10px; text-decoration:none; border-radius:4px; display:inline-block; margin-right:4px;">📷 Sebelum</a>`);
+        if (o.fotoSesudah || o.fotoGembok) eLinks.push(`<a href="${o.fotoSesudah || o.fotoGembok}" target="_blank" class="link-btn" style="background:#2ecc71; color:white; padding:3px 7px; font-size:10px; text-decoration:none; border-radius:4px; display:inline-block;">📷 Sesudah</a>`);
+        if (eLinks.length > 0) evidenceCol = eLinks.join(' ');
+
+        let aksiBtn = `<button onclick="openModalGembokEvidence('${o.name}')" class="link-btn" style="background:${isDiperbarui ? 'transparent' : '#2ecc71'}; border:1px solid #2ecc71; color:${isDiperbarui ? '#2ecc71' : 'white'}; font-size:11px; padding:4px 10px; cursor:pointer; border-radius:4px;">${isDiperbarui ? '✏️ Update' : '+ Perbarui Gembok'}</button>`;
+
+        html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td><strong>${o.sto || '-'}</strong></td>
+            <td style="font-weight:bold; color:var(--primary-color);">${o.name}</td>
+            <td><span style="background:${badgeColor}; color:white; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">${statusLabel}</span></td>
+            <td>${o.gembokDiganti || '-'}</td>
+            <td>${o.petugasGembok || '-'}</td>
+            <td style="font-size:12px; max-width:180px;">${o.keteranganGembok || '-'}</td>
+            <td>${evidenceCol}</td>
+            <td>${aksiBtn}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
     }
 
     async function showGlobalHistoryView() {

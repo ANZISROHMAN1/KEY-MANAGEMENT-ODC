@@ -86,6 +86,8 @@ function doPost(e) {
       result = submitReturn(data.payload);
     } else if (action === 'submitEvidence') {
       result = submitEvidence(data.payload);
+    } else if (action === 'submitPergantianGembok') {
+      result = submitPergantianGembok(data.payload);
     } else if (action === 'login') {
       result = handleLogin(data.payload);
     } else if (action === 'register') {
@@ -125,6 +127,10 @@ function initSheets() {
   if (!ss.getSheetByName('EvidenceKegiatan')) {
     const sheet = ss.insertSheet('EvidenceKegiatan');
     sheet.appendRow(['ID', 'STO', 'ODC', 'Teknisi', 'Kegiatan', 'Waktu', 'Foto Evidence URL']);
+  }
+  if (!ss.getSheetByName('HistoryGembok')) {
+    const sheet = ss.insertSheet('HistoryGembok');
+    sheet.appendRow(['ID Tiket', 'STO', 'ODC', 'Petugas', 'Tanggal', 'Keterangan', 'Foto Evidence URL']);
   }
   if (!ss.getSheetByName('Hsa')) {
     const sheet = ss.insertSheet('Hsa');
@@ -209,6 +215,127 @@ function submitEvidence(data) {
   return { success: true, id: id };
 }
 
+function submitPergantianGembok(data) {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const sheet = ss.getSheetByName('DB ODC') || ss.getSheets()[0];
+  const sheetData = sheet.getDataRange().getValues();
+  
+  let rowIndex = -1;
+  const targetOdc = (data.odc || '').toString().toUpperCase().trim();
+  const targetSto = (data.sto || '').toString().toUpperCase().trim();
+  
+  for (let i = 1; i < sheetData.length; i++) {
+    const sto = sheetData[i][5] ? sheetData[i][5].toString().toUpperCase().trim() : '';
+    const odc = sheetData[i][7] ? sheetData[i][7].toString().toUpperCase().trim() : '';
+    
+    if (odc === targetOdc) {
+      if (!targetSto || sto === targetSto) {
+        rowIndex = i + 1; // 1-based row index in spreadsheet
+        break;
+      }
+    }
+  }
+  
+  if (rowIndex === -1) {
+    return { success: false, message: 'ODC ' + data.odc + ' tidak ditemukan di database.' };
+  }
+  
+  // Upload foto ke Google Drive jika ada Base64
+  let fotoSebelumUrl = '';
+  if (data.photoBefore) {
+    const fileName = 'SEBELUM_' + targetOdc + '_' + new Date().getTime() + '.png';
+    fotoSebelumUrl = uploadImageToDrive(data.photoBefore, fileName);
+  } else if (data.photoBeforeUrl) {
+    fotoSebelumUrl = data.photoBeforeUrl;
+  }
+
+  let fotoSesudahUrl = '';
+  if (data.photoAfter) {
+    const fileName = 'SESUDAH_' + targetOdc + '_' + new Date().getTime() + '.png';
+    fotoSesudahUrl = uploadImageToDrive(data.photoAfter, fileName);
+  } else if (data.photo) {
+    const fileName = 'SESUDAH_' + targetOdc + '_' + new Date().getTime() + '.png';
+    fotoSesudahUrl = uploadImageToDrive(data.photo, fileName);
+  } else if (data.photoAfterUrl) {
+    fotoSesudahUrl = data.photoAfterUrl;
+  }
+  
+  const tanggal = data.tanggal ? data.tanggal : Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy");
+  const petugas = data.petugas || data.user || '-';
+  const keterangan = data.keterangan || 'Gembok Baru Terpasang';
+  
+  // Pastikan header di baris 1 tersedia
+  if (sheetData.length > 0) {
+    if (!sheetData[0][13]) sheet.getRange(1, 14).setValue('GEMBOK DIGANTI');
+    if (!sheetData[0][14]) sheet.getRange(1, 15).setValue('FOTO SEBELUM DIGANTI');
+    if (!sheetData[0][15]) sheet.getRange(1, 16).setValue('FOTO SESUDAH DIGANTI');
+    if (!sheetData[0][16]) sheet.getRange(1, 17).setValue('PETUGAS GEMBOK');
+    if (!sheetData[0][17]) sheet.getRange(1, 18).setValue('KETERANGAN');
+  }
+
+  // Kolom N (14): Tanggal Gembok Diganti
+  sheet.getRange(rowIndex, 14).setValue(tanggal);
+  
+  // Kolom O (15): Foto Sebelum URL
+  if (fotoSebelumUrl) {
+    sheet.getRange(rowIndex, 15).setValue(fotoSebelumUrl);
+  }
+
+  // Kolom P (16): Foto Sesudah URL
+  if (fotoSesudahUrl) {
+    sheet.getRange(rowIndex, 16).setValue(fotoSesudahUrl);
+  }
+  
+  // Kolom Q (17): Petugas / Teknisi
+  sheet.getRange(rowIndex, 17).setValue(petugas);
+
+  // Kolom R (18): Keterangan
+  if (keterangan) {
+    sheet.getRange(rowIndex, 18).setValue(keterangan);
+  }
+
+  // Update status gembok (Ada Gembok: YA, Kondisi: BAGUS, Secure: YA jika dipilih)
+  sheet.getRange(rowIndex, 10).setValue('YA'); // Kolom J: Ada Gembok
+  sheet.getRange(rowIndex, 12).setValue('BAGUS'); // Kolom L: Kondisi Gembok
+  if (data.isSecure) {
+    sheet.getRange(rowIndex, 13).setValue('YA'); // Kolom M: Gembok Secure
+  }
+
+  // Catat ke sheet HistoryGembok untuk riwayat lengkap
+  let histSheet = ss.getSheetByName('HistoryGembok');
+  if (!histSheet) {
+    histSheet = ss.insertSheet('HistoryGembok');
+    histSheet.appendRow(['ID Tiket', 'STO', 'ODC', 'Petugas', 'Tanggal', 'Keterangan', 'Foto Sebelum URL', 'Foto Sesudah URL']);
+  }
+  const ticketId = generateTicketId(targetSto || 'STO', targetOdc, true).replace('#EVD-', '#GM-');
+  histSheet.appendRow([ticketId, targetSto || '-', targetOdc, petugas, tanggal, keterangan, fotoSebelumUrl, fotoSesudahUrl]);
+
+  // Clear cache
+  const cache = CacheService.getScriptCache();
+  try { cache.remove("MASTER_DATA"); } catch(e){}
+  invalidateHistoryCache();
+
+  // Telegram Notification
+  const msg = `🔐 <b>UPDATE PERGANTIAN GEMBOK</b>\n\n` +
+              `<b>ODC:</b> ${targetOdc}\n` +
+              `<b>Petugas:</b> ${petugas}\n` +
+              `<b>Tanggal:</b> ${tanggal}\n` +
+              `<b>Keterangan:</b> ${keterangan}\n` +
+              (fotoSebelumUrl ? `<b>Evidence Sebelum:</b> <a href="${fotoSebelumUrl}">Lihat Foto</a>\n` : '') +
+              (fotoSesudahUrl ? `<b>Evidence Sesudah:</b> <a href="${fotoSesudahUrl}">Lihat Foto</a>\n` : '');
+  sendTelegramMessage(msg);
+
+  return { 
+    success: true, 
+    message: 'Pergantian gembok berhasil dicatat!', 
+    fotoSebelumUrl: fotoSebelumUrl,
+    fotoSesudahUrl: fotoSesudahUrl,
+    fotoUrl: fotoSesudahUrl || fotoSebelumUrl, 
+    tanggal: tanggal,
+    petugas: petugas 
+  };
+}
+
 function generateTicketId(sto, odc, isEvidence) {
   const dateStr = Utilities.formatDate(new Date(), "Asia/Jakarta", "ddMMyy");
   
@@ -271,6 +398,12 @@ function getMasterData() {
       }
     }
     
+    const fotoSebelum = data[i][14] ? data[i][14].toString().trim() : '';
+    const fotoSesudah = data[i][15] ? data[i][15].toString().trim() : '';
+    const fotoGembok = fotoSesudah || fotoSebelum;
+    const petugasGembok = data[i][16] ? data[i][16].toString().trim() : '';
+    const keteranganGembok = data[i][17] ? data[i][17].toString().trim() : '';
+    
     if (sto && odc) {
       if (!sas[sa]) sas[sa] = {};
       if (!sas[sa][sto]) sas[sa][sto] = [];
@@ -282,7 +415,12 @@ function getMasterData() {
           gembokWasaka: gembokWasaka,
           kondisiGembok: kondisiGembok,
           gembokSecure: gembokSecure,
-          gembokDiganti: gembokDigantiStr
+          gembokDiganti: gembokDigantiStr,
+          fotoSebelum: fotoSebelum,
+          fotoSesudah: fotoSesudah,
+          fotoGembok: fotoGembok,
+          petugasGembok: petugasGembok,
+          keteranganGembok: keteranganGembok
         });
       }
     }
@@ -366,7 +504,12 @@ function getDashboardData() {
           gembokWasaka: item.gembokWasaka || '',
           kondisiGembok: item.kondisiGembok || '',
           gembokSecure: item.gembokSecure || '',
-          gembokDiganti: item.gembokDiganti || ''
+          gembokDiganti: item.gembokDiganti || '',
+          fotoSebelum: item.fotoSebelum || '',
+          fotoSesudah: item.fotoSesudah || '',
+          fotoGembok: item.fotoGembok || item.fotoSesudah || item.fotoSebelum || '',
+          petugasGembok: item.petugasGembok || '',
+          keteranganGembok: item.keteranganGembok || ''
         });
       });
     }
@@ -441,8 +584,6 @@ function submitBorrow(data) {
 
   return { success: true, id: id };
 }
-
-
 
 function submitReturn(data) {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);

@@ -89,6 +89,7 @@
         <div class="tab active" id="tabBorrow" onclick="switchTab('borrow')">Pinjam Kunci</div>
         <div class="tab" id="tabEvidence" onclick="switchTab('evidence')">Pengerjaan</div>
         <div class="tab" id="tabReturn" onclick="switchTab('return')">Kembalikan Kunci</div>
+        <div class="tab" id="tabGanti" onclick="switchTab('ganti')">Ganti Kunci</div>
       </div>
 
       <div id="loader" class="loader" style="display:none;"></div>
@@ -281,6 +282,69 @@
 
         <button type="submit" class="btn-submit" id="btn_submit_e">Submit Pengerjaan</button>
       </form>
+
+      <!-- Ganti Kunci Form -->
+      <form id="gantiForm" style="display:none;" onsubmit="handleGantiGembok(event)">
+        <div class="form-group">
+          <label>Nama Teknisi / Petugas</label>
+          <input type="text" id="g_user" required placeholder="Masukkan nama Anda">
+        </div>
+
+        <div class="form-group">
+          <label>STO</label>
+          <select id="g_sto" required onchange="populateOdc('g')">
+            <option value="">Pilih STO...</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>ODC yang Diganti Kuncinya</label>
+          <select id="g_odc" required>
+            <option value="">Pilih ODC...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tanggal Pergantian</label>
+          <input type="date" id="g_tanggal" required>
+        </div>
+
+        <div class="form-group">
+          <label>Catatan / Keterangan Gembok Baru</label>
+          <input type="text" id="g_keterangan" placeholder="Contoh: Penggantian gembok rusak dengan gembok Wasaka / Secure">
+        </div>
+
+        <div class="form-group" style="display:flex; align-items:center; gap:8px; margin:10px 0;">
+          <input type="checkbox" id="g_secure" style="width:18px; height:18px; cursor:pointer;">
+          <label for="g_secure" style="margin:0; cursor:pointer; font-size:14px;">Gembok Tipe Secure</label>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+          <!-- Foto Sebelum -->
+          <div style="background: var(--bg-color); border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; text-align: center;">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #e74c3c;">1. Foto SEBELUM Diganti<br><span style="font-weight: normal; font-size: 11px; color: var(--text-muted);">(Gembok Rusak / Lama)</span></label>
+            <input type="file" id="g_foto_before_file" accept="image/*" required style="width: 100%; font-size: 11px;" onchange="handleGantiFotoUpload(event, 'before')">
+            <input type="hidden" id="g_foto_before_evidence" required>
+            <div id="g_preview_before_box" style="display: none; margin-top: 8px;">
+              <img id="g_preview_before_img" src="" style="max-width: 100%; max-height: 120px; border-radius: 6px; object-fit: cover;">
+              <p style="color: #2ecc71; font-size: 11px; margin: 4px 0 0; font-weight: bold;">Foto 1 Siap ✓</p>
+            </div>
+          </div>
+
+          <!-- Foto Sesudah -->
+          <div style="background: var(--bg-color); border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; text-align: center;">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #2ecc71;">2. Foto SESUDAH Diganti<br><span style="font-weight: normal; font-size: 11px; color: var(--text-muted);">(Gembok Baru Terpasang)</span></label>
+            <input type="file" id="g_foto_after_file" accept="image/*" required style="width: 100%; font-size: 11px;" onchange="handleGantiFotoUpload(event, 'after')">
+            <input type="hidden" id="g_foto_after_evidence" required>
+            <div id="g_preview_after_box" style="display: none; margin-top: 8px;">
+              <img id="g_preview_after_img" src="" style="max-width: 100%; max-height: 120px; border-radius: 6px; object-fit: cover;">
+              <p style="color: #2ecc71; font-size: 11px; margin: 4px 0 0; font-weight: bold;">Foto 2 Siap ✓</p>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btn_submit_g" style="background:#2ecc71;">Submit Pergantian Kunci</button>
+      </form>
     </div>
   </div>
   </div>
@@ -395,7 +459,7 @@
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('appContainer').style.display = 'block';
         
-        const userFields = ['b_user', 'e_user', 'r_user', 'h_query'];
+        const userFields = ['b_user', 'e_user', 'r_user', 'g_user', 'h_query'];
         userFields.forEach(id => {
           const el = document.getElementById(id);
           if (el) {
@@ -598,7 +662,7 @@
           }
         }
 
-        ['b', 'r', 'e'].forEach(prefix => populateSto(prefix));
+        ['b', 'r', 'e', 'g'].forEach(prefix => populateSto(prefix));
       } catch (e) {
         console.error(e);
         alert('Gagal mengambil data master');
@@ -615,14 +679,22 @@
       document.getElementById('borrowForm').style.display = (tab === 'borrow') ? 'block' : 'none';
       document.getElementById('returnForm').style.display = (tab === 'return') ? 'block' : 'none';
       document.getElementById('evidenceForm').style.display = (tab === 'evidence') ? 'block' : 'none';
+      document.getElementById('gantiForm').style.display = (tab === 'ganti') ? 'block' : 'none';
       
       document.getElementById('tabBorrow').className = (tab === 'borrow') ? 'tab active' : 'tab';
       document.getElementById('tabReturn').className = (tab === 'return') ? 'tab active' : 'tab';
       document.getElementById('tabEvidence').className = (tab === 'evidence') ? 'tab active' : 'tab';
+      document.getElementById('tabGanti').className = (tab === 'ganti') ? 'tab active' : 'tab';
       
       if (tab === 'borrow') populateOdc('b');
       if (tab === 'return') populateOdc('r');
       if (tab === 'evidence') populateOdc('e');
+      if (tab === 'ganti') {
+        populateOdc('g');
+        if (!document.getElementById('g_tanggal').value) {
+          document.getElementById('g_tanggal').value = new Date().toISOString().split('T')[0];
+        }
+      }
     }
 
 
@@ -995,6 +1067,107 @@
 
       btn.disabled = false;
       btn.innerText = 'Submit Pengerjaan';
+    }
+
+    async function handleGantiFotoUpload(event, type) {
+      const file = event.target.files[0];
+      const hiddenInputId = (type === 'before') ? 'g_foto_before_evidence' : 'g_foto_after_evidence';
+      const previewBoxId = (type === 'before') ? 'g_preview_before_box' : 'g_preview_after_box';
+      const previewImgId = (type === 'before') ? 'g_preview_before_img' : 'g_preview_after_img';
+
+      if (!file) {
+        document.getElementById(hiddenInputId).value = '';
+        document.getElementById(previewBoxId).style.display = 'none';
+        return;
+      }
+
+      try {
+        const compressedBase64 = await resizeAndCompressImage(file);
+        document.getElementById(hiddenInputId).value = compressedBase64;
+        document.getElementById(previewImgId).src = compressedBase64;
+        document.getElementById(previewBoxId).style.display = 'block';
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal memproses gambar', 'error');
+      }
+    }
+
+    async function handleGantiGembok(e) {
+      e.preventDefault();
+      const user = document.getElementById('g_user').value.trim();
+      const sto = document.getElementById('g_sto').value;
+      const odc = document.getElementById('g_odc').value;
+      const rawTanggal = document.getElementById('g_tanggal').value;
+      const keterangan = document.getElementById('g_keterangan').value.trim();
+      const isSecure = document.getElementById('g_secure').checked;
+      const photoBefore = document.getElementById('g_foto_before_evidence').value;
+      const photoAfter = document.getElementById('g_foto_after_evidence').value;
+
+      if (!photoBefore) {
+        showToast('Silakan pilih foto SEBELUM diganti terlebih dahulu!', 'error');
+        return;
+      }
+      if (!photoAfter) {
+        showToast('Silakan pilih foto SESUDAH diganti (gembok baru)!', 'error');
+        return;
+      }
+
+      let formattedDate = '';
+      if (rawTanggal) {
+        const parts = rawTanggal.split('-');
+        if (parts.length === 3) {
+          formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+      }
+
+      const btn = document.getElementById('btn_submit_g');
+      btn.disabled = true;
+      btn.innerText = 'Mengunggah & Menyimpan...';
+
+      try {
+        const payload = {
+          sto: sto,
+          odc: odc,
+          user: user,
+          tanggal: formattedDate,
+          keterangan: keterangan,
+          isSecure: isSecure,
+          photoBefore: photoBefore,
+          photoAfter: photoAfter
+        };
+
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'submitPergantianGembok',
+            payload: payload
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast('Berhasil submit evidence pergantian kunci!', 'success');
+          showSuccessModal('PERGANTIAN KUNCI BERHASIL!', `Evidence foto sebelum & sesudah pergantian gembok ODC ${odc} berhasil dicatat.`);
+          document.getElementById('gantiForm').reset();
+          document.getElementById('g_foto_before_evidence').value = '';
+          document.getElementById('g_foto_after_evidence').value = '';
+          document.getElementById('g_preview_before_box').style.display = 'none';
+          document.getElementById('g_preview_after_box').style.display = 'none';
+          document.getElementById('g_tanggal').value = new Date().toISOString().split('T')[0];
+          
+          // Re-populate username
+          const savedUser = localStorage.getItem('teknisi_user');
+          if (savedUser) document.getElementById('g_user').value = savedUser;
+        } else {
+          showToast('Gagal: ' + (data.message || 'Error'), 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Terjadi kesalahan saat mengirim data.', 'error');
+      }
+
+      btn.disabled = false;
+      btn.innerText = 'Submit Pergantian Kunci';
     }
 
     async function autofillForm(btn, prefix) {
