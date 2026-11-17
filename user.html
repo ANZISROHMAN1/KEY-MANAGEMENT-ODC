@@ -321,25 +321,39 @@
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
           <!-- Foto Sebelum -->
-          <div style="background: var(--bg-color); border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; text-align: center;">
-            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #e74c3c;">1. Foto SEBELUM Diganti<br><span style="font-weight: normal; font-size: 11px; color: var(--text-muted);">(Gembok Rusak / Lama)</span></label>
-            <input type="file" id="g_foto_before_file" accept="image/*" required style="width: 100%; font-size: 11px;" onchange="handleGantiFotoUpload(event, 'before')">
-            <input type="hidden" id="g_foto_before_evidence" required>
-            <div id="g_preview_before_box" style="display: none; margin-top: 8px;">
-              <img id="g_preview_before_img" src="" style="max-width: 100%; max-height: 120px; border-radius: 6px; object-fit: cover;">
-              <p style="color: #2ecc71; font-size: 11px; margin: 4px 0 0; font-weight: bold;">Foto 1 Siap ✓</p>
+          <div style="background: var(--bg-color); border: 2px dashed rgba(231, 76, 60, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer;" onclick="document.getElementById('g_foto_before_file').click()">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #e74c3c; cursor: pointer;">
+              1. Foto SEBELUM<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Kondisi Gembok Rusak)</span>
+            </label>
+            
+            <div id="g_preview_before_box" style="display: none; margin-bottom: 6px;">
+              <img id="g_preview_before_img" src="" style="width: 100%; max-height: 100px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
             </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 11px; color: #e74c3c; font-weight: bold;">
+              <span>📷</span> <span id="g_status_before">Pilih Foto</span>
+            </div>
+            
+            <input type="file" id="g_foto_before_file" accept="image/*" style="display:none;" onchange="handleGantiFotoUpload(event, 'before')">
+            <input type="hidden" id="g_foto_before_evidence" required>
           </div>
 
           <!-- Foto Sesudah -->
-          <div style="background: var(--bg-color); border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; text-align: center;">
-            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #2ecc71;">2. Foto SESUDAH Diganti<br><span style="font-weight: normal; font-size: 11px; color: var(--text-muted);">(Gembok Baru Terpasang)</span></label>
-            <input type="file" id="g_foto_after_file" accept="image/*" required style="width: 100%; font-size: 11px;" onchange="handleGantiFotoUpload(event, 'after')">
-            <input type="hidden" id="g_foto_after_evidence" required>
-            <div id="g_preview_after_box" style="display: none; margin-top: 8px;">
-              <img id="g_preview_after_img" src="" style="max-width: 100%; max-height: 120px; border-radius: 6px; object-fit: cover;">
-              <p style="color: #2ecc71; font-size: 11px; margin: 4px 0 0; font-weight: bold;">Foto 2 Siap ✓</p>
+          <div style="background: var(--bg-color); border: 2px dashed rgba(46, 204, 113, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer;" onclick="document.getElementById('g_foto_after_file').click()">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #2ecc71; cursor: pointer;">
+              2. Foto SESUDAH<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Gembok Baru Terpasang)</span>
+            </label>
+            
+            <div id="g_preview_after_box" style="display: none; margin-bottom: 6px;">
+              <img id="g_preview_after_img" src="" style="width: 100%; max-height: 100px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
             </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 11px; color: #2ecc71; font-weight: bold;">
+              <span>📷</span> <span id="g_status_after">Pilih Foto</span>
+            </div>
+            
+            <input type="file" id="g_foto_after_file" accept="image/*" style="display:none;" onchange="handleGantiFotoUpload(event, 'after')">
+            <input type="hidden" id="g_foto_after_evidence" required>
           </div>
         </div>
 
@@ -1074,21 +1088,27 @@
       const hiddenInputId = (type === 'before') ? 'g_foto_before_evidence' : 'g_foto_after_evidence';
       const previewBoxId = (type === 'before') ? 'g_preview_before_box' : 'g_preview_after_box';
       const previewImgId = (type === 'before') ? 'g_preview_before_img' : 'g_preview_after_img';
+      const statusText = document.getElementById(type === 'before' ? 'g_status_before' : 'g_status_after');
 
       if (!file) {
         document.getElementById(hiddenInputId).value = '';
         document.getElementById(previewBoxId).style.display = 'none';
+        if (statusText) statusText.innerText = 'Pilih Foto';
         return;
       }
+
+      if (statusText) statusText.innerText = 'Mengompres...';
 
       try {
         const compressedBase64 = await resizeAndCompressImage(file);
         document.getElementById(hiddenInputId).value = compressedBase64;
         document.getElementById(previewImgId).src = compressedBase64;
         document.getElementById(previewBoxId).style.display = 'block';
+        if (statusText) statusText.innerText = 'Foto Siap ✓';
       } catch (err) {
         console.error(err);
         showToast('Gagal memproses gambar', 'error');
+        if (statusText) statusText.innerText = 'Pilih Foto';
       }
     }
 
@@ -1154,16 +1174,24 @@
           document.getElementById('g_preview_before_box').style.display = 'none';
           document.getElementById('g_preview_after_box').style.display = 'none';
           document.getElementById('g_tanggal').value = new Date().toISOString().split('T')[0];
+          const stB = document.getElementById('g_status_before');
+          if (stB) stB.innerText = 'Pilih Foto';
+          const stA = document.getElementById('g_status_after');
+          if (stA) stA.innerText = 'Pilih Foto';
           
           // Re-populate username
           const savedUser = localStorage.getItem('teknisi_user');
           if (savedUser) document.getElementById('g_user').value = savedUser;
         } else {
-          showToast('Gagal: ' + (data.message || 'Error'), 'error');
+          if (data.message === 'Invalid action') {
+            alert('Gagal: Google Apps Script belum di-deploy dengan versi terbaru!\n\nSilakan buka script.google.com, paste Code.gs terbaru, lalu Deploy > New deployment.');
+          } else {
+            showToast('Gagal: ' + (data.message || 'Error'), 'error');
+          }
         }
       } catch (err) {
         console.error(err);
-        showToast('Terjadi kesalahan saat mengirim data.', 'error');
+        showToast('Terjadi kesalahan koneksi atau backend. Pastikan Code.gs sudah di-deploy.', 'error');
       }
 
       btn.disabled = false;
