@@ -333,6 +333,8 @@ body {
 .stat-card.red { background-color: var(--stat-red); }
 .stat-card.orange { background-color: var(--stat-orange); }
 .stat-card.green { background-color: var(--stat-green); }
+.stat-card.purple { background-color: #8b5cf6; }
+.stat-card.teal { background-color: #0d9488; }
 
 /* Charts */
 .charts-row {

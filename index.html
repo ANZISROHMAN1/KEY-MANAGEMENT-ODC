@@ -123,13 +123,20 @@
              <div class="stat-title">GEMBOK OPEN</div>
              <div class="stat-value"><span id="countGembokOpen">...</span> <span class="icon">📖</span></div>
           </div>
+          <div class="stat-card green" style="cursor: pointer;" onclick="showMonitoringGembokView('bagus')">
+             <div class="stat-title">GEMBOK BAGUS / ADA</div>
+             <div class="stat-value"><span id="countGembokBagus">...</span> <span class="icon">🔒</span></div>
+             <div id="subtextGembokBagus" style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">-</div>
+          </div>
           <div class="stat-card red" style="cursor: pointer;" onclick="showMonitoringGembokView('rusak')">
              <div class="stat-title">GEMBOK RUSAK</div>
              <div class="stat-value"><span id="countGembokRusak">...</span> <span class="icon">⚠️</span></div>
+             <div id="subtextGembokRusak" style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">-</div>
           </div>
-          <div class="stat-card green" style="cursor: pointer;" onclick="showMonitoringGembokView('diperbarui')">
+          <div class="stat-card purple" style="cursor: pointer;" onclick="showMonitoringGembokView('diperbarui')">
              <div class="stat-title">TELAH DIPERBARUI</div>
              <div class="stat-value"><span id="countGembokDiperbarui">...</span> <span class="icon">✅</span></div>
+             <div id="subtextGembokDiperbarui" style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">Evidence Tersimpan</div>
           </div>
         </div>
 
@@ -241,9 +248,29 @@
             <button onclick="openModalGembokEvidence()" class="btn-submit" style="background: #2ecc71; width: auto; margin: 0; padding: 8px 18px; font-size: 13px; cursor: pointer;">+ Catat Pergantian Kunci</button>
           </div>
 
+          <!-- Ratio Bar Perbandingan Gembok Bagus vs Rusak -->
+          <div id="gembokRatioContainer" style="background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px 20px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; font-size: 13px;">
+              <div>
+                <strong>Perbandingan Status Gembok ODC:</strong>
+                <span style="color: var(--stat-green); font-weight: bold; margin-left: 10px;">🟢 Bagus / Ada: <span id="ratioTextBagus">0</span> (<span id="ratioPctBagus">0%</span>)</span>
+                <span style="color: var(--stat-red); font-weight: bold; margin-left: 15px;">🔴 Rusak / Hilang: <span id="ratioTextRusak">0</span> (<span id="ratioPctRusak">0%</span>)</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted);">
+                Total: <strong id="ratioTextTotal" style="color: var(--text-main);">0</strong> ODC
+              </div>
+            </div>
+            <!-- Progress Bar Segments -->
+            <div style="height: 10px; width: 100%; background: #334155; border-radius: 5px; overflow: hidden; display: flex;">
+              <div id="ratioBarBagus" style="height: 100%; width: 50%; background: #10b981; transition: width 0.5s ease;" title="Gembok Bagus"></div>
+              <div id="ratioBarRusak" style="height: 100%; width: 50%; background: #ef4444; transition: width 0.5s ease;" title="Gembok Rusak / Tidak Ada"></div>
+            </div>
+          </div>
+
           <!-- Filter Pills -->
           <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
             <button id="btnFilterGembokAll" onclick="filterGembokTable('all')" class="link-btn" style="background: var(--primary-color); color: white; padding: 6px 14px; border-radius: 20px; border: none; cursor: pointer;">Semua ODC (<span id="filterCountAll">0</span>)</button>
+            <button id="btnFilterGembokBagus" onclick="filterGembokTable('bagus')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 14px; border-radius: 20px; cursor: pointer;">🔒 Gembok Bagus (<span id="filterCountBagus">0</span>)</button>
             <button id="btnFilterGembokRusak" onclick="filterGembokTable('rusak')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 14px; border-radius: 20px; cursor: pointer;">⚠️ Gembok Rusak (<span id="filterCountRusak">0</span>)</button>
             <button id="btnFilterGembokDiperbarui" onclick="filterGembokTable('diperbarui')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 14px; border-radius: 20px; cursor: pointer;">✅ Telah Diperbarui (<span id="filterCountDiperbarui">0</span>)</button>
           </div>
@@ -664,6 +691,7 @@
       
       let activeBorrowingsList = [];
       let allOdcsList = [];
+      let totalGembokBagus = 0;
       let totalGembokRusak = 0;
       let totalGembokDiperbarui = 0;
       
@@ -686,6 +714,8 @@
             }
             if (odc.kondisiGembok === 'RUSAK' || odc.adaGembok === 'TIDAK') {
               totalGembokRusak++;
+            } else {
+              totalGembokBagus++;
             }
             if (odc.gembokDiganti || odc.fotoGembok) {
               totalGembokDiperbarui++;
@@ -735,10 +765,26 @@
       }
 
       window.allOdcsList = allOdcsList;
+      const totalAllGembok = totalGembokBagus + totalGembokRusak;
+      const pctBagus = totalAllGembok > 0 ? Math.round((totalGembokBagus / totalAllGembok) * 100) : 0;
+      const pctRusak = totalAllGembok > 0 ? Math.round((totalGembokRusak / totalAllGembok) * 100) : 0;
+
+      const countGembokBagusEl = document.getElementById('countGembokBagus');
+      if (countGembokBagusEl) countGembokBagusEl.innerText = totalGembokBagus;
+      const subtextBagusEl = document.getElementById('subtextGembokBagus');
+      if (subtextBagusEl) subtextBagusEl.innerText = `${pctBagus}% dari total`;
+
       const countGembokRusakEl = document.getElementById('countGembokRusak');
       if (countGembokRusakEl) countGembokRusakEl.innerText = totalGembokRusak;
+      const subtextRusakEl = document.getElementById('subtextGembokRusak');
+      if (subtextRusakEl) subtextRusakEl.innerText = `${pctRusak}% dari total`;
+
       const countGembokDiperbaruiEl = document.getElementById('countGembokDiperbarui');
       if (countGembokDiperbaruiEl) countGembokDiperbaruiEl.innerText = totalGembokDiperbarui;
+      const subtextDiperbaruiEl = document.getElementById('subtextGembokDiperbarui');
+      if (subtextDiperbaruiEl) {
+        subtextDiperbaruiEl.innerText = totalGembokRusak > 0 ? `${totalGembokDiperbarui} terecovery` : 'Telah diganti';
+      }
       
       if (activeBorrowingsList.length > 0) {
         if (!isDetailViewOpen) activeSection.style.display = 'block';
@@ -1471,18 +1517,43 @@
       if (!tbody) return;
 
       const totalAll = list.length;
+      const totalBagus = list.filter(o => o.kondisiGembok !== 'RUSAK' && o.adaGembok !== 'TIDAK').length;
       const totalRusak = list.filter(o => o.kondisiGembok === 'RUSAK' || o.adaGembok === 'TIDAK').length;
       const totalDiperbarui = list.filter(o => o.gembokDiganti || o.fotoGembok).length;
 
+      const pctBagus = totalAll > 0 ? Math.round((totalBagus / totalAll) * 100) : 0;
+      const pctRusak = totalAll > 0 ? Math.round((totalRusak / totalAll) * 100) : 0;
+
       const filterCountAll = document.getElementById('filterCountAll');
       if (filterCountAll) filterCountAll.innerText = totalAll;
+      const filterCountBagus = document.getElementById('filterCountBagus');
+      if (filterCountBagus) filterCountBagus.innerText = totalBagus;
       const filterCountRusak = document.getElementById('filterCountRusak');
       if (filterCountRusak) filterCountRusak.innerText = totalRusak;
       const filterCountDiperbarui = document.getElementById('filterCountDiperbarui');
       if (filterCountDiperbarui) filterCountDiperbarui.innerText = totalDiperbarui;
 
+      // Update Ratio Bar di Monitoring Gembok View
+      const ratioTextBagus = document.getElementById('ratioTextBagus');
+      if (ratioTextBagus) ratioTextBagus.innerText = totalBagus;
+      const ratioPctBagus = document.getElementById('ratioPctBagus');
+      if (ratioPctBagus) ratioPctBagus.innerText = pctBagus + '%';
+
+      const ratioTextRusak = document.getElementById('ratioTextRusak');
+      if (ratioTextRusak) ratioTextRusak.innerText = totalRusak;
+      const ratioPctRusak = document.getElementById('ratioPctRusak');
+      if (ratioPctRusak) ratioPctRusak.innerText = pctRusak + '%';
+
+      const ratioTextTotal = document.getElementById('ratioTextTotal');
+      if (ratioTextTotal) ratioTextTotal.innerText = totalAll;
+
+      const barBagus = document.getElementById('ratioBarBagus');
+      if (barBagus) barBagus.style.width = pctBagus + '%';
+      const barRusak = document.getElementById('ratioBarRusak');
+      if (barRusak) barRusak.style.width = pctRusak + '%';
+
       // Update active filter button styling
-      ['all', 'rusak', 'diperbarui'].forEach(f => {
+      ['all', 'bagus', 'rusak', 'diperbarui'].forEach(f => {
         const btn = document.getElementById('btnFilterGembok' + f.charAt(0).toUpperCase() + f.slice(1));
         if (btn) {
           if (f === filter) {
@@ -1498,7 +1569,9 @@
       });
 
       let filtered = list;
-      if (filter === 'rusak') {
+      if (filter === 'bagus') {
+        filtered = list.filter(o => o.kondisiGembok !== 'RUSAK' && o.adaGembok !== 'TIDAK');
+      } else if (filter === 'rusak') {
         filtered = list.filter(o => o.kondisiGembok === 'RUSAK' || o.adaGembok === 'TIDAK');
       } else if (filter === 'diperbarui') {
         filtered = list.filter(o => o.gembokDiganti || o.fotoGembok);
