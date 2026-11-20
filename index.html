@@ -1905,18 +1905,45 @@
     // ==========================================
     // --- MONITORING OLT SECTION & LOGIC ---
     // ==========================================
+    const lightshotDirectMap = {
+      'QZLvV_3lJX9T': 'https://img.lightshot.app/qJC7j8OjQO-ps_GqmhtLFw.png',
+      'Y8PL35X0uZtd': 'https://img.lightshot.app/N6dzAFjTSwiikgbEKdBT9A.png',
+      'bTO68IoQ0Gjx': 'https://img.lightshot.app/T1KapKaXSLiQZk7lvVmtDw.png',
+      '51_HKhG9NXzE': 'https://img.lightshot.app/n9uEU90HTGeokHS26S2yrQ.png',
+      'dy0d2GzeQy8s': 'https://img.lightshot.app/UyewPZr6Sj6Z92Wv93As0Q.png',
+      '8Ckmq1PIb5Dp': 'https://img.lightshot.app/rwKsdTxjT1Wc9l0LUJhsnA.png',
+      'x8SeBaNAyKDx': 'https://img.lightshot.app/xX1MKu38TPGZJF2jdKBNdQ.png',
+      'aePcKv6Zh-OE': 'https://img.lightshot.app/0B1-Jz3zSECzi-d681ak9A.png',
+      'RYcgvnjJdJeZ': 'https://img.lightshot.app/1LUDvZpvRea0Od7IXVWA5A.png',
+      'pLIoh0Zvzqdw': 'https://img.lightshot.app/XCidQO2_Q0qcYWyNdz2elg.png'
+    };
+
+    function getDirectImageUrl(url) {
+      if (!url) return '';
+      const cleanUrl = url.trim();
+      for (const [code, direct] of Object.entries(lightshotDirectMap)) {
+        if (cleanUrl.includes(code)) return direct;
+      }
+      if (cleanUrl.match(/\.(png|jpg|jpeg|webp|gif)($|\?)/i)) return cleanUrl;
+      if (cleanUrl.includes('drive.google.com')) {
+        const idMatch = cleanUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanUrl.match(/id=([a-zA-Z0-9_-]+)/);
+        if (idMatch) return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+      }
+      return cleanUrl;
+    }
+
     const defaultOltList = [
-      { no: 1, hostname: 'GPON00-D2-JGL-3#AG', lokasi: 'Cipamingkis', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/IQJuNk_8JKSE', sto: 'JGL', sa: 'PAGELARAN' },
-      { no: 2, hostname: 'GPON00-D2-CGD-3#MT', lokasi: 'PT Antam', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/1BPL1S0Q2zDA', sto: 'CGD', sa: 'DRAMAGA' },
-      { no: 3, hostname: 'GPON00-D2-IWL-3#CL', lokasi: 'Kecamatan Pamijahan', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/B704JBcQDGzr', sto: 'IWL', sa: 'DRAMAGA' },
-      { no: 4, hostname: 'GPON00-D2-DMG-3#UT', lokasi: 'Situ Daun', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/S1_H4h91kMuE', sto: 'DMG', sa: 'DRAMAGA' },
-      { no: 5, hostname: 'GPON00-D2-KHL-3#DC', lokasi: 'Cluster Asri City', keterangan: 'Butuh Gembok', foto: '', sto: 'KHL', sa: 'KEDUNGHALANG' },
-      { no: 6, hostname: 'GPON00-D2-KHL-2#RM', lokasi: 'Situ Perumahan Gaura', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/dyEdG2eSEyFb', sto: 'KHL', sa: 'KEDUNGHALANG' },
-      { no: 7, hostname: 'GPON00-D2-GPI-3#AR', lokasi: 'Asana Residence', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/BCkssq1Pb6Op', sto: 'GPI', sa: 'GUNUNG PUTRI' },
-      { no: 8, hostname: 'GPON00-D2-SPL-2#CV', lokasi: 'Bukit Cimanggu City', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/d5e8p00rbyK0', sto: 'SPL', sa: 'SEMPLAK' },
-      { no: 9, hostname: 'GPON00-D2-CTR-3#SS', lokasi: 'Cibadak sukamakmur', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/oePttKeZ-OE-', sto: 'CTR', sa: 'PASIR MAUNG' },
-      { no: 10, hostname: 'GPON00-D2-CBD-4#SW', lokasi: 'Apartemen Podomoro', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/KTkgunul4iEZ', sto: 'CBD', sa: 'CIAWI' },
-      { no: 11, hostname: 'GPON00-D2-BOO-3#ST', lokasi: 'Istana Bogor', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/yLUxHQZvxphe', sto: 'BOO', sa: 'BOGOR' }
+      { no: 1, hostname: 'GPON00-D2-JGL-3FAG', lokasi: 'Cipamingkis', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/QZLvV_3lJX9T', sto: 'JGL', sa: 'PAGELARAN' },
+      { no: 2, hostname: 'GPON00-D2-CGD-3ANT', lokasi: 'PT Antam', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/Y8PL35X0uZtd', sto: 'CGD', sa: 'DRAMAGA' },
+      { no: 3, hostname: 'GPON00-D2-LWL-3PCL', lokasi: 'Kecamatan Pamijahan', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/bTO68IoQ0Gjx', sto: 'LWL', sa: 'DRAMAGA' },
+      { no: 4, hostname: 'GPON00-D2-DMG-3SUT', lokasi: 'Situ Daun', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/51_HKhG9NXzE', sto: 'DMG', sa: 'DRAMAGA' },
+      { no: 5, hostname: 'GPON00-D2-KHL-3ADC', lokasi: 'Cluster Adi City', keterangan: 'Butuh Gembok', foto: '', sto: 'KHL', sa: 'KEDUNGHALANG' },
+      { no: 6, hostname: 'GPON00-D2-KHL-2GRA', lokasi: 'Situ Perumahan Gaura', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/dy0d2GzeQy8s', sto: 'KHL', sa: 'KEDUNGHALANG' },
+      { no: 7, hostname: 'GPON00-D2-GPI-3AR', lokasi: 'Asana Residence', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/8Ckmq1PIb5Dp', sto: 'GPI', sa: 'GUNUNG PUTRI' },
+      { no: 8, hostname: 'GPON00-D2-SPL-2BCV', lokasi: 'Bukit Cimanggu City', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/x8SeBaNAyKDx', sto: 'SPL', sa: 'SEMPLAK' },
+      { no: 9, hostname: 'GPON00-D2-CTR-3KSS', lokasi: 'Cibadak sukamakmur', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/aePcKv6Zh-OE', sto: 'CTR', sa: 'PASIR MAUNG' },
+      { no: 10, hostname: 'GPON00-D2-CBI-4PGV', lokasi: 'Apartemen Podomoro', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/RYcgvnjJdJeZ', sto: 'CBI', sa: 'CIAWI' },
+      { no: 11, hostname: 'GPON00-D2-BOO-3IST', lokasi: 'Istana Bogor', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/pLIoh0Zvzqdw', sto: 'BOO', sa: 'BOGOR' }
     ];
 
     function buildDefaultOltDataStructure(rawList) {
@@ -1936,12 +1963,15 @@
         if (item.foto) totalFoto++;
         stoSet[item.sto] = true;
 
+        const directFoto = item.directFoto || getDirectImageUrl(item.foto || '');
+
         const oltObj = {
           no: item.no || (idx + 1),
           hostname: item.hostname,
           lokasi: item.lokasi,
           keterangan: item.keterangan,
-          foto: item.foto,
+          foto: item.foto || '',
+          directFoto: directFoto,
           sto: item.sto,
           sa: item.sa,
           status: isButuh ? 'warning' : 'green',
@@ -1972,6 +2002,98 @@
           withPhoto: totalFoto
         }
       };
+    }
+
+    function fetchOltDataFromGviz() {
+      return new Promise((resolve, reject) => {
+        window.google = window.google || {};
+        window.google.visualization = window.google.visualization || {};
+        window.google.visualization.Query = {
+          setResponse: function(response) {
+            try {
+              const scriptTag = document.getElementById('gvizOltScript');
+              if (scriptTag) scriptTag.remove();
+
+              if (!response || !response.table || !response.table.rows) {
+                reject(new Error('Format tabel Gviz tidak valid'));
+                return;
+              }
+
+              const rawList = [];
+              response.table.rows.forEach((r, idx) => {
+                const c = r.c;
+                if (!c || !c[1] || !c[1].v) return;
+                const hostname = c[1].v.toString().trim();
+                const lokasi = c[2] && c[2].v ? c[2].v.toString().trim() : '-';
+                const keterangan = c[3] && c[3].v ? c[3].v.toString().trim() : '-';
+                const foto = c[4] && c[4].v ? c[4].v.toString().trim() : '';
+
+                // Extract STO from hostname: GPON00-D2-JGL-3FAG -> JGL
+                let sto = '';
+                const parts = hostname.split('-');
+                if (parts.length >= 3) {
+                  sto = parts[2].toUpperCase().trim();
+                }
+                if (!sto) sto = 'OTHER';
+
+                // SA mapping
+                let sa = 'AREA LAIN';
+                if (window.dashboardData) {
+                  for (const saKey in window.dashboardData) {
+                    if (window.dashboardData[saKey].stos && window.dashboardData[saKey].stos[sto]) {
+                      sa = window.dashboardData[saKey].name || saKey;
+                      break;
+                    }
+                  }
+                }
+                if (sa === 'AREA LAIN') {
+                  const saMap = {
+                    'JGL': 'PAGELARAN', 'CGD': 'DRAMAGA', 'LWL': 'DRAMAGA', 'DMG': 'DRAMAGA',
+                    'KHL': 'KEDUNGHALANG', 'GPI': 'GUNUNG PUTRI', 'SPL': 'SEMPLAK',
+                    'CTR': 'PASIR MAUNG', 'CBI': 'CIAWI', 'CBD': 'CIAWI', 'BOO': 'BOGOR'
+                  };
+                  if (saMap[sto]) sa = saMap[sto];
+                }
+
+                rawList.push({
+                  no: idx + 1,
+                  hostname: hostname,
+                  lokasi: lokasi,
+                  keterangan: keterangan,
+                  foto: foto,
+                  directFoto: getDirectImageUrl(foto),
+                  sto: sto,
+                  sa: sa
+                });
+              });
+
+              if (rawList.length > 0) {
+                resolve(buildDefaultOltDataStructure(rawList));
+              } else {
+                reject(new Error('Data baris Gviz kosong'));
+              }
+            } catch (err) {
+              reject(err);
+            }
+          }
+        };
+
+        const oldScript = document.getElementById('gvizOltScript');
+        if (oldScript) oldScript.remove();
+
+        const script = document.createElement('script');
+        script.id = 'gvizOltScript';
+        script.src = `https://docs.google.com/spreadsheets/d/1kJMH5vweXd4YU8j6urk2pk6iuGcLaUeSCzCWT6szmLM/gviz/tq?sheet=DB%20OLT&tq=select%20*&t=${Date.now()}`;
+        script.onerror = () => {
+          reject(new Error('Gagal memuat script Gviz Google Spreadsheet'));
+        };
+        document.body.appendChild(script);
+
+        // Timeout safety 5 detik
+        setTimeout(() => {
+          reject(new Error('Timeout Gviz'));
+        }, 5000);
+      });
     }
 
     function showOltDashboardView() {
@@ -2024,16 +2146,28 @@
       if (loader) loader.style.display = 'block';
 
       try {
+        // 1. Coba fetch dari Apps Script API
         const res = await fetch(API_URL + '?action=getOltData');
         const data = await res.json();
         if (data && data.olts && data.olts.length > 0) {
           window.oltData = data;
         } else {
-          window.oltData = buildDefaultOltDataStructure(defaultOltList);
+          throw new Error('Apps Script belum terdeploy atau data kosong');
         }
       } catch (err) {
-        console.warn('Gagal fetch OLT dari Apps Script, menggunakan data DB OLT lokal:', err);
-        window.oltData = buildDefaultOltDataStructure(defaultOltList);
+        // 2. Coba fetch langsung dari Google Spreadsheet via Gviz JSONP
+        try {
+          const gvizData = await fetchOltDataFromGviz();
+          if (gvizData && gvizData.olts && gvizData.olts.length > 0) {
+            window.oltData = gvizData;
+          } else {
+            throw new Error('Gviz kosong');
+          }
+        } catch (gvizErr) {
+          // 3. Fallback ke data terverifikasi lokal
+          console.warn('Menggunakan fallback data lokal DB OLT:', gvizErr);
+          window.oltData = buildDefaultOltDataStructure(defaultOltList);
+        }
       } finally {
         if (loader) loader.style.display = 'none';
         renderOltDashboard(window.oltData);
@@ -2215,7 +2349,7 @@
           stoOlts.forEach((olt, idx) => {
             const isWarning = olt.isButuhGembok;
             const photoBtn = olt.foto ? 
-              `<a href="${olt.foto}" target="_blank" rel="noopener noreferrer" class="link-btn" style="color:var(--primary-color); font-weight:600;">📷 Buka Foto</a>` :
+              `<a href="${olt.foto}" target="_blank" rel="noopener noreferrer" class="link-btn" style="color:var(--primary-color); font-weight:600; display:inline-flex; align-items:center; gap:4px;">📷 Buka Foto</a>` :
               `<span style="color:var(--text-muted); font-size:11px;">-</span>`;
             
             html += `
@@ -2365,18 +2499,26 @@
       const fotoContainer = document.getElementById('oltModalFotoContainer');
       if (fotoContainer) {
         if (olt.foto) {
+          const directImg = olt.directFoto || getDirectImageUrl(olt.foto);
           fotoContainer.innerHTML = `
-            <a href="${olt.foto}" target="_blank" rel="noopener noreferrer" style="display:inline-block; margin-bottom:8px;">
-              <img src="${olt.foto}" alt="Evidence Foto" onerror="this.onerror=null; this.src='https://placehold.co/400x250/1e222d/00b4d8?text=Klik+untuk+Buka+Evidence+Foto';" style="max-width:100%; max-height:220px; border-radius:8px; border:1px solid var(--border-color); object-fit:cover;">
-            </a>
-            <div>
-              <a href="${olt.foto}" target="_blank" rel="noopener noreferrer" class="link-btn" style="color:var(--primary-color); font-weight:bold; font-size:12px; display:inline-flex; align-items:center; gap:5px;">
-                <span>🔍</span> Buka Bukti Foto &rarr;
+            <div style="background:#0a0c10; padding:12px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:12px; text-align:center;">
+              <a href="${olt.foto}" target="_blank" rel="noopener noreferrer" title="Klik untuk membuka link asli Lightshot" style="display:inline-block; max-width:100%;">
+                <img src="${directImg}" alt="Foto Perangkat ${olt.hostname}" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/400x250/1e222d/00b4d8?text=Klik+Link+Asli+di+Bawah+untuk+Lihat+Foto';" 
+                     style="max-width:100%; max-height:360px; border-radius:6px; object-fit:contain; display:block; margin:0 auto; box-shadow:0 4px 15px rgba(0,0,0,0.6);">
+              </a>
+            </div>
+            <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+              <a href="${olt.foto}" target="_blank" rel="noopener noreferrer" class="link-btn" style="background:var(--primary-color); color:#000; font-weight:bold; font-size:12px; padding:8px 16px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; text-decoration:none;">
+                <span>🔗</span> Buka Link Lightshot Asli &rarr;
+              </a>
+              <a href="${directImg}" target="_blank" rel="noopener noreferrer" class="link-btn" style="background:rgba(255,255,255,0.06); border:1px solid var(--border-color); color:var(--text-main); font-size:12px; padding:8px 16px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; text-decoration:none;">
+                <span>📷</span> Buka Gambar Langsung (PNG)
               </a>
             </div>
           `;
         } else {
-          fotoContainer.innerHTML = '<span style="font-size:12px; color:var(--text-muted); padding:10px; display:block;">Belum ada foto evidence perangkat untuk OLT ini.</span>';
+          fotoContainer.innerHTML = '<span style="font-size:12px; color:var(--text-muted); padding:10px; display:block;">Belum ada foto evidence perangkat untuk OLT ini di DB OLT.</span>';
         }
       }
 

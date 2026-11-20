@@ -527,6 +527,18 @@ function getDashboardData() {
   return dashboard;
 }
 
+function resolveLightshotImage(url) {
+  if (!url || !url.toString().includes('prnt.sc/')) return url;
+  try {
+    const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } });
+    const html = res.getContentText();
+    const match = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
+                  html.match(/<meta\s+name=["']twitter:image:src["']\s+content=["']([^"']+)["']/i);
+    if (match && match[1]) return match[1];
+  } catch (e) {}
+  return url;
+}
+
 function getOltData() {
   const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
   
@@ -564,6 +576,7 @@ function getOltData() {
     const lokasi = row[2] ? row[2].toString().trim() : '-';
     const keterangan = row[3] ? row[3].toString().trim() : '-';
     const foto = row[4] ? row[4].toString().trim() : '';
+    const directFoto = resolveLightshotImage(foto);
 
     // Extract STO from Hostname: GPON00-D2-JGL-3#AG -> JGL
     let sto = '';
@@ -602,6 +615,7 @@ function getOltData() {
       lokasi: lokasi,
       keterangan: keterangan,
       foto: foto,
+      directFoto: directFoto,
       sto: sto,
       sa: sa,
       status: isButuhGembok ? 'warning' : 'green',
