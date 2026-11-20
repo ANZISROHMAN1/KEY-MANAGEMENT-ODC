@@ -455,6 +455,48 @@ body {
   border-color: #e74c3c;
 }
 
+.odc-item.status-warning {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.odc-item.status-warning:hover {
+  background: rgba(245, 158, 11, 0.15);
+  box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+  border-color: #f59e0b;
+}
+
+.odc-item.status-green {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.03);
+}
+
+.odc-item.status-green:hover {
+  background: rgba(16, 185, 129, 0.1);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+  border-color: #10b981;
+}
+
+.badge-olt {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.badge-olt.warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-olt.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
 .card-section {
   background: var(--bg-panel);
   padding: 20px;

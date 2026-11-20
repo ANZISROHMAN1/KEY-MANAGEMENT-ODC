@@ -74,25 +74,28 @@
         <h2>O-Key</h2>
       </div>
       <ul class="sidebar-menu">
-        <li class="active">
-          <a href="#" onclick="backToDashboard()"><span class="icon">⏱</span> Dashboard</a>
+        <li class="active" id="menuDashboardOdc">
+          <a href="#" onclick="backToDashboard()"><span class="icon">⏱</span> Dashboard ODC</a>
         </li>
-        <li>
+        <li id="menuDashboardOlt">
+          <a href="#" onclick="showOltDashboardView()"><span class="icon">🖥️</span> Monitoring OLT</a>
+        </li>
+        <li id="menuMonitoringGembok">
           <a href="#" onclick="showMonitoringGembokView('all')"><span class="icon">🔐</span> Monitoring Gembok</a>
         </li>
-        <li>
+        <li id="menuGlobalHistory">
           <a href="#" onclick="showGlobalHistoryView()"><span class="icon">📝</span> History</a>
         </li>
-        <li>
+        <li id="menuApprovalBa">
           <a href="#" onclick="showApprovedBaView()"><span class="icon">📄</span> Approval BA</a>
         </li>
-        <li>
+        <li id="menuApprovalHsa">
           <a href="#" onclick="showPendingHsaView()"><span class="icon">⏳</span> Approval HSA</a>
         </li>
         <li id="menuApprovalTif">
           <a href="#" onclick="showPendingTifView()"><span class="icon">⏳</span> Approval TIF</a>
         </li>
-        <li>
+        <li id="menuFlowchart">
           <a href="flowchart.html" target="_blank"><span class="icon">📊</span> Flowchart Sistem</a>
         </li>
         <li style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
@@ -117,7 +120,7 @@
 
       <div class="dashboard-content">
         <!-- Stat Cards -->
-        <div class="stat-cards">
+        <div class="stat-cards" id="odcStatCards">
           <div class="stat-card blue" style="cursor: pointer;" onclick="showUsersView()">
              <div class="stat-title">USERS</div>
              <div class="stat-value"><span id="countUsers">...</span> <span class="icon">👥</span></div>
@@ -143,8 +146,8 @@
           </div>
         </div>
 
-        <hr style="border-color: var(--border-color); margin: 30px 0;">
-        <h2 style="margin-bottom: 20px; font-size: 18px;">Data Realtime (O-Key System)</h2>
+        <hr id="odcDivider" style="border-color: var(--border-color); margin: 30px 0;">
+        <h2 id="odcHeading" style="margin-bottom: 20px; font-size: 18px;">Data Realtime (O-Key System)</h2>
 
         <!-- Existing Realtime Data Section -->
         <div id="loader" class="loader"></div>
@@ -297,6 +300,151 @@
                 <tr><td colspan="9" style="text-align:center;">Memuat data monitoring...</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- OLT Dashboard View -->
+        <div id="oltDashboardView" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:20px;">
+            <div>
+              <h2 style="margin:0; font-size:20px; font-weight:700;">Dashboard Monitoring OLT</h2>
+              <p style="margin:4px 0 0; color:var(--text-muted); font-size:12px;">Realtime Status & Perangkat OLT (Optical Line Terminal) dari Sheet DB OLT</p>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button onclick="backToDashboard()" class="btn-back" style="margin:0;">&larr; Dashboard ODC</button>
+              <button onclick="fetchOltData(true)" class="link-btn" style="background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:600;">🔄 Refresh Data</button>
+            </div>
+          </div>
+
+          <!-- Stat Cards OLT -->
+          <div class="stat-cards" id="oltStatCards">
+            <div class="stat-card blue" style="cursor: pointer;" onclick="filterOltTable('all')">
+              <div class="stat-title">TOTAL OLT</div>
+              <div class="stat-value"><span id="countTotalOlt">...</span> <span class="icon">🖥️</span></div>
+              <div id="subtextTotalOlt" style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">Unit Terdaftar</div>
+            </div>
+            <div class="stat-card red" style="cursor: pointer;" onclick="filterOltTable('butuh')">
+              <div class="stat-title">BUTUH GEMBOK / KERANGKENG</div>
+              <div class="stat-value"><span id="countOltButuhGembok">...</span> <span class="icon">⚠️</span></div>
+              <div id="subtextOltButuhGembok" style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">Perlu Tindakan</div>
+            </div>
+            <div class="stat-card green" style="cursor: pointer;" onclick="filterOltTable('aman')">
+              <div class="stat-title">GEMBOK AMAN</div>
+              <div class="stat-value"><span id="countOltAman">...</span> <span class="icon">🔒</span></div>
+              <div id="subtextOltAman" style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">Kondisi Baik</div>
+            </div>
+            <div class="stat-card teal" style="cursor: default;">
+              <div class="stat-title">AREA STO OLT</div>
+              <div class="stat-value"><span id="countOltSto">...</span> <span class="icon">🏢</span></div>
+              <div id="subtextOltSto" style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">Sebaran STO</div>
+            </div>
+            <div class="stat-card purple" style="cursor: pointer;" onclick="filterOltTable('foto')">
+              <div class="stat-title">EVIDENCE FOTO</div>
+              <div class="stat-value"><span id="countOltFoto">...</span> <span class="icon">📷</span></div>
+              <div id="subtextOltFoto" style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">Terdokumentasi</div>
+            </div>
+          </div>
+
+          <!-- OLT Ratio Comparison Bar -->
+          <div style="background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px; margin-bottom: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px;">
+              <span style="font-weight: 600; color: var(--text-muted);">Perbandingan Kondisi Gembok / Keamanan Fisik OLT:</span>
+              <span style="font-weight: 700;">Total: <strong id="oltRatioTotal">0</strong> OLT</span>
+            </div>
+            <div style="height: 12px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden; display: flex; gap: 2px;">
+              <div id="oltRatioBarButuh" style="height: 100%; background: #e74c3c; width: 0%; transition: width 0.5s ease;" title="Butuh Gembok / Kerangkeng"></div>
+              <div id="oltRatioBarAman" style="height: 100%; background: #2ecc71; width: 0%; transition: width 0.5s ease;" title="Gembok Aman"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px;">
+              <span style="color: #e74c3c; font-weight: 600;">⚠️ Butuh Gembok / Kerangkeng: <span id="oltRatioPctButuh">0%</span> (<span id="oltRatioCountButuh">0</span>)</span>
+              <span style="color: #2ecc71; font-weight: 600;">🔒 Gembok Aman: <span id="oltRatioPctAman">0%</span> (<span id="oltRatioCountAman">0</span>)</span>
+            </div>
+          </div>
+
+          <hr style="border-color: var(--border-color); margin: 30px 0;">
+          <h2 style="margin-bottom: 20px; font-size: 18px;">Data Realtime OLT (Per Service Area & STO)</h2>
+          <div id="oltLoader" class="loader" style="display:none; margin:30px auto;"></div>
+          <div id="oltDashboardGrid" class="dashboard-container"></div>
+
+          <!-- Repository Data OLT Table -->
+          <div class="card-section" style="margin-top: 30px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+              <div>
+                <h2 style="margin:0; font-size:16px;">REPOSITORY DATA OLT (DB OLT)</h2>
+                <p style="margin:4px 0 0; font-size:11px; color:var(--text-muted);">Daftar seluruh perangkat OLT beserta status pengamanan dan foto perangkat</p>
+              </div>
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <input type="text" id="searchOltInput" placeholder="Cari Hostname, Lokasi, STO..." onkeyup="searchOltTable()" style="background:var(--bg-dark); border:1px solid var(--border-color); color:var(--text-main); padding:7px 12px; border-radius:20px; font-size:12px; outline:none; width:220px;">
+              </div>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap;">
+              <button id="btnFilterOltAll" onclick="filterOltTable('all')" class="link-btn" style="background:var(--primary-color); color:#000; font-weight:bold; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:12px;">Semua (<span id="filterOltCountAll">0</span>)</button>
+              <button id="btnFilterOltButuh" onclick="filterOltTable('butuh')" class="link-btn" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main); padding:6px 14px; border-radius:20px; cursor:pointer; font-size:12px;">⚠️ Butuh Gembok (<span id="filterOltCountButuh">0</span>)</button>
+              <button id="btnFilterOltAman" onclick="filterOltTable('aman')" class="link-btn" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main); padding:6px 14px; border-radius:20px; cursor:pointer; font-size:12px;">✅ Aman (<span id="filterOltCountAman">0</span>)</button>
+              <button id="btnFilterOltFoto" onclick="filterOltTable('foto')" class="link-btn" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main); padding:6px 14px; border-radius:20px; cursor:pointer; font-size:12px;">📷 Ada Foto (<span id="filterOltCountFoto">0</span>)</button>
+            </div>
+
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Service Area</th>
+                    <th>STO</th>
+                    <th>Hostname OLT</th>
+                    <th>Lokasi</th>
+                    <th>Kondisi Gembok / Keterangan</th>
+                    <th>Evidence Foto</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="oltTableBody">
+                  <tr><td colspan="8" style="text-align:center;">Memuat data OLT...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- OLT STO Detail View -->
+        <div id="oltStoDetailView" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+            <button onclick="backToOltDashboard()" class="btn-back" style="margin:0;">&larr; Kembali ke Dashboard OLT</button>
+            <span style="font-size:12px; color:var(--text-muted);">Sistem Monitoring OLT</span>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap;">
+            <h2 id="oltStoDetailTitle" style="font-size:18px;">Detail STO: - (Service Area: -)</h2>
+            <span id="oltStoDetailCountBadge" class="badge-olt warning" style="font-size:12px; padding:4px 10px;">- OLT</span>
+          </div>
+
+          <div class="card-section" style="margin-bottom:25px;">
+            <h3 style="font-size:13px; text-transform:uppercase; color:var(--text-muted); margin-bottom:15px; letter-spacing:0.5px;">Perangkat OLT di STO Ini</h3>
+            <div id="oltStoDevicesGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:15px;"></div>
+          </div>
+
+          <!-- Table of OLTs in this STO -->
+          <div class="card-section">
+            <h3 style="font-size:14px; margin-bottom:15px;">Daftar Perangkat OLT</h3>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Hostname OLT</th>
+                    <th>Lokasi</th>
+                    <th>Status Gembok</th>
+                    <th>Foto</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="oltStoTableBody">
+                  <tr><td colspan="6" style="text-align:center;">Memuat data...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -574,6 +722,57 @@
     </div>
   </div>
 
+  <!-- Modal Detail OLT -->
+  <div id="oltDetailModal" class="modal" style="overflow-y:auto; padding:20px 10px;">
+    <div class="modal-content" style="max-width:550px; background:var(--bg-panel); border:1px solid var(--border-color); border-radius:12px; padding:25px; box-shadow:0 15px 35px rgba(0,0,0,0.5);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:12px;">
+        <h3 style="margin:0; font-size:18px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+          <span>🖥️</span> Detail Perangkat OLT
+        </h3>
+        <span onclick="closeOltDetailModal()" style="cursor:pointer; font-size:24px; color:var(--text-muted); line-height:1;">&times;</span>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="background:var(--bg-dark); padding:12px 16px; border-radius:8px; border:1px solid var(--border-color);">
+          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Hostname OLT</div>
+          <div id="oltModalHostname" style="font-size:16px; font-weight:800; color:var(--primary-color); word-break:break-all; margin-top:2px;">-</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div style="background:var(--bg-dark); padding:10px 14px; border-radius:8px; border:1px solid var(--border-color);">
+            <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Service Area</div>
+            <div id="oltModalSa" style="font-size:13px; font-weight:700; color:var(--text-main); margin-top:2px;">-</div>
+          </div>
+          <div style="background:var(--bg-dark); padding:10px 14px; border-radius:8px; border:1px solid var(--border-color);">
+            <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">STO</div>
+            <div id="oltModalSto" style="font-size:13px; font-weight:700; color:var(--text-main); margin-top:2px;">-</div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-dark); padding:10px 14px; border-radius:8px; border:1px solid var(--border-color);">
+          <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Lokasi</div>
+          <div id="oltModalLokasi" style="font-size:13px; font-weight:600; color:var(--text-main); margin-top:2px;">-</div>
+        </div>
+
+        <div style="background:var(--bg-dark); padding:10px 14px; border-radius:8px; border:1px solid var(--border-color);">
+          <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Kondisi / Keterangan Gembok</div>
+          <div id="oltModalKeterangan" style="font-size:13px; font-weight:600; margin-top:2px;">-</div>
+        </div>
+
+        <div style="background:var(--bg-dark); padding:12px 14px; border-radius:8px; border:1px solid var(--border-color);">
+          <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:8px;">Foto Perangkat</div>
+          <div id="oltModalFotoContainer" style="text-align:center;">
+            <span style="font-size:12px; color:var(--text-muted);">Tidak ada foto</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:20px; border-top:1px solid var(--border-color); padding-top:12px;">
+        <button type="button" onclick="closeOltDetailModal()" class="btn-submit" style="background:var(--text-muted); width:auto; padding:8px 20px; margin:0; cursor:pointer; font-size:13px;">Tutup</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     function getOdcStatusDesign(odc, size) {
       let isBorrowed = odc.status === 'red';
@@ -662,8 +861,16 @@
         const data = await response.json();
         
         const countEl = document.getElementById('countUsers');
-        if (countEl) countEl.innerText = data.users.length;
+        if (countEl) countEl.innerText = (data.users && data.users.length) ? data.users.length : '0';
         
+        if (data.oltData) {
+          window.oltData = data.oltData;
+          const oltDash = document.getElementById('oltDashboardView');
+          if (oltDash && oltDash.style.display === 'block') {
+            renderOltDashboard(data.oltData);
+          }
+        }
+
         renderDashboard(data.dashboard);
       } catch (err) {
         console.error('Error fetching initial data:', err);
@@ -676,6 +883,7 @@
         }
       }
     }
+    window.fetchDashboardData = fetchInitialData;
 
     function renderDashboard(data) {
       window.dashboardData = data; 
@@ -686,7 +894,7 @@
       const stoDetailView = document.getElementById('stoDetailView');
       const isDetailViewOpen = stoDetailView.style.display === 'block';
       
-      const isDashboardActive = document.querySelector('.sidebar-menu li:nth-child(1)').classList.contains('active');
+      const isDashboardActive = document.getElementById('menuDashboardOdc')?.classList.contains('active');
       if (isDashboardActive && !isDetailViewOpen) {
         dashboard.style.display = 'grid';
       }
@@ -961,6 +1169,19 @@
       window.currentSaName = null;
       document.getElementById('stoDetailView').style.display = 'none';
       
+      const oltDashboardView = document.getElementById('oltDashboardView');
+      if (oltDashboardView) oltDashboardView.style.display = 'none';
+      const oltStoDetailView = document.getElementById('oltStoDetailView');
+      if (oltStoDetailView) oltStoDetailView.style.display = 'none';
+
+      // Restore ODC stat cards & headers
+      const odcStatCards = document.getElementById('odcStatCards');
+      if (odcStatCards) odcStatCards.style.display = 'grid';
+      const odcDivider = document.getElementById('odcDivider');
+      if (odcDivider) odcDivider.style.display = 'block';
+      const odcHeading = document.getElementById('odcHeading');
+      if (odcHeading) odcHeading.style.display = 'block';
+
       // Remove temporary back button from active section if it exists
       const btnBackActive = document.getElementById('btnBackActive');
       if (btnBackActive) btnBackActive.remove();
@@ -984,10 +1205,11 @@
       if(monitoringView) monitoringView.style.display = 'none';
 
       document.getElementById('dashboard').style.display = 'grid';
-      // Ensure Dashboard menu is active
+      // Ensure Dashboard ODC menu is active
       const sidebarItems = document.querySelectorAll('.sidebar-menu li');
       sidebarItems.forEach(item => item.classList.remove('active'));
-      if(sidebarItems.length > 0) sidebarItems[0].classList.add('active');
+      const menuOdc = document.getElementById('menuDashboardOdc') || sidebarItems[0];
+      if (menuOdc) menuOdc.classList.add('active');
 
       if (document.getElementById('activeBorrowingsTableBody').children.length > 0 && 
           document.getElementById('activeBorrowingsTableBody').children[0].innerText !== 'Tidak ada kunci yang sedang dipinjam saat ini.') {
@@ -1378,7 +1600,22 @@
       document.getElementById('historyModal').style.display = 'none';
       const baModal = document.getElementById('baModal');
       if (baModal) baModal.style.display = 'none';
+      const oltModal = document.getElementById('oltDetailModal');
+      if (oltModal) oltModal.style.display = 'none';
+      const gembokModal = document.getElementById('gembokEvidenceModal');
+      if (gembokModal) gembokModal.style.display = 'none';
     }
+
+    window.addEventListener('click', function(event) {
+      const oltModal = document.getElementById('oltDetailModal');
+      if (event.target === oltModal) {
+        oltModal.style.display = 'none';
+      }
+      const gembokModal = document.getElementById('gembokEvidenceModal');
+      if (event.target === gembokModal) {
+        gembokModal.style.display = 'none';
+      }
+    });
 
     function showBaModal(borrowDataStr, odcName) {
       const data = JSON.parse(decodeURIComponent(atob(borrowDataStr)));
@@ -1420,6 +1657,18 @@
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('activeBorrowingsSection').style.display = 'none';
       document.getElementById('stoDetailView').style.display = 'none';
+
+      const odcStatCards = document.getElementById('odcStatCards');
+      if (odcStatCards) odcStatCards.style.display = 'none';
+      const odcDivider = document.getElementById('odcDivider');
+      if (odcDivider) odcDivider.style.display = 'none';
+      const odcHeading = document.getElementById('odcHeading');
+      if (odcHeading) odcHeading.style.display = 'none';
+
+      const oltDashboardView = document.getElementById('oltDashboardView');
+      if (oltDashboardView) oltDashboardView.style.display = 'none';
+      const oltStoDetailView = document.getElementById('oltStoDetailView');
+      if (oltStoDetailView) oltStoDetailView.style.display = 'none';
       
       // Tampilkan users view
       const usersView = document.getElementById('usersView');
@@ -1469,6 +1718,18 @@
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('stoDetailView').style.display = 'none';
       document.getElementById('usersView').style.display = 'none';
+
+      const odcStatCards = document.getElementById('odcStatCards');
+      if (odcStatCards) odcStatCards.style.display = 'none';
+      const odcDivider = document.getElementById('odcDivider');
+      if (odcDivider) odcDivider.style.display = 'none';
+      const odcHeading = document.getElementById('odcHeading');
+      if (odcHeading) odcHeading.style.display = 'none';
+
+      const oltDashboardView = document.getElementById('oltDashboardView');
+      if (oltDashboardView) oltDashboardView.style.display = 'none';
+      const oltStoDetailView = document.getElementById('oltStoDetailView');
+      if (oltStoDetailView) oltStoDetailView.style.display = 'none';
       
       // Tampilkan tabel active borrowings
       const activeSection = document.getElementById('activeBorrowingsSection');
@@ -1491,6 +1752,19 @@
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('activeBorrowingsSection').style.display = 'none';
       document.getElementById('stoDetailView').style.display = 'none';
+
+      const odcStatCards = document.getElementById('odcStatCards');
+      if (odcStatCards) odcStatCards.style.display = 'none';
+      const odcDivider = document.getElementById('odcDivider');
+      if (odcDivider) odcDivider.style.display = 'none';
+      const odcHeading = document.getElementById('odcHeading');
+      if (odcHeading) odcHeading.style.display = 'none';
+
+      const oltDashboardView = document.getElementById('oltDashboardView');
+      if (oltDashboardView) oltDashboardView.style.display = 'none';
+      const oltStoDetailView = document.getElementById('oltStoDetailView');
+      if (oltStoDetailView) oltStoDetailView.style.display = 'none';
+
       const usersView = document.getElementById('usersView');
       if (usersView) usersView.style.display = 'none';
       const globalHistoryView = document.getElementById('globalHistoryView');
@@ -1508,7 +1782,7 @@
 
       // Update active menu in sidebar
       document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
-      const menuGembok = document.querySelector('.sidebar-menu li:nth-child(2)');
+      const menuGembok = document.getElementById('menuMonitoringGembok');
       if (menuGembok) menuGembok.classList.add('active');
 
       filterGembokTable(filter);
@@ -1628,12 +1902,510 @@
       tbody.innerHTML = html;
     }
 
+    // ==========================================
+    // --- MONITORING OLT SECTION & LOGIC ---
+    // ==========================================
+    const defaultOltList = [
+      { no: 1, hostname: 'GPON00-D2-JGL-3#AG', lokasi: 'Cipamingkis', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/IQJuNk_8JKSE', sto: 'JGL', sa: 'PAGELARAN' },
+      { no: 2, hostname: 'GPON00-D2-CGD-3#MT', lokasi: 'PT Antam', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/1BPL1S0Q2zDA', sto: 'CGD', sa: 'DRAMAGA' },
+      { no: 3, hostname: 'GPON00-D2-IWL-3#CL', lokasi: 'Kecamatan Pamijahan', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/B704JBcQDGzr', sto: 'IWL', sa: 'DRAMAGA' },
+      { no: 4, hostname: 'GPON00-D2-DMG-3#UT', lokasi: 'Situ Daun', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/S1_H4h91kMuE', sto: 'DMG', sa: 'DRAMAGA' },
+      { no: 5, hostname: 'GPON00-D2-KHL-3#DC', lokasi: 'Cluster Asri City', keterangan: 'Butuh Gembok', foto: '', sto: 'KHL', sa: 'KEDUNGHALANG' },
+      { no: 6, hostname: 'GPON00-D2-KHL-2#RM', lokasi: 'Situ Perumahan Gaura', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/dyEdG2eSEyFb', sto: 'KHL', sa: 'KEDUNGHALANG' },
+      { no: 7, hostname: 'GPON00-D2-GPI-3#AR', lokasi: 'Asana Residence', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/BCkssq1Pb6Op', sto: 'GPI', sa: 'GUNUNG PUTRI' },
+      { no: 8, hostname: 'GPON00-D2-SPL-2#CV', lokasi: 'Bukit Cimanggu City', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/d5e8p00rbyK0', sto: 'SPL', sa: 'SEMPLAK' },
+      { no: 9, hostname: 'GPON00-D2-CTR-3#SS', lokasi: 'Cibadak sukamakmur', keterangan: 'Butuh Gembok / Kerangkeng', foto: 'https://prnt.sc/oePttKeZ-OE-', sto: 'CTR', sa: 'PASIR MAUNG' },
+      { no: 10, hostname: 'GPON00-D2-CBD-4#SW', lokasi: 'Apartemen Podomoro', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/KTkgunul4iEZ', sto: 'CBD', sa: 'CIAWI' },
+      { no: 11, hostname: 'GPON00-D2-BOO-3#ST', lokasi: 'Istana Bogor', keterangan: 'Butuh Gembok', foto: 'https://prnt.sc/yLUxHQZvxphe', sto: 'BOO', sa: 'BOGOR' }
+    ];
+
+    function buildDefaultOltDataStructure(rawList) {
+      const olts = [];
+      const dashboard = {};
+      let totalButuh = 0;
+      let totalAman = 0;
+      let totalFoto = 0;
+      const stoSet = {};
+
+      rawList.forEach((item, idx) => {
+        const isButuh = (item.keterangan || '').toLowerCase().includes('butuh') || 
+                        (item.keterangan || '').toLowerCase().includes('gembok') || 
+                        (item.keterangan || '').toLowerCase().includes('kerangkeng') ||
+                        (item.keterangan || '').toLowerCase().includes('rusak');
+        if (isButuh) totalButuh++; else totalAman++;
+        if (item.foto) totalFoto++;
+        stoSet[item.sto] = true;
+
+        const oltObj = {
+          no: item.no || (idx + 1),
+          hostname: item.hostname,
+          lokasi: item.lokasi,
+          keterangan: item.keterangan,
+          foto: item.foto,
+          sto: item.sto,
+          sa: item.sa,
+          status: isButuh ? 'warning' : 'green',
+          isButuhGembok: isButuh
+        };
+        olts.push(oltObj);
+
+        if (!dashboard[item.sa]) {
+          dashboard[item.sa] = { name: item.sa, stos: {} };
+        }
+        if (!dashboard[item.sa].stos[item.sto]) {
+          dashboard[item.sa].stos[item.sto] = { name: item.sto, status: 'green', olts: [] };
+        }
+        if (isButuh) {
+          dashboard[item.sa].stos[item.sto].status = 'warning';
+        }
+        dashboard[item.sa].stos[item.sto].olts.push(oltObj);
+      });
+
+      return {
+        olts: olts,
+        dashboard: dashboard,
+        stats: {
+          total: olts.length,
+          butuhGembok: totalButuh,
+          aman: totalAman,
+          totalSto: Object.keys(stoSet).length,
+          withPhoto: totalFoto
+        }
+      };
+    }
+
+    function showOltDashboardView() {
+      // Sembunyikan semua view lain
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('activeBorrowingsSection').style.display = 'none';
+      document.getElementById('odcHistorySection').style.display = 'none';
+      document.getElementById('stoDetailView').style.display = 'none';
+      
+      const odcStatCards = document.getElementById('odcStatCards');
+      if (odcStatCards) odcStatCards.style.display = 'none';
+      const odcDivider = document.getElementById('odcDivider');
+      if (odcDivider) odcDivider.style.display = 'none';
+      const odcHeading = document.getElementById('odcHeading');
+      if (odcHeading) odcHeading.style.display = 'none';
+
+      const oltStoDetailView = document.getElementById('oltStoDetailView');
+      if (oltStoDetailView) oltStoDetailView.style.display = 'none';
+      const usersView = document.getElementById('usersView');
+      if (usersView) usersView.style.display = 'none';
+      const globalHistoryView = document.getElementById('globalHistoryView');
+      if (globalHistoryView) globalHistoryView.style.display = 'none';
+      const approvedBaView = document.getElementById('approvedBaView');
+      if (approvedBaView) approvedBaView.style.display = 'none';
+      const pendingHsaView = document.getElementById('pendingHsaView');
+      if (pendingHsaView) pendingHsaView.style.display = 'none';
+      const pendingTifView = document.getElementById('pendingTifView');
+      if (pendingTifView) pendingTifView.style.display = 'none';
+      const monitoringView = document.getElementById('monitoringGembokView');
+      if (monitoringView) monitoringView.style.display = 'none';
+
+      // Tampilkan Dashboard OLT
+      const oltView = document.getElementById('oltDashboardView');
+      if (oltView) oltView.style.display = 'block';
+
+      // Aktifkan item menu di sidebar
+      document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
+      const menuOlt = document.getElementById('menuDashboardOlt');
+      if (menuOlt) menuOlt.classList.add('active');
+
+      if (!window.oltData) {
+        fetchOltData();
+      } else {
+        renderOltDashboard(window.oltData);
+      }
+    }
+
+    async function fetchOltData(force = false) {
+      const loader = document.getElementById('oltLoader');
+      if (loader) loader.style.display = 'block';
+
+      try {
+        const res = await fetch(API_URL + '?action=getOltData');
+        const data = await res.json();
+        if (data && data.olts && data.olts.length > 0) {
+          window.oltData = data;
+        } else {
+          window.oltData = buildDefaultOltDataStructure(defaultOltList);
+        }
+      } catch (err) {
+        console.warn('Gagal fetch OLT dari Apps Script, menggunakan data DB OLT lokal:', err);
+        window.oltData = buildDefaultOltDataStructure(defaultOltList);
+      } finally {
+        if (loader) loader.style.display = 'none';
+        renderOltDashboard(window.oltData);
+      }
+    }
+
+    function renderOltDashboard(data) {
+      if (!data) return;
+      const stats = data.stats || {};
+      const total = stats.total || (data.olts ? data.olts.length : 0);
+      const butuh = stats.butuhGembok || 0;
+      const aman = stats.aman || 0;
+      const stoCount = stats.totalSto || Object.keys(data.dashboard || {}).length;
+      const fotoCount = stats.withPhoto || 0;
+
+      // Update stat cards
+      const countTotal = document.getElementById('countTotalOlt');
+      if (countTotal) countTotal.innerText = total;
+      const countButuh = document.getElementById('countOltButuhGembok');
+      if (countButuh) countButuh.innerText = butuh;
+      const countAman = document.getElementById('countOltAman');
+      if (countAman) countAman.innerText = aman;
+      const countSto = document.getElementById('countOltSto');
+      if (countSto) countSto.innerText = stoCount;
+      const countFoto = document.getElementById('countOltFoto');
+      if (countFoto) countFoto.innerText = fotoCount;
+
+      // Update Ratio Bar
+      const pctButuh = total > 0 ? Math.round((butuh / total) * 100) : 0;
+      const pctAman = total > 0 ? (100 - pctButuh) : 0;
+
+      const ratioTotal = document.getElementById('oltRatioTotal');
+      if (ratioTotal) ratioTotal.innerText = total;
+      const barButuh = document.getElementById('oltRatioBarButuh');
+      if (barButuh) barButuh.style.width = pctButuh + '%';
+      const barAman = document.getElementById('oltRatioBarAman');
+      if (barAman) barAman.style.width = pctAman + '%';
+
+      const pctButuhEl = document.getElementById('oltRatioPctButuh');
+      if (pctButuhEl) pctButuhEl.innerText = pctButuh + '%';
+      const countButuhEl = document.getElementById('oltRatioCountButuh');
+      if (countButuhEl) countButuhEl.innerText = butuh;
+
+      const pctAmanEl = document.getElementById('oltRatioPctAman');
+      if (pctAmanEl) pctAmanEl.innerText = pctAman + '%';
+      const countAmanEl = document.getElementById('oltRatioCountAman');
+      if (countAmanEl) countAmanEl.innerText = aman;
+
+      // Render Realtime Service Area Grid
+      const grid = document.getElementById('oltDashboardGrid');
+      if (grid) {
+        grid.innerHTML = '';
+        const dashboardObj = data.dashboard || {};
+        
+        for (const saName in dashboardObj) {
+          const sa = dashboardObj[saName];
+          const saSection = document.createElement('div');
+          saSection.className = 'sa-section';
+          saSection.innerHTML = `<h2 class="sa-title">Service Area: ${sa.name}</h2>`;
+
+          const saGrid = document.createElement('div');
+          saGrid.className = 'dashboard-grid';
+
+          for (const stoName in sa.stos) {
+            const sto = sa.stos[stoName];
+            const isWarning = sto.status === 'warning';
+            const iconColor = isWarning ? '#f59e0b' : '#10b981';
+
+            // Server / OLT SVG Icon
+            const iconSvg = `
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="${iconColor}" stroke="#1e222d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+                <rect x="6" y="6" width="12" height="8" fill="#fff" stroke="none"></rect>
+              </svg>`;
+
+            const stoCard = document.createElement('div');
+            stoCard.className = `odc-item status-${sto.status}`;
+            stoCard.style.cursor = 'pointer';
+            stoCard.title = `Klik untuk melihat ${sto.olts.length} OLT di STO ${sto.name}`;
+            stoCard.innerHTML = `
+              <div class="monitor-icon">${iconSvg}</div>
+              <div style="font-size:11px; font-weight:bold; margin-top:5px; color:#ddd; text-align:center;">${sto.name}</div>
+              <div style="font-size:9px; color:${iconColor}; font-weight:700; text-align:center; margin-top:2px;">
+                ${sto.olts.length} OLT ${isWarning ? '⚠️' : '✅'}
+              </div>
+            `;
+            stoCard.onclick = (e) => handleOltStoClick(e, sto.name, sa.name);
+            saGrid.appendChild(stoCard);
+          }
+
+          saSection.appendChild(saGrid);
+          grid.appendChild(saSection);
+        }
+      }
+
+      // Render Repository Table
+      filterOltTable('all');
+    }
+
+    function handleOltStoClick(e, stoName, saName) {
+      if (e && e.stopPropagation) e.stopPropagation();
+      const oltView = document.getElementById('oltDashboardView');
+      if (oltView) oltView.style.display = 'none';
+
+      const stoDetailView = document.getElementById('oltStoDetailView');
+      if (stoDetailView) stoDetailView.style.display = 'block';
+
+      const titleEl = document.getElementById('oltStoDetailTitle');
+      if (titleEl) titleEl.innerText = `Detail STO: ${stoName} (Service Area: ${saName})`;
+
+      const allOlts = (window.oltData && window.oltData.olts) ? window.oltData.olts : [];
+      const stoOlts = allOlts.filter(o => o.sto.toUpperCase() === stoName.toUpperCase());
+
+      const countBadge = document.getElementById('oltStoDetailCountBadge');
+      if (countBadge) {
+        countBadge.innerText = `${stoOlts.length} OLT`;
+        const hasWarning = stoOlts.some(o => o.isButuhGembok);
+        countBadge.className = `badge-olt ${hasWarning ? 'warning' : 'success'}`;
+      }
+
+      // Render Device Cards Grid
+      const devicesGrid = document.getElementById('oltStoDevicesGrid');
+      if (devicesGrid) {
+        devicesGrid.innerHTML = '';
+        if (stoOlts.length === 0) {
+          devicesGrid.innerHTML = '<div style="color:var(--text-muted); padding:10px;">Tidak ada OLT di STO ini.</div>';
+        } else {
+          stoOlts.forEach(olt => {
+            const isWarning = olt.isButuhGembok;
+            const statusLabel = isWarning ? 'BUTUH GEMBOK / KERANGKENG' : 'AMAN';
+            const statusColor = isWarning ? '#f59e0b' : '#10b981';
+
+            const card = document.createElement('div');
+            card.className = `odc-item status-${olt.status}`;
+            card.style.padding = '14px';
+            card.style.borderRadius = '10px';
+            card.style.cursor = 'pointer';
+            card.style.borderTop = `3px solid ${statusColor}`;
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.gap = '8px';
+            card.onclick = () => openOltDetailModal(olt.hostname);
+
+            card.innerHTML = `
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="badge-olt ${isWarning ? 'warning' : 'success'}" style="font-size:9px;">${statusLabel}</span>
+                <span style="font-size:16px;">🖥️</span>
+              </div>
+              <div style="font-weight:800; font-size:13px; color:var(--primary-color); word-break:break-all;">
+                ${olt.hostname}
+              </div>
+              <div style="font-size:11px; color:var(--text-muted);">
+                📍 <strong>Lokasi:</strong> ${olt.lokasi}
+              </div>
+              <div style="font-size:11px; color:var(--text-main); background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:6px; border:1px solid var(--border-color);">
+                <strong>Keterangan:</strong> ${olt.keterangan || '-'}
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                <span style="font-size:10px; color:${olt.foto ? 'var(--primary-color)' : 'var(--text-muted)'}; font-weight:600;">
+                  ${olt.foto ? '📷 Ada Foto' : '📷 Tanpa Foto'}
+                </span>
+                <span style="font-size:11px; color:var(--primary-color); font-weight:bold;">Lihat Detail &rarr;</span>
+              </div>
+            `;
+            devicesGrid.appendChild(card);
+          });
+        }
+      }
+
+      // Render Table in STO Detail
+      const tbody = document.getElementById('oltStoTableBody');
+      if (tbody) {
+        if (stoOlts.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Tidak ada data OLT.</td></tr>';
+        } else {
+          let html = '';
+          stoOlts.forEach((olt, idx) => {
+            const isWarning = olt.isButuhGembok;
+            const photoBtn = olt.foto ? 
+              `<a href="${olt.foto}" target="_blank" rel="noopener noreferrer" class="link-btn" style="color:var(--primary-color); font-weight:600;">📷 Buka Foto</a>` :
+              `<span style="color:var(--text-muted); font-size:11px;">-</span>`;
+            
+            html += `
+              <tr>
+                <td>${idx + 1}</td>
+                <td style="font-weight:bold; color:var(--primary-color);">${olt.hostname}</td>
+                <td>${olt.lokasi}</td>
+                <td><span class="badge-olt ${isWarning ? 'warning' : 'success'}">${olt.keterangan || (isWarning ? 'Butuh Gembok' : 'Aman')}</span></td>
+                <td>${photoBtn}</td>
+                <td>
+                  <button onclick="openOltDetailModal('${olt.hostname}')" class="link-btn" style="background:rgba(0,180,216,0.1); border:1px solid var(--primary-color); color:var(--primary-color); padding:4px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">Lihat Detail</button>
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      }
+    }
+
+    function backToOltDashboard() {
+      const stoDetailView = document.getElementById('oltStoDetailView');
+      if (stoDetailView) stoDetailView.style.display = 'none';
+      const oltView = document.getElementById('oltDashboardView');
+      if (oltView) oltView.style.display = 'block';
+    }
+
+    let currentOltFilter = 'all';
+
+    function filterOltTable(filter) {
+      currentOltFilter = filter;
+      const btnAll = document.getElementById('btnFilterOltAll');
+      const btnButuh = document.getElementById('btnFilterOltButuh');
+      const btnAman = document.getElementById('btnFilterOltAman');
+      const btnFoto = document.getElementById('btnFilterOltFoto');
+
+      [btnAll, btnButuh, btnAman, btnFoto].forEach(btn => {
+        if (!btn) return;
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-main)';
+        btn.style.border = '1px solid var(--border-color)';
+        btn.style.fontWeight = 'normal';
+      });
+
+      let activeBtn = btnAll;
+      if (filter === 'butuh') activeBtn = btnButuh;
+      else if (filter === 'aman') activeBtn = btnAman;
+      else if (filter === 'foto') activeBtn = btnFoto;
+
+      if (activeBtn) {
+        activeBtn.style.background = 'var(--primary-color)';
+        activeBtn.style.color = '#000';
+        activeBtn.style.border = '1px solid var(--primary-color)';
+        activeBtn.style.fontWeight = 'bold';
+      }
+
+      searchOltTable();
+    }
+
+    function searchOltTable() {
+      const query = (document.getElementById('searchOltInput')?.value || '').toLowerCase().trim();
+      const allOlts = (window.oltData && window.oltData.olts) ? window.oltData.olts : [];
+
+      // Update badge counts
+      const countAll = allOlts.length;
+      const countButuh = allOlts.filter(o => o.isButuhGembok).length;
+      const countAman = allOlts.filter(o => !o.isButuhGembok).length;
+      const countFoto = allOlts.filter(o => !!o.foto).length;
+
+      const fCountAll = document.getElementById('filterOltCountAll');
+      if (fCountAll) fCountAll.innerText = countAll;
+      const fCountButuh = document.getElementById('filterOltCountButuh');
+      if (fCountButuh) fCountButuh.innerText = countButuh;
+      const fCountAman = document.getElementById('filterOltCountAman');
+      if (fCountAman) fCountAman.innerText = countAman;
+      const fCountFoto = document.getElementById('filterOltCountFoto');
+      if (fCountFoto) fCountFoto.innerText = countFoto;
+
+      let filtered = allOlts;
+      if (currentOltFilter === 'butuh') {
+        filtered = filtered.filter(o => o.isButuhGembok);
+      } else if (currentOltFilter === 'aman') {
+        filtered = filtered.filter(o => !o.isButuhGembok);
+      } else if (currentOltFilter === 'foto') {
+        filtered = filtered.filter(o => !!o.foto);
+      }
+
+      if (query) {
+        filtered = filtered.filter(o => 
+          (o.hostname && o.hostname.toLowerCase().includes(query)) ||
+          (o.lokasi && o.lokasi.toLowerCase().includes(query)) ||
+          (o.sto && o.sto.toLowerCase().includes(query)) ||
+          (o.sa && o.sa.toLowerCase().includes(query)) ||
+          (o.keterangan && o.keterangan.toLowerCase().includes(query))
+        );
+      }
+
+      const tbody = document.getElementById('oltTableBody');
+      if (!tbody) return;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">Tidak ada perangkat OLT yang cocok dengan pencarian/filter.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      filtered.forEach((olt, idx) => {
+        const isWarning = olt.isButuhGembok;
+        const photoBtn = olt.foto ? 
+          `<a href="${olt.foto}" target="_blank" rel="noopener noreferrer" class="link-btn" style="color:var(--primary-color); font-weight:600; display:inline-flex; align-items:center; gap:4px;">📷 Buka Foto</a>` :
+          `<span style="color:var(--text-muted); font-size:11px;">Belum ada</span>`;
+
+        html += `
+          <tr>
+            <td>${olt.no || (idx + 1)}</td>
+            <td><strong style="color:var(--text-main);">${olt.sa}</strong></td>
+            <td><span class="badge-olt" style="background:rgba(255,255,255,0.06); color:#fff; border:1px solid var(--border-color);">${olt.sto}</span></td>
+            <td style="font-weight:700; color:var(--primary-color);">${olt.hostname}</td>
+            <td>${olt.lokasi}</td>
+            <td><span class="badge-olt ${isWarning ? 'warning' : 'success'}">${olt.keterangan || (isWarning ? 'Butuh Gembok' : 'Aman')}</span></td>
+            <td>${photoBtn}</td>
+            <td>
+              <button onclick="openOltDetailModal('${olt.hostname}')" class="link-btn" style="background:rgba(0,180,216,0.1); border:1px solid var(--primary-color); color:var(--primary-color); padding:4px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">Lihat Detail</button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function openOltDetailModal(hostname) {
+      const allOlts = (window.oltData && window.oltData.olts) ? window.oltData.olts : [];
+      const olt = allOlts.find(o => o.hostname === hostname);
+      if (!olt) return;
+
+      document.getElementById('oltModalHostname').innerText = olt.hostname;
+      document.getElementById('oltModalSa').innerText = olt.sa || '-';
+      document.getElementById('oltModalSto').innerText = olt.sto || '-';
+      document.getElementById('oltModalLokasi').innerText = olt.lokasi || '-';
+
+      const ketEl = document.getElementById('oltModalKeterangan');
+      if (ketEl) {
+        ketEl.innerText = olt.keterangan || (olt.isButuhGembok ? 'Butuh Gembok / Kerangkeng' : 'Aman');
+        ketEl.style.color = olt.isButuhGembok ? '#f59e0b' : '#10b981';
+      }
+
+      const fotoContainer = document.getElementById('oltModalFotoContainer');
+      if (fotoContainer) {
+        if (olt.foto) {
+          fotoContainer.innerHTML = `
+            <a href="${olt.foto}" target="_blank" rel="noopener noreferrer" style="display:inline-block; margin-bottom:8px;">
+              <img src="${olt.foto}" alt="Evidence Foto" onerror="this.onerror=null; this.src='https://placehold.co/400x250/1e222d/00b4d8?text=Klik+untuk+Buka+Evidence+Foto';" style="max-width:100%; max-height:220px; border-radius:8px; border:1px solid var(--border-color); object-fit:cover;">
+            </a>
+            <div>
+              <a href="${olt.foto}" target="_blank" rel="noopener noreferrer" class="link-btn" style="color:var(--primary-color); font-weight:bold; font-size:12px; display:inline-flex; align-items:center; gap:5px;">
+                <span>🔍</span> Buka Bukti Foto &rarr;
+              </a>
+            </div>
+          `;
+        } else {
+          fotoContainer.innerHTML = '<span style="font-size:12px; color:var(--text-muted); padding:10px; display:block;">Belum ada foto evidence perangkat untuk OLT ini.</span>';
+        }
+      }
+
+      document.getElementById('oltDetailModal').style.display = 'block';
+    }
+
+    function closeOltDetailModal() {
+      const modal = document.getElementById('oltDetailModal');
+      if (modal) modal.style.display = 'none';
+    }
+
     async function showGlobalHistoryView() {
       // Sembunyikan view lain
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('activeBorrowingsSection').style.display = 'none';
       document.getElementById('stoDetailView').style.display = 'none';
       
+      const odcStatCards = document.getElementById('odcStatCards');
+      if (odcStatCards) odcStatCards.style.display = 'none';
+      const odcDivider = document.getElementById('odcDivider');
+      if (odcDivider) odcDivider.style.display = 'none';
+      const odcHeading = document.getElementById('odcHeading');
+      if (odcHeading) odcHeading.style.display = 'none';
+
+      const oltDashboardView = document.getElementById('oltDashboardView');
+      if (oltDashboardView) oltDashboardView.style.display = 'none';
+      const oltStoDetailView = document.getElementById('oltStoDetailView');
+      if (oltStoDetailView) oltStoDetailView.style.display = 'none';
+
       const globalHistoryView = document.getElementById('globalHistoryView');
       if (globalHistoryView) globalHistoryView.style.display = 'none';
       
@@ -1648,14 +2420,12 @@
       
       // Update UI menus
       document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
+      const menuHist = document.getElementById('menuGlobalHistory');
+      if (menuHist) menuHist.classList.add('active');
       
       // Tampilkan history view
       const historyView = document.getElementById('globalHistoryView');
       historyView.style.display = 'block';
-      
-      // Update sidebar styling to make History active
-      const sidebarItems = document.querySelectorAll('.sidebar-menu li');
-      sidebarItems[1].classList.add('active'); // history is 2nd item
       
       const tbody = document.getElementById('globalHistoryTableBody');
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
@@ -1751,7 +2521,7 @@
       const view = document.getElementById('approvedBaView');
       const tbody = document.getElementById('approvedBaTableBody');
       view.style.display = 'block';
-      document.querySelectorAll('.sidebar-menu li')[2].classList.add('active'); // Approval BA menu is index 2
+      document.getElementById('menuApprovalBa')?.classList.add('active');
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       try {
@@ -1797,6 +2567,19 @@
       document.getElementById('stoDetailView').style.display = 'none';
       document.getElementById('activeBorrowingsSection').style.display = 'none';
       document.getElementById('odcHistorySection').style.display = 'none';
+
+      const odcStatCards = document.getElementById('odcStatCards');
+      if (odcStatCards) odcStatCards.style.display = 'none';
+      const odcDivider = document.getElementById('odcDivider');
+      if (odcDivider) odcDivider.style.display = 'none';
+      const odcHeading = document.getElementById('odcHeading');
+      if (odcHeading) odcHeading.style.display = 'none';
+
+      const oltDashboardView = document.getElementById('oltDashboardView');
+      if (oltDashboardView) oltDashboardView.style.display = 'none';
+      const oltStoDetailView = document.getElementById('oltStoDetailView');
+      if (oltStoDetailView) oltStoDetailView.style.display = 'none';
+
       const usersView = document.getElementById('usersView');
       if (usersView) usersView.style.display = 'none';
       const globalHistoryView = document.getElementById('globalHistoryView');
@@ -1807,6 +2590,8 @@
       if (pendingHsaView) pendingHsaView.style.display = 'none';
       const pendingTifView = document.getElementById('pendingTifView');
       if (pendingTifView) pendingTifView.style.display = 'none';
+      const monitoringView = document.getElementById('monitoringGembokView');
+      if (monitoringView) monitoringView.style.display = 'none';
       
       document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
     }
@@ -1816,7 +2601,7 @@
       const view = document.getElementById('pendingHsaView');
       const tbody = document.getElementById('pendingHsaTableBody');
       view.style.display = 'block';
-      document.querySelectorAll('.sidebar-menu li')[3].classList.add('active'); // Pending HSA menu is index 3
+      document.getElementById('menuApprovalHsa')?.classList.add('active');
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       try {
@@ -1860,7 +2645,7 @@
       const view = document.getElementById('pendingTifView');
       const tbody = document.getElementById('pendingTifTableBody');
       view.style.display = 'block';
-      document.querySelectorAll('.sidebar-menu li')[4].classList.add('active'); // Pending TIF menu is index 4
+      document.getElementById('menuApprovalTif')?.classList.add('active');
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       try {

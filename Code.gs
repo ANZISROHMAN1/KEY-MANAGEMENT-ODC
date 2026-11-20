@@ -44,12 +44,15 @@ function doGet(e) {
     if (action === 'getInitialData') {
       result = {
         dashboard: getDashboardData(),
-        users: getUsersList()
+        users: getUsersList(),
+        oltData: getOltData()
       };
     } else if (action === 'getMasterData') {
       result = getMasterData();
     } else if (action === 'getDashboardData') {
       result = getDashboardData();
+    } else if (action === 'getOltData') {
+      result = getOltData();
     } else if (action === 'getUsersList') {
       result = getUsersList();
     } else if (action === 'getOdcHistory') {
@@ -100,6 +103,8 @@ function doPost(e) {
       result = registerAdmin(data.payload);
     } else if (action === 'actionApproval') {
       result = actionApproval(data.payload);
+    } else if (action === 'updateOlt') {
+      result = updateOlt(data.payload);
     } else {
       result = { success: false, message: 'Invalid action' };
     }
@@ -141,6 +146,10 @@ function initSheets() {
     const sheet = ss.insertSheet('Tif');
     sheet.appendRow(['Username', 'Password', 'Telegram ID']);
     sheet.appendRow(['admin_tif', '123456', '@contoh_tif']); // Default dummy TIF
+  }
+  if (!ss.getSheetByName('DB OLT')) {
+    const sheet = ss.insertSheet('DB OLT');
+    sheet.appendRow(['No', 'Hostname', 'Lokasi', 'Keterangan', 'Foto Perangkat']);
   }
   
   props.setProperty('SHEETS_INITIALIZED', 'true');
@@ -516,6 +525,146 @@ function getDashboardData() {
   }
   
   return dashboard;
+}
+
+function getOltData() {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  
+  // Build STO to SA mapping from DB ODC
+  const odcSheet = ss.getSheetByName('DB ODC') || ss.getSheets()[0];
+  const odcData = odcSheet.getDataRange().getValues();
+  const stoToSa = {};
+  for (let i = 1; i < odcData.length; i++) {
+    const sto = odcData[i][5] ? odcData[i][5].toString().toUpperCase().trim() : '';
+    const sa = odcData[i][8] ? odcData[i][8].toString().toUpperCase().trim() : '';
+    if (sto && sa && !stoToSa[sto]) {
+      stoToSa[sto] = sa;
+    }
+  }
+
+  const oltSheet = ss.getSheetByName('DB OLT');
+  if (!oltSheet) {
+    return { olts: [], dashboard: {}, stats: { total: 0, butuhGembok: 0, aman: 0, totalSto: 0, withPhoto: 0 } };
+  }
+  
+  const oltData = oltSheet.getDataRange().getValues();
+  const olts = [];
+  const dashboard = {};
+  let totalButuhGembok = 0;
+  let totalAman = 0;
+  let totalWithPhoto = 0;
+  const stoSet = {};
+
+  for (let i = 1; i < oltData.length; i++) {
+    const row = oltData[i];
+    const no = row[0];
+    const hostname = row[1] ? row[1].toString().trim() : '';
+    if (!hostname) continue;
+    
+    const lokasi = row[2] ? row[2].toString().trim() : '-';
+    const keterangan = row[3] ? row[3].toString().trim() : '-';
+    const foto = row[4] ? row[4].toString().trim() : '';
+
+    // Extract STO from Hostname: GPON00-D2-JGL-3#AG -> JGL
+    let sto = '';
+    const parts = hostname.split('-');
+    if (parts.length >= 3) {
+      sto = parts[2].toUpperCase().trim();
+    } else {
+      for (const knownSto in stoToSa) {
+        if (hostname.toUpperCase().includes(knownSto)) {
+          sto = knownSto;
+          break;
+        }
+      }
+    }
+    if (!sto) sto = 'OTHER';
+    
+    const sa = stoToSa[sto] || 'AREA LAIN';
+    stoSet[sto] = true;
+
+    const isButuhGembok = keterangan.toLowerCase().includes('butuh') || 
+                          keterangan.toLowerCase().includes('gembok') || 
+                          keterangan.toLowerCase().includes('kerangkeng') ||
+                          keterangan.toLowerCase().includes('rusak');
+    
+    if (isButuhGembok) {
+      totalButuhGembok++;
+    } else {
+      totalAman++;
+    }
+
+    if (foto) totalWithPhoto++;
+
+    const oltItem = {
+      no: no || i,
+      hostname: hostname,
+      lokasi: lokasi,
+      keterangan: keterangan,
+      foto: foto,
+      sto: sto,
+      sa: sa,
+      status: isButuhGembok ? 'warning' : 'green',
+      isButuhGembok: isButuhGembok
+    };
+
+    olts.push(oltItem);
+
+    // Grouping by SA and STO for Dashboard View
+    if (!dashboard[sa]) {
+      dashboard[sa] = { name: sa, stos: {} };
+    }
+    if (!dashboard[sa].stos[sto]) {
+      dashboard[sa].stos[sto] = { name: sto, status: 'green', olts: [] };
+    }
+    if (isButuhGembok) {
+      dashboard[sa].stos[sto].status = 'warning';
+    }
+    dashboard[sa].stos[sto].olts.push(oltItem);
+  }
+
+  return {
+    olts: olts,
+    dashboard: dashboard,
+    stats: {
+      total: olts.length,
+      butuhGembok: totalButuhGembok,
+      aman: totalAman,
+      totalSto: Object.keys(stoSet).length,
+      withPhoto: totalWithPhoto
+    }
+  };
+}
+
+function updateOlt(data) {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const sheet = ss.getSheetByName('DB OLT');
+  if (!sheet) return { success: false, message: 'Sheet DB OLT tidak ditemukan' };
+  
+  const targetHost = (data.hostname || '').toString().trim().toUpperCase();
+  const sheetData = sheet.getDataRange().getValues();
+  let rowIndex = -1;
+  for (let i = 1; i < sheetData.length; i++) {
+    if (sheetData[i][1] && sheetData[i][1].toString().trim().toUpperCase() === targetHost) {
+      rowIndex = i + 1;
+      break;
+    }
+  }
+  if (rowIndex === -1) {
+    return { success: false, message: 'OLT ' + data.hostname + ' tidak ditemukan' };
+  }
+  
+  let fotoUrl = data.fotoUrl || '';
+  if (data.photoBase64) {
+    const fileName = 'OLT_' + targetHost.replace(/[^a-zA-Z0-9]/g, '_') + '_' + new Date().getTime() + '.png';
+    fotoUrl = uploadImageToDrive(data.photoBase64, fileName);
+  }
+  
+  if (data.lokasi) sheet.getRange(rowIndex, 3).setValue(data.lokasi);
+  if (data.keterangan) sheet.getRange(rowIndex, 4).setValue(data.keterangan);
+  if (fotoUrl) sheet.getRange(rowIndex, 5).setValue(fotoUrl);
+  
+  return { success: true, fotoUrl: fotoUrl };
 }
 
 function uploadImageToDrive(base64Str, fileName) {
