@@ -273,34 +273,34 @@ function submitPergantianGembok(data) {
   const petugas = data.petugas || data.user || '-';
   const keterangan = data.keterangan || 'Gembok Baru Terpasang';
   
-  // Pastikan header di baris 1 tersedia
+  // Pastikan header di baris 1 tersedia (mulai dari kolom R / 18 agar aman dari data A-Q)
   if (sheetData.length > 0) {
-    if (!sheetData[0][13]) sheet.getRange(1, 14).setValue('GEMBOK DIGANTI');
-    if (!sheetData[0][14]) sheet.getRange(1, 15).setValue('FOTO SEBELUM DIGANTI');
-    if (!sheetData[0][15]) sheet.getRange(1, 16).setValue('FOTO SESUDAH DIGANTI');
-    if (!sheetData[0][16]) sheet.getRange(1, 17).setValue('PETUGAS GEMBOK');
-    if (!sheetData[0][17]) sheet.getRange(1, 18).setValue('KETERANGAN');
+    if (!sheetData[0][17]) sheet.getRange(1, 18).setValue('GEMBOK DIGANTI');
+    if (!sheetData[0][18]) sheet.getRange(1, 19).setValue('FOTO SEBELUM DIGANTI');
+    if (!sheetData[0][19]) sheet.getRange(1, 20).setValue('FOTO SESUDAH DIGANTI');
+    if (!sheetData[0][20]) sheet.getRange(1, 21).setValue('PETUGAS GEMBOK');
+    if (!sheetData[0][21]) sheet.getRange(1, 22).setValue('KETERANGAN GEMBOK');
   }
 
-  // Kolom N (14): Tanggal Gembok Diganti
-  sheet.getRange(rowIndex, 14).setValue(tanggal);
+  // Kolom R (18): Tanggal Gembok Diganti
+  sheet.getRange(rowIndex, 18).setValue(tanggal);
   
-  // Kolom O (15): Foto Sebelum URL
+  // Kolom S (19): Foto Sebelum URL
   if (fotoSebelumUrl) {
-    sheet.getRange(rowIndex, 15).setValue(fotoSebelumUrl);
+    sheet.getRange(rowIndex, 19).setValue(fotoSebelumUrl);
   }
 
-  // Kolom P (16): Foto Sesudah URL
+  // Kolom T (20): Foto Sesudah URL
   if (fotoSesudahUrl) {
-    sheet.getRange(rowIndex, 16).setValue(fotoSesudahUrl);
+    sheet.getRange(rowIndex, 20).setValue(fotoSesudahUrl);
   }
   
-  // Kolom Q (17): Petugas / Teknisi
-  sheet.getRange(rowIndex, 17).setValue(petugas);
+  // Kolom U (21): Petugas / Teknisi
+  sheet.getRange(rowIndex, 21).setValue(petugas);
 
-  // Kolom R (18): Keterangan
+  // Kolom V (22): Keterangan
   if (keterangan) {
-    sheet.getRange(rowIndex, 18).setValue(keterangan);
+    sheet.getRange(rowIndex, 22).setValue(keterangan);
   }
 
   // Update status gembok (Ada Gembok: YA, Kondisi: BAGUS, Secure: YA jika dipilih)
@@ -386,33 +386,97 @@ function getMasterData() {
   const sheet = ss.getSheetByName('DB ODC') || ss.getSheets()[0];
   const data = sheet.getDataRange().getValues();
   
+  if (data.length <= 1) return {};
+
+  const headers = data[0].map(h => (h || '').toString().toUpperCase().trim());
+  const stoIdx = headers.indexOf('STO') !== -1 ? headers.indexOf('STO') : 5;
+  const odcIdx = headers.indexOf('ODC NAME') !== -1 ? headers.indexOf('ODC NAME') : 7;
+  const saIdx = headers.indexOf('SA') !== -1 ? headers.indexOf('SA') : 8;
+  const adaGembokIdx = headers.indexOf('ADA GEMBOK') !== -1 ? headers.indexOf('ADA GEMBOK') : 9;
+  const gembokWasakaIdx = headers.indexOf('GEMBOK WASAKA') !== -1 ? headers.indexOf('GEMBOK WASAKA') : 10;
+  const kondisiGembokIdx = headers.indexOf('KONDISI GEMBOK') !== -1 ? headers.indexOf('KONDISI GEMBOK') : 11;
+  const krangkengIdx = headers.indexOf('KRANGKENG') !== -1 ? headers.indexOf('KRANGKENG') : 12;
+  const gembokKrankengIdx = headers.indexOf('GEMBOK KRANKENG') !== -1 ? headers.indexOf('GEMBOK KRANKENG') : 13;
+  const tikorIdx = headers.indexOf('TIKOR') !== -1 ? headers.indexOf('TIKOR') : 14;
+
+  // Extra columns in DB ODC (must be >= 17 to avoid standard columns A-Q)
+  const gembokDigantiIdx = headers.indexOf('GEMBOK DIGANTI');
+  const fotoSebelumIdx = headers.indexOf('FOTO SEBELUM DIGANTI') !== -1 ? headers.indexOf('FOTO SEBELUM DIGANTI') : headers.indexOf('FOTO SEBELUM');
+  const fotoSesudahIdx = headers.indexOf('FOTO SESUDAH DIGANTI') !== -1 ? headers.indexOf('FOTO SESUDAH DIGANTI') : headers.indexOf('FOTO SESUDAH');
+  const petugasGembokIdx = headers.indexOf('PETUGAS GEMBOK');
+  const ketGembokIdx = headers.indexOf('KETERANGAN GEMBOK');
+
+  // Read HistoryGembok to populate latest replaced padlock info
+  const gembokHistoryMap = {};
+  const histSheet = ss.getSheetByName('HistoryGembok');
+  if (histSheet) {
+    const histData = histSheet.getDataRange().getValues();
+    for (let h = 1; h < histData.length; h++) {
+      const odcName = histData[h][2] ? histData[h][2].toString().toUpperCase().trim() : '';
+      if (odcName) {
+        gembokHistoryMap[odcName] = {
+          petugas: histData[h][3] ? histData[h][3].toString().trim() : '',
+          tanggal: histData[h][4] ? (histData[h][4] instanceof Date ? Utilities.formatDate(histData[h][4], Session.getScriptTimeZone(), "dd/MM/yyyy") : histData[h][4].toString().trim()) : '',
+          keterangan: histData[h][5] ? histData[h][5].toString().trim() : '',
+          fotoSebelum: histData[h][6] ? histData[h][6].toString().trim() : '',
+          fotoSesudah: histData[h][7] ? histData[h][7].toString().trim() : ''
+        };
+      }
+    }
+  }
+
   const sas = {};
   for (let i = 1; i < data.length; i++) {
-    const sto = data[i][5];
-    const odc = data[i][7];
-    const sa = data[i][8] || 'OTHER';
+    const sto = data[i][stoIdx];
+    const odc = data[i][odcIdx];
+    const sa = data[i][saIdx] || 'OTHER';
     
-    const adaGembok = data[i][9] ? data[i][9].toString().toUpperCase().trim() : '';
-    const gembokWasaka = data[i][10] ? data[i][10].toString().toUpperCase().trim() : '';
-    const kondisiGembok = data[i][11] ? data[i][11].toString().toUpperCase().trim() : '';
-    const gembokSecure = data[i][12] ? data[i][12].toString().toUpperCase().trim() : '';
+    const adaGembok = data[i][adaGembokIdx] ? data[i][adaGembokIdx].toString().toUpperCase().trim() : '';
+    const gembokWasaka = data[i][gembokWasakaIdx] ? data[i][gembokWasakaIdx].toString().toUpperCase().trim() : '';
+    const kondisiGembok = data[i][kondisiGembokIdx] ? data[i][kondisiGembokIdx].toString().toUpperCase().trim() : '';
+    const krangkeng = krangkengIdx !== -1 && data[i][krangkengIdx] ? data[i][krangkengIdx].toString().toUpperCase().trim() : '';
+    const gembokKrankeng = gembokKrankengIdx !== -1 && data[i][gembokKrankengIdx] ? data[i][gembokKrankengIdx].toString().toUpperCase().trim() : '';
     
-    let gembokDigantiStr = '';
-    const rawGembokDiganti = data[i][13];
-    if (rawGembokDiganti) {
+    let tikor = '';
+    if (tikorIdx !== -1 && data[i][tikorIdx]) {
+      const rawT = data[i][tikorIdx].toString().trim();
+      if (rawT && rawT !== '#N/A') {
+        tikor = rawT;
+      }
+    }
+
+    const odcKey = (odc || '').toString().toUpperCase().trim();
+    const histRecord = gembokHistoryMap[odcKey];
+
+    let gembokDigantiStr = histRecord ? histRecord.tanggal : '';
+    let fotoSebelum = histRecord ? histRecord.fotoSebelum : '';
+    let fotoSesudah = histRecord ? histRecord.fotoSesudah : '';
+    let petugasGembok = histRecord ? histRecord.petugas : '';
+    let keteranganGembok = histRecord ? histRecord.keterangan : '';
+
+    if (!gembokDigantiStr && gembokDigantiIdx >= 17 && data[i][gembokDigantiIdx]) {
+      const rawGembokDiganti = data[i][gembokDigantiIdx];
       if (rawGembokDiganti instanceof Date) {
         gembokDigantiStr = Utilities.formatDate(rawGembokDiganti, Session.getScriptTimeZone(), "dd/MM/yyyy");
       } else {
         gembokDigantiStr = rawGembokDiganti.toString().trim();
       }
     }
-    
-    const fotoSebelum = data[i][14] ? data[i][14].toString().trim() : '';
-    const fotoSesudah = data[i][15] ? data[i][15].toString().trim() : '';
+    if (!fotoSebelum && fotoSebelumIdx >= 17 && data[i][fotoSebelumIdx]) {
+      fotoSebelum = data[i][fotoSebelumIdx].toString().trim();
+    }
+    if (!fotoSesudah && fotoSesudahIdx >= 17 && data[i][fotoSesudahIdx]) {
+      fotoSesudah = data[i][fotoSesudahIdx].toString().trim();
+    }
+    if (!petugasGembok && petugasGembokIdx >= 17 && data[i][petugasGembokIdx]) {
+      petugasGembok = data[i][petugasGembokIdx].toString().trim();
+    }
+    if (!keteranganGembok && ketGembokIdx >= 17 && data[i][ketGembokIdx]) {
+      keteranganGembok = data[i][ketGembokIdx].toString().trim();
+    }
+
     const fotoGembok = fotoSesudah || fotoSebelum;
-    const petugasGembok = data[i][16] ? data[i][16].toString().trim() : '';
-    const keteranganGembok = data[i][17] ? data[i][17].toString().trim() : '';
-    
+
     if (sto && odc) {
       if (!sas[sa]) sas[sa] = {};
       if (!sas[sa][sto]) sas[sa][sto] = [];
@@ -420,10 +484,13 @@ function getMasterData() {
       if (!exists) {
         sas[sa][sto].push({
           name: odc,
+          tikor: tikor,
           adaGembok: adaGembok,
           gembokWasaka: gembokWasaka,
           kondisiGembok: kondisiGembok,
-          gembokSecure: gembokSecure,
+          krangkeng: krangkeng,
+          gembokKrankeng: gembokKrankeng,
+          gembokSecure: (gembokWasaka === 'YA' || gembokKrankeng === 'YA') ? 'YA' : '',
           gembokDiganti: gembokDigantiStr,
           fotoSebelum: fotoSebelum,
           fotoSesudah: fotoSesudah,
@@ -434,11 +501,11 @@ function getMasterData() {
       }
     }
   }
-  
+
   try {
     cache.put("MASTER_DATA", JSON.stringify(sas), 60); // Cache for 1 minute
   } catch(e) {}
-  
+
   return sas;
 }
 
@@ -504,14 +571,20 @@ function getDashboardData() {
         const isBorrowed = activeRecord && activeRecord.status === 'Approved';
         
         if (isBorrowed) dashboard[sa].stos[sto].status = 'red';
+        if (activeRecord) {
+          activeRecord.tikor = item.tikor || '';
+        }
         
         dashboard[sa].stos[sto].odcs.push({
           name: odc,
+          tikor: item.tikor || '',
           status: isBorrowed ? 'red' : 'green',
           borrowDetails: isBorrowed ? activeRecord : null,
           adaGembok: item.adaGembok || '',
           gembokWasaka: item.gembokWasaka || '',
           kondisiGembok: item.kondisiGembok || '',
+          krangkeng: item.krangkeng || '',
+          gembokKrankeng: item.gembokKrankeng || '',
           gembokSecure: item.gembokSecure || '',
           gembokDiganti: item.gembokDiganti || '',
           fotoSebelum: item.fotoSebelum || '',

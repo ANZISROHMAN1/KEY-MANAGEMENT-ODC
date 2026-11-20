@@ -647,6 +647,7 @@
           <div class="form-group" style="margin-bottom: 0;">
             <label style="font-size: 12px;">Kode ODC</label>
             <input type="text" id="ag_odc" required placeholder="Contoh: PAG-FAC" style="font-weight: bold; color: var(--primary-color); padding: 8px 12px; font-size: 13px;">
+            <div id="ag_tikor_display" style="font-size: 11px; margin-top: 4px; color: var(--text-muted);"></div>
           </div>
           <div class="form-group" style="margin-bottom: 0;">
             <label style="font-size: 12px;">Kode STO (Area)</label>
@@ -853,7 +854,84 @@
 
       // Fetch Realtime Data
       fetchInitialData();
+      loadOdcTikorFromSheet();
     });
+
+    function loadOdcTikorFromSheet() {
+      return new Promise((resolve) => {
+        const callbackName = 'gvizOdcTikorCallback_' + Math.floor(Math.random() * 1000000);
+        window[callbackName] = function(response) {
+          try {
+            delete window[callbackName];
+            const oldScript = document.getElementById(callbackName);
+            if (oldScript) oldScript.remove();
+          } catch(e){}
+          try {
+            const rows = response.table.rows;
+            const tikorMap = {};
+            rows.forEach(r => {
+              if (!r.c) return;
+              const sto = r.c[5]?.v ? r.c[5].v.toString().trim() : '';
+              const odc = r.c[7]?.v ? r.c[7].v.toString().trim() : '';
+              const tikor = r.c[14]?.v ? r.c[14].v.toString().trim() : '';
+              if (odc && tikor && tikor !== '#N/A') {
+                tikorMap[odc] = tikor;
+                if (sto) tikorMap[`${sto}-${odc}`] = tikor;
+              }
+            });
+            window.odcTikorMap = tikorMap;
+            mergeOdcTikor();
+            resolve(tikorMap);
+          } catch (err) {
+            resolve({});
+          }
+        };
+
+        const script = document.createElement('script');
+        script.id = callbackName;
+        script.src = `https://docs.google.com/spreadsheets/d/1kJMH5vweXd4YU8j6urk2pk6iuGcLaUeSCzCWT6szmLM/gviz/tq?sheet=DB%20ODC&tqx=responseHandler:${callbackName}&tq=select%20*&t=${Date.now()}`;
+        script.onerror = () => {
+          try { delete window[callbackName]; script.remove(); } catch(e){}
+          resolve({});
+        };
+        document.body.appendChild(script);
+
+        setTimeout(() => {
+          if (window[callbackName]) {
+            try { delete window[callbackName]; script.remove(); } catch(e){}
+            resolve({});
+          }
+        }, 7000);
+      });
+    }
+
+    function mergeOdcTikor() {
+      if (!window.odcTikorMap) return;
+      if (window.allOdcsList) {
+        window.allOdcsList.forEach(o => {
+          if (!o.tikor && (window.odcTikorMap[o.name] || window.odcTikorMap[`${o.sto}-${o.name}`])) {
+            o.tikor = window.odcTikorMap[o.name] || window.odcTikorMap[`${o.sto}-${o.name}`];
+          }
+        });
+      }
+      if (window.dashboardData) {
+        for (const sa in window.dashboardData) {
+          for (const sto in window.dashboardData[sa].stos) {
+            window.dashboardData[sa].stos[sto].odcs.forEach(o => {
+              if (!o.tikor && (window.odcTikorMap[o.name] || window.odcTikorMap[`${sto}-${o.name}`])) {
+                o.tikor = window.odcTikorMap[o.name] || window.odcTikorMap[`${sto}-${o.name}`];
+              }
+            });
+          }
+        }
+      }
+      if (window.currentStoName && window.currentSaName && document.getElementById('stoDetailView')?.style.display === 'block') {
+        handleStoClick({stopPropagation: () => {}}, window.currentStoName, window.currentSaName);
+      }
+      if (document.getElementById('monitoringGembokView')?.style.display === 'block') {
+        filterGembokTable(window.currentGembokFilter || 'all');
+      }
+    }
 
     async function fetchInitialData() {
       try {
@@ -872,6 +950,7 @@
         }
 
         renderDashboard(data.dashboard);
+        mergeOdcTikor();
       } catch (err) {
         console.error('Error fetching initial data:', err);
         const dashboard = document.getElementById('dashboard');
@@ -931,7 +1010,8 @@
             if (odc.gembokDiganti || odc.fotoGembok) {
               totalGembokDiperbarui++;
             }
-            allOdcsList.push({ ...odc, sto: stoName, sa: saName });
+            const resolvedTikor = odc.tikor || (window.odcTikorMap ? (window.odcTikorMap[odc.name] || window.odcTikorMap[stoName + '-' + odc.name]) : '') || '';
+            allOdcsList.push({ ...odc, sto: stoName, sa: saName, tikor: resolvedTikor });
           });
           
           let iconColor = sto.status === 'red' ? '#e74c3c' : '#2ecc71';
@@ -1000,10 +1080,14 @@
       if (activeBorrowingsList.length > 0) {
         if (!isDetailViewOpen) activeSection.style.display = 'block';
         activeBorrowingsList.forEach(b => {
+          const bTikor = b.tikor || (window.odcTikorMap ? (window.odcTikorMap[b.odc] || window.odcTikorMap[b.sto + '-' + b.odc]) : '') || '';
           const row = document.createElement('tr');
           row.innerHTML = `
             <td><strong>${b.sto}</strong></td>
-            <td>${b.odc}</td>
+            <td>
+              <div style="font-weight:bold; color:var(--primary-color);">${b.odc}</div>
+              ${bTikor ? `<div style="font-size:10px; margin-top:2px;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bTikor)}" target="_blank" rel="noopener noreferrer" style="color:var(--text-muted); text-decoration:none; display:inline-flex; align-items:center; gap:2px;">📍 ${bTikor}</a></div>` : ''}
+            </td>
             <td>${b.user}</td>
             <td>${b.kegiatan}</td>
             <td>${b.dasarKegiatan || '-'}</td>
@@ -1047,10 +1131,12 @@
       sto.odcs.forEach(odc => {
         let borrowData = odc.borrowDetails ? JSON.stringify(odc.borrowDetails) : '{}';
         let borrowDataStr = btoa(encodeURIComponent(borrowData));
+        const odcTikor = odc.tikor || (window.odcTikorMap ? (window.odcTikorMap[odc.name] || window.odcTikorMap[stoName + '-' + odc.name]) : '') || '';
         
         if (odc.status === 'red' && odc.borrowDetails) {
           activeOdcs.push({ 
             name: odc.name, 
+            tikor: odcTikor,
             details: odc.borrowDetails, 
             borrowDataStr: borrowDataStr,
             gembokDiganti: odc.gembokDiganti,
@@ -1066,19 +1152,23 @@
 
         const odcCard = document.createElement('div');
         odcCard.className = `odc-item status-${odc.status}`;
-        odcCard.title = odc.name;
-        odcCard.style.padding = '10px 5px';
-        odcCard.style.minHeight = '75px';
+        odcCard.title = `${odc.name}${odcTikor ? ` (Tikor: ${odcTikor})` : ''}`;
+        odcCard.style.padding = '8px 4px';
+        odcCard.style.minHeight = '84px';
         odcCard.style.display = 'flex';
         odcCard.style.flexDirection = 'column';
         odcCard.style.alignItems = 'center';
         odcCard.style.justifyContent = 'space-between';
         odcCard.style.borderTop = `3px solid ${design.color}`;
-        odcCard.onclick = (e) => handleOdcClick(e, odc.name, odc.status, borrowDataStr, odc.gembokDiganti, odc.fotoGembok, odc.petugasGembok, stoName, odc.kondisiGembok, odc.gembokSecure, odc.adaGembok, odc.fotoSebelum, odc.fotoSesudah);
+        odcCard.onclick = (e) => handleOdcClick(e, odc.name, odc.status, borrowDataStr, odc.gembokDiganti, odc.fotoGembok, odc.petugasGembok, stoName, odc.kondisiGembok, odc.gembokSecure, odc.adaGembok, odc.fotoSebelum, odc.fotoSesudah, odcTikor);
         odcCard.innerHTML = `
-          <div style="font-size:8px; color:${design.color}; font-weight:800; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">${design.label}</div>
-          <div class="monitor-icon" style="margin-bottom:5px;">${design.svg}</div>
+          <div style="font-size:8px; color:${design.color}; font-weight:800; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.5px;">${design.label}</div>
+          <div class="monitor-icon" style="margin-bottom:3px;">${design.svg}</div>
           <div style="font-size:10px; font-weight:bold; color:#ddd; text-align:center; max-width:60px; word-wrap:break-word;">${odc.name.split('-').pop()}</div>
+          ${odcTikor ? `
+            <div style="font-size:7.5px; color:var(--text-muted); font-family:monospace; margin-top:2px; max-width:62px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Tikor: ${odcTikor}">
+              📍 ${odcTikor}
+            </div>` : ''}
         `;
         stoDetailGrid.appendChild(odcCard);
       });
@@ -1087,7 +1177,7 @@
         let alertHtml = '';
         activeOdcs.forEach((item, index) => {
           alertHtml += `
-            <div onclick="handleOdcClick(null, '${item.name}', 'red', '${item.borrowDataStr}', '${item.gembokDiganti || ''}', '${item.fotoGembok || ''}', '${item.petugasGembok || ''}', '${stoName}', '${item.kondisiGembok || ''}', '${item.gembokSecure || ''}', '${item.adaGembok || ''}')" class="alert-box" title="Klik untuk melihat riwayat ODC ini">
+            <div onclick="handleOdcClick(null, '${item.name}', 'red', '${item.borrowDataStr}', '${item.gembokDiganti || ''}', '${item.fotoGembok || ''}', '${item.petugasGembok || ''}', '${stoName}', '${item.kondisiGembok || ''}', '${item.gembokSecure || ''}', '${item.adaGembok || ''}', '', '', '${item.tikor || ''}')" class="alert-box" title="Klik untuk melihat riwayat ODC ini">
               <div>
                 <strong>${item.name}</strong> dipinjam oleh <strong>${item.details.user}</strong>
                 <span class="badge-hint">Klik untuk lihat riwayat</span>
@@ -1219,15 +1309,24 @@
       }
     }
 
-    async function handleOdcClick(event, odcName, status, borrowDataStr, gembokDiganti = '', fotoGembok = '', petugasGembok = '', stoName = '', kondisiGembok = '', gembokSecure = '', adaGembok = '', fotoSebelum = '', fotoSesudah = '') {
+    async function handleOdcClick(event, odcName, status, borrowDataStr, gembokDiganti = '', fotoGembok = '', petugasGembok = '', stoName = '', kondisiGembok = '', gembokSecure = '', adaGembok = '', fotoSebelum = '', fotoSesudah = '', tikor = '') {
       if (event && event.stopPropagation) event.stopPropagation();
       
       const historySection = document.getElementById('odcHistorySection');
       const title = document.getElementById('odcHistoryTitle');
       const tbody = document.getElementById('odcHistoryTableBody');
       
+      if (!tikor && window.allOdcsList) {
+        const found = window.allOdcsList.find(o => o.name === odcName && (!stoName || o.sto === stoName));
+        if (found && found.tikor) tikor = found.tikor;
+      }
+      if (!tikor && window.odcTikorMap) {
+        tikor = window.odcTikorMap[odcName] || window.odcTikorMap[`${stoName}-${odcName}`] || '';
+      }
+
       window.currentSelectedOdc = odcName;
       window.currentSelectedSto = stoName;
+      window.currentSelectedTikor = tikor;
       window.currentGembokDiganti = gembokDiganti;
       window.currentFotoGembok = fotoGembok;
       window.currentFotoSebelum = fotoSebelum;
@@ -1240,12 +1339,15 @@
       // Render Gembok Monitoring Status Banner
       const bannerEl = document.getElementById('gembokStatusBanner');
       if (bannerEl) {
+        const tikorHtml = tikor ? `<p style="margin: 4px 0 0; font-size: 12px; color: var(--text-main);">📍 <strong>Titik Koordinat:</strong> <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tikor)}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-color); font-weight: 600; text-decoration: underline; margin-left: 4px;">${tikor} ↗ (Buka Google Maps)</a></p>` : `<p style="margin: 4px 0 0; font-size: 12px; color: var(--text-muted);">📍 <strong>Titik Koordinat:</strong> <span style="opacity:0.7;">Belum diset</span></p>`;
+
         if (gembokDiganti) {
           bannerEl.innerHTML = `
             <div style="background: rgba(46, 204, 113, 0.12); border: 1px solid #2ecc71; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
               <div>
                 <span style="color: #2ecc71; font-weight: bold; font-size: 14px;">✅ Status Gembok: TELAH DIPERBARUI (${gembokSecure === 'YA' ? 'SECURE' : 'BAGUS'})</span>
                 <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-muted);">Diperbarui pada: <strong>${gembokDiganti}</strong> ${petugasGembok ? `oleh <strong>${petugasGembok}</strong>` : ''}</p>
+                ${tikorHtml}
               </div>
               <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                 ${fotoSebelum ? `<a href="${fotoSebelum}" target="_blank" class="link-btn" style="background: #e74c3c; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; border-radius: 4px;">📷 Foto Sebelum</a>` : ''}
@@ -1261,6 +1363,7 @@
               <div>
                 <span style="color: #e74c3c; font-weight: bold; font-size: 14px;">⚠️ Status Gembok: ${labelRusak} (Perlu Diperbarui)</span>
                 <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-muted);">Gembok ODC ini terdata rusak atau belum ada. Silakan upload foto sebelum & sesudah setelah diganti.</p>
+                ${tikorHtml}
               </div>
               <button onclick="openModalGembokEvidence('${odcName}')" class="btn-submit" style="background: #2ecc71; width: auto; margin: 0; padding: 8px 16px; font-size: 13px; cursor: pointer; border-radius: 6px;">+ Submit Evidence Gembok Baru</button>
             </div>
@@ -1271,6 +1374,7 @@
               <div>
                 <span style="color: #3498db; font-weight: bold; font-size: 14px;">ℹ️ Status Gembok: ${gembokSecure === 'YA' ? 'SECURE' : 'BAGUS'}</span>
                 <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-muted);">Gembok dalam kondisi baik. Klik di kanan jika melakukan penggantian kunci baru.</p>
+                ${tikorHtml}
               </div>
               <button onclick="openModalGembokEvidence('${odcName}')" class="btn-submit" style="background: #3498db; width: auto; margin: 0; padding: 6px 14px; font-size: 12px; cursor: pointer; border-radius: 6px;">+ Catat Pergantian Kunci</button>
             </div>
@@ -1279,7 +1383,7 @@
       }
 
       historySection.style.display = 'block';
-      title.innerText = `LOG ${odcName}`;
+      title.innerHTML = `LOG ${odcName} ${tikor ? `<span style="font-size:12px; font-weight:normal; margin-left:10px;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tikor)}" target="_blank" rel="noopener noreferrer" style="color:var(--primary-color); text-decoration:none; display:inline-flex; align-items:center; gap:3px;">📍 ${tikor} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></span>` : ''}`;
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;"><div class="loader" style="margin:auto;"></div></td></tr>';
       
       let activeRowHtml = '';
@@ -1304,7 +1408,10 @@
             <td>${data.waktuPinjam}</td>
             <td>-</td>
             <td>${durasiHtml}</td>
-            <td style="font-weight:bold; color:#3498db;">${odcName}</td>
+            <td style="font-weight:bold; color:#3498db;">
+              <div>${odcName}</div>
+              ${tikor ? `<div style="font-size:10px; font-weight:normal; margin-top:2px;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tikor)}" target="_blank" rel="noopener noreferrer" style="color:var(--text-muted); text-decoration:none; display:inline-flex; align-items:center; gap:2px;">📍 ${tikor}</a></div>` : ''}
+            </td>
             <td>${data.kegiatan}</td>
             <td>${data.user}</td>
             <td>
@@ -1316,24 +1423,40 @@
         `;
       }
       
-      fetchHistory(odcName, activeRowHtml, gembokDiganti, fotoGembok, petugasGembok, fotoSebelum, fotoSesudah);
+      fetchHistory(odcName, activeRowHtml, gembokDiganti, fotoGembok, petugasGembok, fotoSebelum, fotoSesudah, tikor);
     }
 
-    async function fetchHistory(odcName, activeRowHtml = '', gembokDiganti = '', fotoGembok = '', petugasGembok = '', fotoSebelum = '', fotoSesudah = '') {
+    async function fetchHistory(odcName, activeRowHtml = '', gembokDiganti = '', fotoGembok = '', petugasGembok = '', fotoSebelum = '', fotoSesudah = '', tikor = '') {
       try {
         const response = await fetch(API_URL + '?action=getOdcHistory&odc=' + encodeURIComponent(odcName));
         const historyList = await response.json();
-        renderHistory(odcName, historyList, activeRowHtml, gembokDiganti, fotoGembok, petugasGembok, fotoSebelum, fotoSesudah);
+        renderHistory(odcName, historyList, activeRowHtml, gembokDiganti, fotoGembok, petugasGembok, fotoSebelum, fotoSesudah, tikor);
       } catch (err) {
         document.getElementById('odcHistoryTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:#e74c3c;">Gagal mengambil riwayat.</td></tr>';
       }
     }
 
-    function renderHistory(odcName, historyList, activeRowHtml, gembokDiganti = '', fotoGembok = '', petugasGembok = '', fotoSebelum = '', fotoSesudah = '') {
+    function renderHistory(odcName, historyList, activeRowHtml, gembokDiganti = '', fotoGembok = '', petugasGembok = '', fotoSebelum = '', fotoSesudah = '', tikor = '') {
       const tbody = document.getElementById('odcHistoryTableBody');
       let html = activeRowHtml;
       
       let index = activeRowHtml ? 2 : 1;
+
+      if (!tikor && window.currentSelectedTikor) {
+        tikor = window.currentSelectedTikor;
+      }
+      if (!tikor && window.allOdcsList) {
+        const f = window.allOdcsList.find(o => o.name === odcName);
+        if (f && f.tikor) tikor = f.tikor;
+      }
+      if (!tikor && window.odcTikorMap) {
+        tikor = window.odcTikorMap[odcName] || '';
+      }
+
+      const odcCellHtml = `
+        <div>${odcName}</div>
+        ${tikor ? `<div style="font-size:10px; font-weight:normal; margin-top:2px;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tikor)}" target="_blank" rel="noopener noreferrer" style="color:var(--text-muted); text-decoration:none; display:inline-flex; align-items:center; gap:2px;">📍 ${tikor}</a></div>` : ''}
+      `;
 
       if (gembokDiganti) {
         let aksiHtml = '';
@@ -1357,7 +1480,7 @@
             <td>${gembokDiganti}</td>
             <td>-</td>
             <td>-</td>
-            <td style="font-weight:bold; color:#2ecc71;">${odcName}</td>
+            <td style="font-weight:bold; color:#2ecc71;">${odcCellHtml}</td>
             <td style="font-weight:bold;">Penggantian Gembok</td>
             <td>${petugasGembok || '-'}</td>
             <td>${aksiHtml}</td>
@@ -1390,7 +1513,7 @@
             <td>${h.waktuPinjam}</td>
             <td>${h.waktuKembali}</td>
             <td>${durasiHtml}</td>
-            <td style="color:#3498db;">${odcName}</td>
+            <td style="color:#3498db;">${odcCellHtml}</td>
             <td>${h.kegiatan}</td>
             <td>${h.user}</td>
             <td style="font-size:12px;">
@@ -1411,6 +1534,12 @@
       document.getElementById('ag_odc').value = targetOdc;
       document.getElementById('ag_sto').value = window.currentSelectedSto || (targetOdc.includes('-') ? targetOdc.split('-')[0] : '');
       
+      const tikor = window.currentSelectedTikor || (window.allOdcsList?.find(o => o.name === targetOdc)?.tikor) || (window.odcTikorMap ? window.odcTikorMap[targetOdc] : '') || '';
+      const tikorDisplay = document.getElementById('ag_tikor_display');
+      if (tikorDisplay) {
+        tikorDisplay.innerHTML = tikor ? `📍 Tikor: <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tikor)}" target="_blank" rel="noopener noreferrer" style="color:var(--primary-color); font-weight:600; text-decoration:none;">${tikor} ↗</a>` : '<span style="opacity:0.6;">📍 Tikor belum diset</span>';
+      }
+
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('ag_tanggal').value = today;
 
@@ -1619,9 +1748,10 @@
 
     function showBaModal(borrowDataStr, odcName) {
       const data = JSON.parse(decodeURIComponent(atob(borrowDataStr)));
+      const baTikor = (window.allOdcsList?.find(o => o.name === odcName)?.tikor) || (window.odcTikorMap ? (window.odcTikorMap[odcName] || window.odcTikorMap[(data.sto || '') + '-' + odcName]) : '') || '';
       document.getElementById('ba_ticketId').innerText = data.id || '-';
       document.getElementById('ba_sto').innerText = data.sto || '-';
-      document.getElementById('ba_odc').innerText = odcName;
+      document.getElementById('ba_odc').innerHTML = `${odcName} ${baTikor ? `<span style="font-size:12px; font-weight:normal; color:var(--text-muted); margin-left:6px;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(baTikor)}" target="_blank" rel="noopener noreferrer" style="color:var(--primary-color); text-decoration:none;">(📍 ${baTikor} ↗)</a></span>` : ''}`;
       document.getElementById('ba_user').innerText = data.user || '-';
       document.getElementById('ba_nik').innerText = data.nik || '-';
       document.getElementById('ba_hsa_name').innerText = data.hsaApprover || '-';
@@ -1789,6 +1919,7 @@
     }
 
     function filterGembokTable(filter = 'all') {
+      window.currentGembokFilter = filter;
       const list = window.allOdcsList || [];
       const tbody = document.getElementById('monitoringGembokTableBody');
       if (!tbody) return;
@@ -1883,12 +2014,16 @@
         if (eLinks.length > 0) evidenceCol = eLinks.join(' ');
 
         let aksiBtn = `<button onclick="openModalGembokEvidence('${o.name}')" class="link-btn" style="background:${isDiperbarui ? 'transparent' : '#2ecc71'}; border:1px solid #2ecc71; color:${isDiperbarui ? '#2ecc71' : 'white'}; font-size:11px; padding:4px 10px; cursor:pointer; border-radius:4px;">${isDiperbarui ? '✏️ Update' : '+ Perbarui Gembok'}</button>`;
+        const oTikor = o.tikor || (window.odcTikorMap ? (window.odcTikorMap[o.name] || window.odcTikorMap[(o.sto || '') + '-' + o.name]) : '') || '';
 
         html += `
           <tr>
             <td>${i + 1}</td>
             <td><strong>${o.sto || '-'}</strong></td>
-            <td style="font-weight:bold; color:var(--primary-color);">${o.name}</td>
+            <td style="font-weight:bold; color:var(--primary-color);">
+              <div>${o.name}</div>
+              ${oTikor ? `<div style="font-size:10.5px; font-weight:normal; margin-top:2px;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(oTikor)}" target="_blank" rel="noopener noreferrer" style="color:var(--text-muted); text-decoration:none; display:inline-flex; align-items:center; gap:3px;">📍 ${oTikor} <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></div>` : '<div style="font-size:10px; font-weight:normal; color:var(--text-muted); opacity:0.6;">📍 -</div>'}
+            </td>
             <td><span style="background:${badgeColor}; color:white; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">${statusLabel}</span></td>
             <td>${o.gembokDiganti || '-'}</td>
             <td>${o.petugasGembok || '-'}</td>
@@ -2639,11 +2774,16 @@
             }
           }
 
+          const itemTikor = (window.allOdcsList?.find(o => o.name === item.odc)?.tikor) || (window.odcTikorMap ? (window.odcTikorMap[item.odc] || window.odcTikorMap[(item.sto || '') + '-' + item.odc]) : '') || '';
+
           html += `
             <tr>
               <td>${item.id}</td>
               <td style="font-weight:bold;">${item.sto}</td>
-              <td style="font-weight:bold;">${item.odc}</td>
+              <td style="font-weight:bold;">
+                <div>${item.odc}</div>
+                ${itemTikor ? `<div style="font-size:10px; font-weight:normal; margin-top:2px;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(itemTikor)}" target="_blank" rel="noopener noreferrer" style="color:var(--text-muted); text-decoration:none; display:inline-flex; align-items:center; gap:2px;">📍 ${itemTikor}</a></div>` : ''}
+              </td>
               <td style="color:var(--primary-color);">${item.user}</td>
               <td>${item.kegiatan}${sisaWaktuHtml}</td>
               <td>${item.waktuPinjam}</td>
