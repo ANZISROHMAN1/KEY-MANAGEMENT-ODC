@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flowchart Sistem O-Key (Key Management ODC)</title>
+  <link rel="icon" type="image/png" href="logo.png?v=2">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --primary: #00d2ff;
+      --primary-hover: #00a8cc;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Nav */
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+    }
+
+    .brand h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .brand p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-primary {
+      background: #10b981;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #0ea5e9;
+      color: #fff;
+    }
+    .btn-secondary:hover {
+      background: #0284c7;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover {
+      background: var(--border);
+    }
+
+    .btn-dashboard {
+      background: var(--primary);
+      color: #0f172a;
+    }
+    .btn-dashboard:hover {
+      background: var(--primary-hover);
+    }
+
+    /* Tabs */
+    .tabs-container {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 30px 0;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: rgba(0, 210, 255, 0.05);
+      border-radius: 6px 6px 0 0;
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: var(--text);
+    }
+
+    /* Content Area */
+    main {
+      flex: 1;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .viewer-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 30px;
+      width: 100%;
+      max-width: 1400px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      min-height: 600px;
+    }
+
+    .diagram-panel {
+      width: 100%;
+      display: none;
+      justify-content: center;
+    }
+
+    .diagram-panel.active {
+      display: flex;
+    }
+
+    .diagram-panel svg {
+      max-width: 100%;
+      height: auto !important;
+    }
+
+    /* Notification Toast */
+    #toast {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: #10b981;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Print styles */
+    @media print {
+      header, .tabs-container, #toast {
+        display: none !important;
+      }
+      body {
+        background: white !important;
+        color: black !important;
+      }
+      .viewer-card {
+        box-shadow: none !important;
+        padding: 0 !important;
+        border: none !important;
+      }
+      @page {
+        size: landscape;
+        margin: 1cm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="brand">
+      <img src="logo.png?v=2" alt="Logo O-Key">
+      <div>
+        <h1>Flowchart Sistem O-Key</h1>
+        <p>Key Management System & Monitoring Gembok ODC</p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="downloadActiveDiagram('png')">
+        <span>📥</span> Download PNG (Gambar)
+      </button>
+      <button class="btn btn-secondary" onclick="downloadActiveDiagram('svg')">
+        <span>📥</span> Download SVG (Vektor)
+      </button>
+      <button class="btn btn-outline" onclick="window.print()">
+        <span>🖨️</span> Cetak / PDF
+      </button>
+      <a href="index.html" class="btn btn-dashboard">
+        <span>⏱</span> Dashboard O-Key
+      </a>
+    </div>
+  </header>
+
+  <!-- Flowchart Tabs -->
+  <div class="tabs-container">
+    <button class="tab-btn active" onclick="switchDiagram('tab1', this)">
+      1. Flowchart Utama (End-to-End)
+    </button>
+    <button class="tab-btn" onclick="switchDiagram('tab2', this)">
+      2. Peminjaman & Pengembalian Kunci
+    </button>
+    <button class="tab-btn" onclick="switchDiagram('tab3', this)">
+      3. Pergantian Gembok & Evidence Foto
+    </button>
+  </div>
+
+  <!-- Content Viewer -->
+  <main>
+    <div class="viewer-card">
+      
+      <!-- Panel 1: End-to-End Flowchart -->
+      <div id="panel_tab1" class="diagram-panel active">
+        <pre class="mermaid">
+flowchart TD
+    %% SUBGRAPH PERAN
+    subgraph TEKNISI ["👷 Teknisi Lapangan"]
+        direction TB
+        T1(["Mulai"]) --> T2["1. Login / Registrasi Portal Teknisi"]
+        T2 --> T3{"Pilih Aktivitas"}
+        
+        %% Cabang Pinjam Kunci
+        T3 -->|"Peminjaman Kunci"| T4["2. Isi Form: Pilih ODC, Estimasi Jam, Dasar WO, Selfie"]
+        T4 --> T5["3. Submit Request Pinjam"]
+        
+        %% Cabang Pengerjaan & Pengembalian
+        T11["6. Upload 4 Foto Evidence Pengerjaan"]
+        T12{"Perlu Tambah Waktu?"}
+        T13["Request Extend Estimasi Jam"]
+        T14["7. Input ID Tiket & Selfie Pengembalian + Gembok Terkunci"]
+        T15["8. Submit Pengembalian Kunci"]
+        
+        %% Cabang Pergantian Gembok
+        T3 -->|"Pergantian Gembok Fisik"| TG1["A. Masuk Tab 'Ganti Kunci'"]
+        TG1 --> TG2["B. Pilih ODC, Petugas, Checklist Secure"]
+        TG2 --> TG3["C. Upload Foto 1: SEBELUM Diganti (Rusak/Lama)"]
+        TG3 --> TG4["D. Upload Foto 2: SESUDAH Diganti (Baru Terpasang)"]
+        TG4 --> TG5["E. Submit Pergantian Gembok"]
+    end
+
+    subgraph APPROVAL ["👔 Approval Bertingkat"]
+        direction TB
+        H1{"4. Approval HSA"}
+        TI1{"5. Approval TIF"}
+        REJ["Status: Rejected (Dibatalkan)"]
+    end
+
+    subgraph BACKEND ["⚙️ Google Apps Script & Database"]
+        direction TB
+        S1["Generate ID Tiket (#ddMMyySTO-ODC) & Simpan ke ActiveBorrowings"]
+        S2[/"Kirim Alert Telegram ke HSA"/]
+        S3[/"Kirim Alert Telegram ke TIF"/]
+        S4["Status: Approved (Peminjaman Aktif)"]
+        
+        S5(("Timer Estimasi Berjalan"))
+        S6{"Sisa Waktu <= 10 Menit?"}
+        S7[/"Warning Telegram: Waktu Segera Habis"/]
+        S8{"Waktu Habis (Overdue)?"}
+        S9[/"Alarm Overdue Berbunyi & Notif Telegram"/]
+        
+        S10["Hitung Total Durasi Pemakaian"]
+        S11[("Pindah Data ke Sheet History")]
+        S12["Generate Berita Acara (BA) Digital"]
+        
+        %% Pergantian Gembok Backend
+        SG1["Upload Foto Sebelum & Sesudah ke Google Drive (ODC_Selfie_Evidence)"]
+        SG2[("Update Sheet DB ODC: Ada=YA, Kondisi=BAGUS, Link Foto, Petugas")]
+        SG3[("Append Log ke Sheet HistoryGembok (#GM-...)")]
+        SG4[/"Kirim Notif Telegram Update Gembok"/]
+        
+        S_End(["Selesai"])
+    end
+
+    subgraph ADMIN ["🖥️ Admin Dashboard & Monitoring"]
+        direction TB
+        D1["Dashboard Realtime ODC (Hijau = Aman, Merah = Dipinjam)"]
+        D2["5 Stat Cards: USERS, OPEN, GEMBOK BAGUS, GEMBOK RUSAK, TELAH DIPERBARUI"]
+        D3["Monitoring Gembok: Bar Rasio Perbandingan (Bagus vs Rusak)"]
+        D4["Modal Admin: Input Pergantian Kunci Langsung"]
+    end
+
+    %% Hubungan Alur Pinjam Kunci
+    T5 --> S1
+    S1 --> S2
+    S2 --> H1
+    H1 -- "Reject" --> REJ
+    H1 -- "Approve" --> S3
+    S3 --> TI1
+    TI1 -- "Reject" --> REJ
+    TI1 -- "Approve" --> S4
+    
+    S4 --> D1
+    S4 --> S5
+    S5 --> S6
+    S6 -- "Ya" --> S7
+    S6 -- "Tidak" --> S8
+    S7 --> S8
+    S8 -- "Ya" --> S9
+    S8 -- "Tidak" --> T11
+    S9 --> T11
+    
+    T11 --> T12
+    T12 -- "Ya" --> T13
+    T13 --> S5
+    T12 -- "Tidak" --> T14
+    
+    T14 --> T15
+    T15 --> S10
+    S10 --> S11
+    S11 --> S12
+    S12 --> D1
+    D1 --> S_End
+
+    %% Hubungan Alur Pergantian Gembok
+    D4 --> TG2
+    TG5 --> SG1
+    SG1 --> SG2
+    SG2 --> SG3
+    SG3 --> SG4
+    SG4 --> D2
+    D2 --> D3
+    D3 --> S_End
+        </pre>
+      </div>
+
+      <!-- Panel 2: Peminjaman & Pengembalian -->
+      <div id="panel_tab2" class="diagram-panel">
+        <pre class="mermaid">
+flowchart TD
+    subgraph Step1 ["1. Pengajuan Peminjaman Kunci"]
+        A1["Teknisi login ke Portal Teknisi (user.html)"] --> A2["Pilih STO dan Kode ODC"]
+        A2 --> A3["Tentukan Estimasi Durasi Pinjam (Jam)"]
+        A3 --> A4["Input Kegiatan & Nomor WO / Tiket Dasar"]
+        A4 --> A5["Ambil Foto Selfie Peminjaman (Live Camera)"]
+        A5 --> A6["Submit Form Pinjam Kunci"]
+    end
+
+    subgraph Step2 ["2. Approval Bertingkat (HSA & TIF)"]
+        B1["Sistem membuat Tiket (#ddMMyySTO-ODC)"] --> B2["Status: Pending HSA"]
+        B2 --> B3[/"Bot Telegram kirim notifikasi ke Admin HSA"/]
+        B3 --> B4{"Approval HSA"}
+        B4 -->|"TOLAK"| B5["Status: Rejected (Tiket Dibatalkan)"]
+        B4 -->|"SETUJUI"| B6["Status: Pending TIF"]
+        B6 --> B7[/"Bot Telegram kirim notifikasi ke Admin TIF"/]
+        B7 --> B8{"Approval TIF"}
+        B8 -->|"TOLAK"| B5
+        B8 -->|"SETUJUI"| B9["Status: Approved (Peminjaman Aktif)"]
+    end
+
+    subgraph Step3 ["3. Masa Pengerjaan & Countdown Timer"]
+        C1["Status ODC di Dashboard Realtime berubah MERAH"] --> C2["Timer Countdown estimasi berjalan"]
+        C2 --> C3{"Sisa Waktu <= 10 Menit?"}
+        C3 -->|"Ya"| C4[/"Alert Telegram: Peringatan Waktu Segera Habis"/]
+        C3 -->|"Tidak"| C5{"Waktu Habis (Overdue)?"}
+        C4 --> C5
+        C5 -->|"Ya"| C6[/"Alarm Overdue Berbunyi & Notif Telegram Overdue"/]
+        C5 -->|"Tidak"| C7["Pengerjaan ODC Berlangsung"]
+        C7 --> C8{"Perlu Tambah Waktu (Extend)?"}
+        C8 -->|"Ya"| C9["Upload Evidence Pengerjaan & Minta Tambahan Jam"]
+        C9 --> C2
+        C8 -->|"Tidak"| C10["Selesai Pengerjaan -> Masuk Tab Pengembalian"]
+    end
+
+    subgraph Step4 ["4. Pengembalian Kunci & Berita Acara (BA)"]
+        D1["Teknisi buka Tab 'Kembalikan Kunci'"] --> D2["Input ID Tiket (Data terisi otomatis)"]
+        D2 --> D3["Ambil Foto Selfie Pengembalian + Gembok Terpasang"]
+        D3 --> D4["Submit Pengembalian Kunci"]
+        D4 --> D5["Sistem menghitung Total Durasi Peminjaman"]
+        D5 --> D6["Data dipindah dari ActiveBorrowings ke Sheet History"]
+        D6 --> D7["Status ODC di Dashboard kembali HIJAU"]
+        D7 --> D8["Terbit Berita Acara (BA) Digital Lengkap Tanda Tangan"]
+    end
+
+    Step1 --> Step2
+    Step2 --> Step3
+    Step3 --> Step4
+        </pre>
+      </div>
+
+      <!-- Panel 3: Pergantian Gembok & Evidence -->
+      <div id="panel_tab3" class="diagram-panel">
+        <pre class="mermaid">
+flowchart TD
+    subgraph JalurInput ["1. Akses Penggantian Gembok"]
+        G1{"Akses Penggantian"} -->|"Jalur Teknisi"| G2A["Portal Teknisi (user.html) -> Tab 'Ganti Kunci'"]
+        G1{"Akses Penggantian"} -->|"Jalur Admin"| G2B["Admin Dashboard (index.html) -> Tombol '+ Catat Pergantian Kunci'"]
+        G2A --> G3["Pilih STO & Kode ODC yang Rusak"]
+        G2B --> G3
+        G3 --> G4["Tentukan Tanggal Pergantian & Nama Petugas"]
+        G4 --> G5["Isi Catatan Gembok & Checklist Tipe Secure"]
+    end
+
+    subgraph FotoEvidence ["2. Pengambilan 2 Evidence Foto"]
+        E1["Klik Kotak: 1. Foto SEBELUM Diganti"] --> E2["Pilih / Foto Kondisi Gembok Lama (Rusak / Hilang)"]
+        E3["Klik Kotak: 2. Foto SESUDAH Diganti"] --> E4["Pilih / Foto Gembok Baru yang Sudah Terpasang"]
+        E2 --> E5["Canvas API: Auto-Kompresi Resolusi Gambar (Max 800px)"]
+        E4 --> E5
+        E5 --> E6["Preview Muncul: 'Foto Siap ✓'"]
+        E6 --> E7["Klik Tombol 'Simpan Evidence'"]
+    end
+
+    subgraph BackendScript ["3. Backend Google Apps Script (Code.gs)"]
+        P1["Menerima action: submitPergantianGembok"] --> P2["Upload Foto Sebelum ke Google Drive (Folder ODC_Selfie_Evidence)"]
+        P2 --> P3["Upload Foto Sesudah ke Google Drive (Folder ODC_Selfie_Evidence)"]
+        P3 --> P4["Cari baris ODC target pada Sheet 'DB ODC'"]
+        P4 --> P5["Update Kolom J: Ada Gembok = 'YA', Kolom L: Kondisi = 'BAGUS'"]
+        P5 --> P6["Simpan Link Foto Sebelum (Kolom O) & Foto Sesudah (Kolom P)"]
+        P6 --> P7["Catat Tanggal (Kolom N), Petugas (Kolom Q), Catatan (Kolom R)"]
+        P7 --> P8["Append riwayat ke Sheet 'HistoryGembok' (ID #GM-ddMMyy...)"]
+        P8 --> P9[/"Kirim Alert Telegram Update Pergantian Gembok"/]
+    end
+
+    subgraph UpdateDashboard ["4. Pembaruan Realtime Dashboard"]
+        R1["Cache Data Master Direset"] --> R2["Stat Card 'GEMBOK RUSAK' berkurang (-1)"]
+        R2 --> R3["Stat Card 'GEMBOK BAGUS / ADA' bertambah (+1)"]
+        R3 --> R4["Stat Card 'TELAH DIPERBARUI' bertambah (+1)"]
+        R4 --> R5["Bar Rasio Perbandingan Otomatis Terkalibrasi Ulang"]
+        R5 --> R6["Ikon ODC di STO Detail berubah Hijau/Biru (Bagus/Secure)"]
+        R6 --> R7["Detail ODC memuat Link Foto Sebelum & Sesudah"]
+    end
+
+    JalurInput --> FotoEvidence
+    FotoEvidence --> BackendScript
+    BackendScript --> UpdateDashboard
+        </pre>
+      </div>
+
+    </div>
+  </main>
+
+  <div id="toast">Notifikasi</div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      securityLevel: 'loose',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis'
+      }
+    });
+
+    let currentTab = 'tab1';
+
+    function switchDiagram(tabId, btn) {
+      currentTab = tabId;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.querySelectorAll('.diagram-panel').forEach(p => p.classList.remove('active'));
+      const activePanel = document.getElementById('panel_' + tabId);
+      activePanel.classList.add('active');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3000);
+    }
+
+    function downloadActiveDiagram(format) {
+      const activePanel = document.querySelector('.diagram-panel.active');
+      const svg = activePanel.querySelector('svg');
+      if (!svg) {
+        alert('Diagram sedang dimuat, silakan tunggu sebentar...');
+        return;
+      }
+
+      const titleMap = {
+        'tab1': 'Flowchart_Utama_Sistem_O-Key',
+        'tab2': 'Flowchart_Peminjaman_Kunci_ODC',
+        'tab3': 'Flowchart_Pergantian_Gembok_ODC'
+      };
+      const fileName = titleMap[currentTab] || 'Flowchart_O-Key';
+
+      if (format === 'svg') {
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const svgUrl = URL.createObjectURL(svgBlob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = svgUrl;
+        downloadLink.download = fileName + '.svg';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        showToast('✓ Berhasil mendownload ' + fileName + '.svg');
+      } else if (format === 'png') {
+        showToast('Sedang memproses gambar PNG HD...');
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const URLObj = window.URL || window.webkitURL || window;
+        const svgUrl = URLObj.createObjectURL(svgBlob);
+        
+        const img = new Image();
+        img.onload = function() {
+          const bbox = svg.getBoundingClientRect();
+          const scale = 2.5; // High resolution scale
+          const width = (bbox.width || 1200) * scale;
+          const height = (bbox.height || 800) * scale;
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          // White background
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          URLObj.revokeObjectURL(svgUrl);
+
+          canvas.toBlob(function(blob) {
+            const pngUrl = URLObj.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = pngUrl;
+            downloadLink.download = fileName + '.png';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            showToast('✓ Berhasil mendownload ' + fileName + '.png');
+          }, 'image/png');
+        };
+        img.src = svgUrl;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+flowchart TD
+    %% ==========================================
+    %% SUBGRAPH PERAN / AKTOR
+    %% ==========================================
+    subgraph TEKNISI ["👷 Teknisi Lapangan"]
+        direction TB
+        T1(["Mulai"]) --> T2["1. Register & Login Portal Teknisi"]
+        T2 --> T3{"Pilih Aktivitas"}
+        
+        %% Cabang Pinjam Kunci
+        T3 -->|"Peminjaman Kunci"| T4["2. Pilih STO & ODC, Estimasi Jam, Input WO, Foto Selfie Pinjam"]
+        T4 --> T5["3. Submit Request Pinjam"]
+        
+        %% Cabang Evidence Pengerjaan & Extend
+        T11["6. Upload 4 Foto Evidence Pengerjaan (Depan, Sisi, Dalam, Terkunci)"]
+        T12{"Perlu Tambah Waktu?"}
+        T13["Request Extend Estimasi Jam"]
+        
+        %% Cabang Pengembalian
+        T14["7. Input ID Tiket & Foto Selfie Pengembalian + Gembok Terpasang"]
+        T15["8. Submit Pengembalian Kunci"]
+        
+        %% Cabang Pergantian Gembok
+        T3 -->|"Pergantian Gembok Fisik"| TG1["A. Masuk Tab 'Ganti Kunci'"]
+        TG1 --> TG2["B. Pilih ODC, Petugas, Checklist Secure"]
+        TG2 --> TG3["C. Upload Foto 1: SEBELUM Diganti (Rusak/Lama)"]
+        TG3 --> TG4["D. Upload Foto 2: SESUDAH Diganti (Baru Terpasang)"]
+        TG4 --> TG5["E. Submit Pergantian Gembok"]
+    end
+
+    subgraph APPROVAL ["👔 Approval Bertingkat"]
+        direction TB
+        H1{"4. Approval HSA"}
+        TI1{"5. Approval TIF"}
+        REJ["Status: Rejected (Peminjaman Dibatalkan)"]
+    end
+
+    subgraph BACKEND ["⚙️ Google Apps Script & Database"]
+        direction TB
+        S1["Generate ID Tiket (#ddMMyySTO-ODC) & Simpan ActiveBorrowings"]
+        S2[/"Kirim Alert Telegram ke HSA"/]
+        S3[/"Kirim Alert Telegram ke TIF"/]
+        S4["Status: Approved (Peminjaman Aktif)"]
+        
+        %% Timer
+        S5(("Timer Estimasi Berjalan"))
+        S6{"Sisa Waktu <= 10 Menit?"}
+        S7[/"Warning Telegram: Waktu Segera Habis"/]
+        S8{"Waktu Habis (Overdue)?"}
+        S9[/"Alarm Overdue Berbunyi & Notif Telegram"/]
+        
+        %% Pengembalian & BA
+        S10["Hitung Total Durasi Pemakaian"]
+        S11[("Pindah Data ke Sheet History")]
+        S12["Generate Berita Acara (BA) Digital"]
+        
+        %% Pergantian Gembok
+        SG1["Upload Foto Sebelum & Sesudah ke Google Drive (ODC_Selfie_Evidence)"]
+        SG2[("Update Sheet DB ODC: Ada=YA, Kondisi=BAGUS, Link Foto, Petugas")]
+        SG3[("Append Log ke Sheet HistoryGembok (#GM-...)")]
+        SG4[/"Kirim Notif Telegram Update Gembok"/]
+        
+        S_End(["Selesai"])
+    end
+
+    subgraph ADMIN ["🖥️ Admin Dashboard & Monitoring"]
+        direction TB
+        D1["Dashboard Realtime ODC (Hijau = Aman, Merah = Dipinjam)"]
+        D2["Stat Cards: USERS, OPEN, GEMBOK BAGUS, GEMBOK RUSAK, TELAH DIPERBARUI"]
+        D3["Monitoring Gembok: Bar Rasio Perbandingan (Bagus vs Rusak)"]
+        D4["Modal Admin: Input Pergantian Kunci Langsung"]
+    end
+
+    %% ==========================================
+    %% ALUR RELASI PROSES
+    %% ==========================================
+    
+    %% Alur Pinjam Kunci
+    T5 --> S1
+    S1 --> S2
+    S2 --> H1
+    H1 -- "Reject" --> REJ
+    H1 -- "Approve" --> S3
+    S3 --> TI1
+    TI1 -- "Reject" --> REJ
+    TI1 -- "Approve" --> S4
+    
+    S4 --> D1
+    S4 --> S5
+    S5 --> S6
+    S6 -- "Ya" --> S7
+    S6 -- "Tidak" --> S8
+    S7 --> S8
+    S8 -- "Ya" --> S9
+    S8 -- "Tidak" --> T11
+    S9 --> T11
+    
+    T11 --> T12
+    T12 -- "Ya" --> T13
+    T13 --> S5
+    T12 -- "Tidak" --> T14
+    
+    T14 --> T15
+    T15 --> S10
+    S10 --> S11
+    S11 --> S12
+    S12 --> D1
+    D1 --> S_End
+
+    %% Alur Pergantian Gembok (Teknisi / Admin)
+    D4 --> TG2
+    TG5 --> SG1
+    SG1 --> SG2
+    SG2 --> SG3
+    SG3 --> SG4
+    SG4 --> D2
+    D2 --> D3
+    D3 --> S_End
+
+    %% ==========================================
+    %% STYLING
+    %% ==========================================
+    classDef default fill:#1e293b,stroke:#475569,stroke-width:1px,color:#f8fafc
+    classDef startend fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
+    classDef reject fill:#ef4444,stroke:#dc2626,stroke-width:2px,color:#fff
+    classDef decision fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
+    classDef highlight fill:#0284c7,stroke:#0369a1,stroke-width:2px,color:#fff
+    
+    class T1,S_End startend
+    class REJ reject
+    class T3,H1,TI1,S6,S8,T12 decision
+    class D1,D2,D3,D4 highlight
