@@ -135,7 +135,7 @@ function initSheets() {
   }
   if (!ss.getSheetByName('HistoryGembok')) {
     const sheet = ss.insertSheet('HistoryGembok');
-    sheet.appendRow(['ID Tiket', 'STO', 'ODC', 'Petugas', 'Tanggal', 'Keterangan', 'Foto Evidence URL']);
+    sheet.appendRow(['ID Tiket', 'STO', 'ODC', 'Petugas', 'Tanggal', 'Keterangan', 'Foto Sebelum URL', 'Foto Sesudah URL', 'Foto Tampak Samping URL', 'Foto Tampak Dalam URL']);
   }
   if (!ss.getSheetByName('Hsa')) {
     const sheet = ss.insertSheet('Hsa');
@@ -268,6 +268,22 @@ function submitPergantianGembok(data) {
   } else if (data.photoAfterUrl) {
     fotoSesudahUrl = data.photoAfterUrl;
   }
+
+  let fotoSampingUrl = '';
+  if (data.photoSide) {
+    const fileName = 'SAMPING_' + targetOdc + '_' + new Date().getTime() + '.png';
+    fotoSampingUrl = uploadImageToDrive(data.photoSide, fileName);
+  } else if (data.photoSideUrl) {
+    fotoSampingUrl = data.photoSideUrl;
+  }
+
+  let fotoDalamUrl = '';
+  if (data.photoInside) {
+    const fileName = 'DALAM_' + targetOdc + '_' + new Date().getTime() + '.png';
+    fotoDalamUrl = uploadImageToDrive(data.photoInside, fileName);
+  } else if (data.photoInsideUrl) {
+    fotoDalamUrl = data.photoInsideUrl;
+  }
   
   const tanggal = data.tanggal ? data.tanggal : Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy");
   const petugas = data.petugas || data.user || '-';
@@ -278,8 +294,10 @@ function submitPergantianGembok(data) {
     if (!sheetData[0][17]) sheet.getRange(1, 18).setValue('GEMBOK DIGANTI');
     if (!sheetData[0][18]) sheet.getRange(1, 19).setValue('FOTO SEBELUM DIGANTI');
     if (!sheetData[0][19]) sheet.getRange(1, 20).setValue('FOTO SESUDAH DIGANTI');
-    if (!sheetData[0][20]) sheet.getRange(1, 21).setValue('PETUGAS GEMBOK');
-    if (!sheetData[0][21]) sheet.getRange(1, 22).setValue('KETERANGAN GEMBOK');
+    if (!sheetData[0][20]) sheet.getRange(1, 21).setValue('FOTO TAMPAK SAMPING');
+    if (!sheetData[0][21]) sheet.getRange(1, 22).setValue('FOTO TAMPAK DALAM');
+    if (!sheetData[0][22]) sheet.getRange(1, 23).setValue('PETUGAS GEMBOK');
+    if (!sheetData[0][23]) sheet.getRange(1, 24).setValue('KETERANGAN GEMBOK');
   }
 
   // Kolom R (18): Tanggal Gembok Diganti
@@ -295,12 +313,22 @@ function submitPergantianGembok(data) {
     sheet.getRange(rowIndex, 20).setValue(fotoSesudahUrl);
   }
   
-  // Kolom U (21): Petugas / Teknisi
-  sheet.getRange(rowIndex, 21).setValue(petugas);
+  // Kolom U (21): Foto Tampak Samping URL
+  if (fotoSampingUrl) {
+    sheet.getRange(rowIndex, 21).setValue(fotoSampingUrl);
+  }
 
-  // Kolom V (22): Keterangan
+  // Kolom V (22): Foto Tampak Dalam URL
+  if (fotoDalamUrl) {
+    sheet.getRange(rowIndex, 22).setValue(fotoDalamUrl);
+  }
+
+  // Kolom W (23): Petugas / Teknisi
+  sheet.getRange(rowIndex, 23).setValue(petugas);
+
+  // Kolom X (24): Keterangan
   if (keterangan) {
-    sheet.getRange(rowIndex, 22).setValue(keterangan);
+    sheet.getRange(rowIndex, 24).setValue(keterangan);
   }
 
   // Update status gembok (Ada Gembok: YA, Kondisi: BAGUS, Secure: YA jika dipilih)
@@ -314,10 +342,14 @@ function submitPergantianGembok(data) {
   let histSheet = ss.getSheetByName('HistoryGembok');
   if (!histSheet) {
     histSheet = ss.insertSheet('HistoryGembok');
-    histSheet.appendRow(['ID Tiket', 'STO', 'ODC', 'Petugas', 'Tanggal', 'Keterangan', 'Foto Sebelum URL', 'Foto Sesudah URL']);
+    histSheet.appendRow(['ID Tiket', 'STO', 'ODC', 'Petugas', 'Tanggal', 'Keterangan', 'Foto Sebelum URL', 'Foto Sesudah URL', 'Foto Tampak Samping URL', 'Foto Tampak Dalam URL']);
+  } else {
+    const histHeaders = histSheet.getRange(1, 1, 1, Math.max(histSheet.getLastColumn(), 10)).getValues()[0];
+    if (!histHeaders[8]) histSheet.getRange(1, 9).setValue('Foto Tampak Samping URL');
+    if (!histHeaders[9]) histSheet.getRange(1, 10).setValue('Foto Tampak Dalam URL');
   }
   const ticketId = generateTicketId(targetSto || 'STO', targetOdc, true).replace('#EVD-', '#GM-');
-  histSheet.appendRow([ticketId, targetSto || '-', targetOdc, petugas, tanggal, keterangan, fotoSebelumUrl, fotoSesudahUrl]);
+  histSheet.appendRow([ticketId, targetSto || '-', targetOdc, petugas, tanggal, keterangan, fotoSebelumUrl, fotoSesudahUrl, fotoSampingUrl, fotoDalamUrl]);
 
   // Clear cache
   const cache = CacheService.getScriptCache();
@@ -331,7 +363,9 @@ function submitPergantianGembok(data) {
               `<b>Tanggal:</b> ${tanggal}\n` +
               `<b>Keterangan:</b> ${keterangan}\n` +
               (fotoSebelumUrl ? `<b>Evidence Sebelum:</b> <a href="${fotoSebelumUrl}">Lihat Foto</a>\n` : '') +
-              (fotoSesudahUrl ? `<b>Evidence Sesudah:</b> <a href="${fotoSesudahUrl}">Lihat Foto</a>\n` : '');
+              (fotoSesudahUrl ? `<b>Evidence Sesudah:</b> <a href="${fotoSesudahUrl}">Lihat Foto</a>\n` : '') +
+              (fotoSampingUrl ? `<b>Tampak Samping:</b> <a href="${fotoSampingUrl}">Lihat Foto</a>\n` : '') +
+              (fotoDalamUrl ? `<b>Tampak Dalam:</b> <a href="${fotoDalamUrl}">Lihat Foto</a>\n` : '');
   sendTelegramMessage(msg);
 
   return { 
@@ -339,7 +373,9 @@ function submitPergantianGembok(data) {
     message: 'Pergantian gembok berhasil dicatat!', 
     fotoSebelumUrl: fotoSebelumUrl,
     fotoSesudahUrl: fotoSesudahUrl,
-    fotoUrl: fotoSesudahUrl || fotoSebelumUrl, 
+    fotoSampingUrl: fotoSampingUrl,
+    fotoDalamUrl: fotoDalamUrl,
+    fotoUrl: fotoSesudahUrl || fotoSebelumUrl || fotoSampingUrl || fotoDalamUrl, 
     tanggal: tanggal,
     petugas: petugas 
   };
@@ -403,6 +439,8 @@ function getMasterData() {
   const gembokDigantiIdx = headers.indexOf('GEMBOK DIGANTI');
   const fotoSebelumIdx = headers.indexOf('FOTO SEBELUM DIGANTI') !== -1 ? headers.indexOf('FOTO SEBELUM DIGANTI') : headers.indexOf('FOTO SEBELUM');
   const fotoSesudahIdx = headers.indexOf('FOTO SESUDAH DIGANTI') !== -1 ? headers.indexOf('FOTO SESUDAH DIGANTI') : headers.indexOf('FOTO SESUDAH');
+  const fotoSampingIdx = headers.indexOf('FOTO TAMPAK SAMPING') !== -1 ? headers.indexOf('FOTO TAMPAK SAMPING') : headers.indexOf('TAMPAK SAMPING');
+  const fotoDalamIdx = headers.indexOf('FOTO TAMPAK DALAM') !== -1 ? headers.indexOf('FOTO TAMPAK DALAM') : headers.indexOf('TAMPAK DALAM');
   const petugasGembokIdx = headers.indexOf('PETUGAS GEMBOK');
   const ketGembokIdx = headers.indexOf('KETERANGAN GEMBOK');
 
@@ -419,7 +457,9 @@ function getMasterData() {
           tanggal: histData[h][4] ? (histData[h][4] instanceof Date ? Utilities.formatDate(histData[h][4], Session.getScriptTimeZone(), "dd/MM/yyyy") : histData[h][4].toString().trim()) : '',
           keterangan: histData[h][5] ? histData[h][5].toString().trim() : '',
           fotoSebelum: histData[h][6] ? histData[h][6].toString().trim() : '',
-          fotoSesudah: histData[h][7] ? histData[h][7].toString().trim() : ''
+          fotoSesudah: histData[h][7] ? histData[h][7].toString().trim() : '',
+          fotoSamping: histData[h][8] ? histData[h][8].toString().trim() : '',
+          fotoDalam: histData[h][9] ? histData[h][9].toString().trim() : ''
         };
       }
     }
@@ -451,6 +491,8 @@ function getMasterData() {
     let gembokDigantiStr = histRecord ? histRecord.tanggal : '';
     let fotoSebelum = histRecord ? histRecord.fotoSebelum : '';
     let fotoSesudah = histRecord ? histRecord.fotoSesudah : '';
+    let fotoSamping = histRecord ? histRecord.fotoSamping : '';
+    let fotoDalam = histRecord ? histRecord.fotoDalam : '';
     let petugasGembok = histRecord ? histRecord.petugas : '';
     let keteranganGembok = histRecord ? histRecord.keterangan : '';
 
@@ -468,6 +510,12 @@ function getMasterData() {
     if (!fotoSesudah && fotoSesudahIdx >= 17 && data[i][fotoSesudahIdx]) {
       fotoSesudah = data[i][fotoSesudahIdx].toString().trim();
     }
+    if (!fotoSamping && fotoSampingIdx >= 17 && data[i][fotoSampingIdx]) {
+      fotoSamping = data[i][fotoSampingIdx].toString().trim();
+    }
+    if (!fotoDalam && fotoDalamIdx >= 17 && data[i][fotoDalamIdx]) {
+      fotoDalam = data[i][fotoDalamIdx].toString().trim();
+    }
     if (!petugasGembok && petugasGembokIdx >= 17 && data[i][petugasGembokIdx]) {
       petugasGembok = data[i][petugasGembokIdx].toString().trim();
     }
@@ -475,7 +523,7 @@ function getMasterData() {
       keteranganGembok = data[i][ketGembokIdx].toString().trim();
     }
 
-    const fotoGembok = fotoSesudah || fotoSebelum;
+    const fotoGembok = fotoSesudah || fotoSebelum || fotoSamping || fotoDalam;
 
     if (sto && odc) {
       if (!sas[sa]) sas[sa] = {};
@@ -494,6 +542,8 @@ function getMasterData() {
           gembokDiganti: gembokDigantiStr,
           fotoSebelum: fotoSebelum,
           fotoSesudah: fotoSesudah,
+          fotoSamping: fotoSamping,
+          fotoDalam: fotoDalam,
           fotoGembok: fotoGembok,
           petugasGembok: petugasGembok,
           keteranganGembok: keteranganGembok
@@ -589,7 +639,9 @@ function getDashboardData() {
           gembokDiganti: item.gembokDiganti || '',
           fotoSebelum: item.fotoSebelum || '',
           fotoSesudah: item.fotoSesudah || '',
-          fotoGembok: item.fotoGembok || item.fotoSesudah || item.fotoSebelum || '',
+          fotoSamping: item.fotoSamping || '',
+          fotoDalam: item.fotoDalam || '',
+          fotoGembok: item.fotoGembok || item.fotoSesudah || item.fotoSebelum || item.fotoSamping || item.fotoDalam || '',
           petugasGembok: item.petugasGembok || '',
           keteranganGembok: item.keteranganGembok || ''
         });
