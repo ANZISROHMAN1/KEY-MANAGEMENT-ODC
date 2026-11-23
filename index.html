@@ -751,6 +751,52 @@
           </div>
         </div>
 
+        <!-- Section Pergantian Overpal -->
+        <div style="margin-top: 10px; margin-bottom: 12px; padding: 10px 14px; background: rgba(230, 126, 34, 0.08); border-left: 3px solid #e67e22; border-radius: 6px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 12px; font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+            <span>🔩</span> Evidence Pergantian Overpal
+          </div>
+          <span style="font-size: 11px; color: var(--text-muted);">(Opsional / Jika diganti)</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+          <!-- 5. Foto Sebelum Overpal -->
+          <div style="background: var(--bg-color); border: 2px dashed rgba(230, 126, 34, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('ag_photo_overpal_before_file').click()">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #e67e22; cursor: pointer;">
+              Sebelum Ganti Overpal<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Kondisi Overpal Lama/Rusak)</span>
+            </label>
+            
+            <div id="ag_preview_overpal_before_box" style="display: none; margin-bottom: 6px;">
+              <img id="ag_preview_overpal_before_img" src="" style="width: 100%; max-height: 90px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(230, 126, 34, 0.1); border: 1px solid rgba(230, 126, 34, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 11px; color: #e67e22; font-weight: bold;">
+              <span>📷</span> <span id="ag_status_overpal_before">Pilih Foto</span>
+            </div>
+            
+            <input type="file" id="ag_photo_overpal_before_file" accept="image/*" style="display: none;" onchange="handleAdminPhotoPreview(event, 'overpal_before')">
+            <input type="hidden" id="ag_photo_overpal_before_base64">
+          </div>
+
+          <!-- 6. Foto Sesudah Overpal -->
+          <div style="background: var(--bg-color); border: 2px dashed rgba(22, 160, 133, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('ag_photo_overpal_after_file').click()">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #16a085; cursor: pointer;">
+              Sesudah Ganti Overpal<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Overpal Baru Terpasang)</span>
+            </label>
+            
+            <div id="ag_preview_overpal_after_box" style="display: none; margin-bottom: 6px;">
+              <img id="ag_preview_overpal_after_img" src="" style="width: 100%; max-height: 90px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(22, 160, 133, 0.1); border: 1px solid rgba(22, 160, 133, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 11px; color: #16a085; font-weight: bold;">
+              <span>📷</span> <span id="ag_status_overpal_after">Pilih Foto</span>
+            </div>
+            
+            <input type="file" id="ag_photo_overpal_after_file" accept="image/*" style="display: none;" onchange="handleAdminPhotoPreview(event, 'overpal_after')">
+            <input type="hidden" id="ag_photo_overpal_after_base64">
+          </div>
+        </div>
+
         <div style="display: flex; gap: 10px; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--border-color);">
           <button type="button" onclick="closeGembokEvidenceModal()" class="btn-submit" style="background: var(--text-muted); width: auto; padding: 8px 18px; margin: 0; cursor: pointer; font-size: 13px;">Batal</button>
           <button type="submit" id="btnSubmitAdminGembok" class="btn-submit" style="background: #2ecc71; width: auto; padding: 8px 22px; margin: 0; cursor: pointer; font-size: 13px; font-weight: bold;">Simpan Evidence</button>
@@ -1196,7 +1242,7 @@
         odcCard.style.alignItems = 'center';
         odcCard.style.justifyContent = 'space-between';
         odcCard.style.borderTop = `3px solid ${design.color}`;
-        odcCard.onclick = (e) => handleOdcClick(e, odc.name, odc.status, borrowDataStr, odc.gembokDiganti, odc.fotoGembok, odc.petugasGembok, stoName, odc.kondisiGembok, odc.gembokSecure, odc.adaGembok, odc.fotoSebelum, odc.fotoSesudah, odcTikor, odc.fotoSamping, odc.fotoDalam);
+        odcCard.onclick = (e) => handleOdcClick(e, odc.name, odc.status, borrowDataStr, odc.gembokDiganti, odc.fotoGembok, odc.petugasGembok, stoName, odc.kondisiGembok, odc.gembokSecure, odc.adaGembok, odc.fotoSebelum, odc.fotoSesudah, odcTikor, odc.fotoSamping, odc.fotoDalam, odc.fotoOverpalSebelum, odc.fotoOverpalSesudah);
         odcCard.innerHTML = `
           <div style="font-size:8px; color:${design.color}; font-weight:800; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.5px;">${design.label}</div>
           <div class="monitor-icon" style="margin-bottom:3px;">${design.svg}</div>
@@ -1345,7 +1391,7 @@
       }
     }
 
-    async function handleOdcClick(event, odcName, status, borrowDataStr, gembokDiganti = '', fotoGembok = '', petugasGembok = '', stoName = '', kondisiGembok = '', gembokSecure = '', adaGembok = '', fotoSebelum = '', fotoSesudah = '', tikor = '', fotoSamping = '', fotoDalam = '') {
+    async function handleOdcClick(event, odcName, status, borrowDataStr, gembokDiganti = '', fotoGembok = '', petugasGembok = '', stoName = '', kondisiGembok = '', gembokSecure = '', adaGembok = '', fotoSebelum = '', fotoSesudah = '', tikor = '', fotoSamping = '', fotoDalam = '', fotoOverpalSebelum = '', fotoOverpalSesudah = '') {
       if (event && event.stopPropagation) event.stopPropagation();
       
       const historySection = document.getElementById('odcHistorySection');
@@ -1360,13 +1406,15 @@
         tikor = window.odcTikorMap[odcName] || window.odcTikorMap[`${stoName}-${odcName}`] || '';
       }
 
-      if ((!fotoSebelum || !fotoSesudah || !fotoSamping || !fotoDalam) && window.allOdcsList) {
+      if ((!fotoSebelum || !fotoSesudah || !fotoSamping || !fotoDalam || !fotoOverpalSebelum || !fotoOverpalSesudah) && window.allOdcsList) {
         const found = window.allOdcsList.find(o => o.name === odcName && (!stoName || o.sto === stoName));
         if (found) {
           if (!fotoSebelum && found.fotoSebelum) fotoSebelum = found.fotoSebelum;
           if (!fotoSesudah && found.fotoSesudah) fotoSesudah = found.fotoSesudah;
           if (!fotoSamping && found.fotoSamping) fotoSamping = found.fotoSamping;
           if (!fotoDalam && found.fotoDalam) fotoDalam = found.fotoDalam;
+          if (!fotoOverpalSebelum && found.fotoOverpalSebelum) fotoOverpalSebelum = found.fotoOverpalSebelum;
+          if (!fotoOverpalSesudah && found.fotoOverpalSesudah) fotoOverpalSesudah = found.fotoOverpalSesudah;
           if (!fotoGembok && found.fotoGembok) fotoGembok = found.fotoGembok;
         }
       }
@@ -1380,6 +1428,8 @@
       window.currentFotoSesudah = fotoSesudah;
       window.currentFotoSamping = fotoSamping;
       window.currentFotoDalam = fotoDalam;
+      window.currentFotoOverpalSebelum = fotoOverpalSebelum;
+      window.currentFotoOverpalSesudah = fotoOverpalSesudah;
       window.currentPetugasGembok = petugasGembok;
       window.currentKondisiGembok = kondisiGembok;
       window.currentGembokSecure = gembokSecure;
@@ -1403,6 +1453,8 @@
                 ${fotoSesudah || fotoGembok ? `<a href="${fotoSesudah || fotoGembok}" target="_blank" class="link-btn" style="background: #2ecc71; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; border-radius: 4px;">📷 Sesudah</a>` : ''}
                 ${fotoSamping ? `<a href="${fotoSamping}" target="_blank" class="link-btn" style="background: #3498db; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; border-radius: 4px;">📷 Samping</a>` : ''}
                 ${fotoDalam ? `<a href="${fotoDalam}" target="_blank" class="link-btn" style="background: #9b59b6; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; border-radius: 4px;">📷 Dalam</a>` : ''}
+                ${fotoOverpalSebelum ? `<a href="${fotoOverpalSebelum}" target="_blank" class="link-btn" style="background: #e67e22; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; border-radius: 4px;">🔩 Overpal S.</a>` : ''}
+                ${fotoOverpalSesudah ? `<a href="${fotoOverpalSesudah}" target="_blank" class="link-btn" style="background: #16a085; color: white; padding: 6px 12px; font-size: 12px; text-decoration: none; border-radius: 4px;">🔩 Overpal K.</a>` : ''}
                 <button onclick="openModalGembokEvidence('${odcName}')" class="link-btn" style="background: transparent; border: 1px solid #2ecc71; color: #2ecc71; padding: 5px 12px; font-size: 12px; cursor: pointer; border-radius: 4px;">✏️ Update Data / Foto</button>
               </div>
             </div>
@@ -1474,20 +1526,20 @@
         `;
       }
       
-      fetchHistory(odcName, activeRowHtml, gembokDiganti, fotoGembok, petugasGembok, fotoSebelum, fotoSesudah, tikor, fotoSamping, fotoDalam);
+      fetchHistory(odcName, activeRowHtml, gembokDiganti, fotoGembok, petugasGembok, fotoSebelum, fotoSesudah, tikor, fotoSamping, fotoDalam, fotoOverpalSebelum, fotoOverpalSesudah);
     }
 
-    async function fetchHistory(odcName, activeRowHtml = '', gembokDiganti = '', fotoGembok = '', petugasGembok = '', fotoSebelum = '', fotoSesudah = '', tikor = '', fotoSamping = '', fotoDalam = '') {
+    async function fetchHistory(odcName, activeRowHtml = '', gembokDiganti = '', fotoGembok = '', petugasGembok = '', fotoSebelum = '', fotoSesudah = '', tikor = '', fotoSamping = '', fotoDalam = '', fotoOverpalSebelum = '', fotoOverpalSesudah = '') {
       try {
         const response = await fetch(API_URL + '?action=getOdcHistory&odc=' + encodeURIComponent(odcName));
         const historyList = await response.json();
-        renderHistory(odcName, historyList, activeRowHtml, gembokDiganti, fotoGembok, petugasGembok, fotoSebelum, fotoSesudah, tikor, fotoSamping, fotoDalam);
+        renderHistory(odcName, historyList, activeRowHtml, gembokDiganti, fotoGembok, petugasGembok, fotoSebelum, fotoSesudah, tikor, fotoSamping, fotoDalam, fotoOverpalSebelum, fotoOverpalSesudah);
       } catch (err) {
         document.getElementById('odcHistoryTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:#e74c3c;">Gagal mengambil riwayat.</td></tr>';
       }
     }
 
-    function renderHistory(odcName, historyList, activeRowHtml, gembokDiganti = '', fotoGembok = '', petugasGembok = '', fotoSebelum = '', fotoSesudah = '', tikor = '', fotoSamping = '', fotoDalam = '') {
+    function renderHistory(odcName, historyList, activeRowHtml, gembokDiganti = '', fotoGembok = '', petugasGembok = '', fotoSebelum = '', fotoSesudah = '', tikor = '', fotoSamping = '', fotoDalam = '', fotoOverpalSebelum = '', fotoOverpalSesudah = '') {
       const tbody = document.getElementById('odcHistoryTableBody');
       let html = activeRowHtml;
       
@@ -1504,13 +1556,15 @@
         tikor = window.odcTikorMap[odcName] || '';
       }
 
-      if ((!fotoSebelum || !fotoSesudah || !fotoSamping || !fotoDalam) && window.allOdcsList) {
+      if ((!fotoSebelum || !fotoSesudah || !fotoSamping || !fotoDalam || !fotoOverpalSebelum || !fotoOverpalSesudah) && window.allOdcsList) {
         const f = window.allOdcsList.find(o => o.name === odcName);
         if (f) {
           if (!fotoSebelum && f.fotoSebelum) fotoSebelum = f.fotoSebelum;
           if (!fotoSesudah && f.fotoSesudah) fotoSesudah = f.fotoSesudah;
           if (!fotoSamping && f.fotoSamping) fotoSamping = f.fotoSamping;
           if (!fotoDalam && f.fotoDalam) fotoDalam = f.fotoDalam;
+          if (!fotoOverpalSebelum && f.fotoOverpalSebelum) fotoOverpalSebelum = f.fotoOverpalSebelum;
+          if (!fotoOverpalSesudah && f.fotoOverpalSesudah) fotoOverpalSesudah = f.fotoOverpalSesudah;
           if (!fotoGembok && f.fotoGembok) fotoGembok = f.fotoGembok;
         }
       }
@@ -1534,6 +1588,12 @@
         }
         if (fotoDalam) {
           photoLinks.push(`<a href="${fotoDalam}" target="_blank" class="link-btn" style="background:#9b59b6; color:white; font-size:11px; padding:3px 7px; text-decoration:none; border-radius:4px;">📷 Dalam</a>`);
+        }
+        if (fotoOverpalSebelum) {
+          photoLinks.push(`<a href="${fotoOverpalSebelum}" target="_blank" class="link-btn" style="background:#e67e22; color:white; font-size:11px; padding:3px 7px; text-decoration:none; border-radius:4px;">🔩 Overpal S.</a>`);
+        }
+        if (fotoOverpalSesudah) {
+          photoLinks.push(`<a href="${fotoOverpalSesudah}" target="_blank" class="link-btn" style="background:#16a085; color:white; font-size:11px; padding:3px 7px; text-decoration:none; border-radius:4px;">🔩 Overpal K.</a>`);
         }
 
         if (photoLinks.length > 0) {
@@ -1642,6 +1702,18 @@
       const statusI = document.getElementById('ag_status_inside');
       if (statusI) statusI.innerText = 'Pilih Foto';
 
+      document.getElementById('ag_photo_overpal_before_file').value = '';
+      document.getElementById('ag_photo_overpal_before_base64').value = '';
+      document.getElementById('ag_preview_overpal_before_box').style.display = 'none';
+      const statusOB = document.getElementById('ag_status_overpal_before');
+      if (statusOB) statusOB.innerText = 'Pilih Foto';
+
+      document.getElementById('ag_photo_overpal_after_file').value = '';
+      document.getElementById('ag_photo_overpal_after_base64').value = '';
+      document.getElementById('ag_preview_overpal_after_box').style.display = 'none';
+      const statusOA = document.getElementById('ag_status_overpal_after');
+      if (statusOA) statusOA.innerText = 'Pilih Foto';
+
       modal.style.display = 'block';
     }
 
@@ -1738,6 +1810,8 @@
       const photoAfter = document.getElementById('ag_photo_after_base64').value;
       const photoSide = document.getElementById('ag_photo_side_base64').value;
       const photoInside = document.getElementById('ag_photo_inside_base64').value;
+      const photoOverpalBefore = document.getElementById('ag_photo_overpal_before_base64').value;
+      const photoOverpalAfter = document.getElementById('ag_photo_overpal_after_base64').value;
 
       if (!photoBefore) {
         alert('Silakan pilih foto 1. Sebelum Pergantian Kunci terlebih dahulu!');
@@ -1773,14 +1847,16 @@
               photoBefore: photoBefore,
               photoAfter: photoAfter,
               photoSide: photoSide,
-              photoInside: photoInside
+              photoInside: photoInside,
+              photoOverpalBefore: photoOverpalBefore,
+              photoOverpalAfter: photoOverpalAfter
             }
           })
         });
 
         const result = await res.json();
         if (result.success) {
-          alert('Berhasil menyimpan evidence pergantian kunci untuk ' + odc);
+          alert('Berhasil menyimpan evidence pergantian kunci & overpal untuk ' + odc);
           closeGembokEvidenceModal();
           
           window.currentGembokDiganti = tanggal;
@@ -1789,11 +1865,13 @@
           window.currentFotoSesudah = result.fotoSesudahUrl;
           window.currentFotoSamping = result.fotoSampingUrl;
           window.currentFotoDalam = result.fotoDalamUrl;
+          window.currentFotoOverpalSebelum = result.fotoOverpalSebelumUrl;
+          window.currentFotoOverpalSesudah = result.fotoOverpalSesudahUrl;
           window.currentPetugasGembok = petugas;
 
           await fetchInitialData();
           if (window.currentSelectedOdc === odc) {
-            handleOdcClick(null, odc, 'green', '', tanggal, result.fotoUrl, petugas, sto, 'BAGUS', isSecure ? 'YA' : '', 'YA', result.fotoSebelumUrl, result.fotoSesudahUrl, window.currentSelectedTikor, result.fotoSampingUrl, result.fotoDalamUrl);
+            handleOdcClick(null, odc, 'green', '', tanggal, result.fotoUrl, petugas, sto, 'BAGUS', isSecure ? 'YA' : '', 'YA', result.fotoSebelumUrl, result.fotoSesudahUrl, window.currentSelectedTikor, result.fotoSampingUrl, result.fotoDalamUrl, result.fotoOverpalSebelumUrl, result.fotoOverpalSesudahUrl);
           }
         } else {
           if (result.message === 'Invalid action') {
@@ -2098,7 +2176,9 @@
         if (o.fotoSebelum) eLinks.push(`<a href="${o.fotoSebelum}" target="_blank" class="link-btn" style="background:#e74c3c; color:white; padding:3px 7px; font-size:10px; text-decoration:none; border-radius:4px; display:inline-block; margin-right:4px;">📷 Sebelum</a>`);
         if (o.fotoSesudah || o.fotoGembok) eLinks.push(`<a href="${o.fotoSesudah || o.fotoGembok}" target="_blank" class="link-btn" style="background:#2ecc71; color:white; padding:3px 7px; font-size:10px; text-decoration:none; border-radius:4px; display:inline-block; margin-right:4px;">📷 Sesudah</a>`);
         if (o.fotoSamping) eLinks.push(`<a href="${o.fotoSamping}" target="_blank" class="link-btn" style="background:#3498db; color:white; padding:3px 7px; font-size:10px; text-decoration:none; border-radius:4px; display:inline-block; margin-right:4px;">📷 Samping</a>`);
-        if (o.fotoDalam) eLinks.push(`<a href="${o.fotoDalam}" target="_blank" class="link-btn" style="background:#9b59b6; color:white; padding:3px 7px; font-size:10px; text-decoration:none; border-radius:4px; display:inline-block;">📷 Dalam</a>`);
+        if (o.fotoDalam) eLinks.push(`<a href="${o.fotoDalam}" target="_blank" class="link-btn" style="background:#9b59b6; color:white; padding:3px 7px; font-size:10px; text-decoration:none; border-radius:4px; display:inline-block; margin-right:4px;">📷 Dalam</a>`);
+        if (o.fotoOverpalSebelum) eLinks.push(`<a href="${o.fotoOverpalSebelum}" target="_blank" class="link-btn" style="background:#e67e22; color:white; padding:3px 7px; font-size:10px; text-decoration:none; border-radius:4px; display:inline-block; margin-right:4px;">🔩 Overpal S.</a>`);
+        if (o.fotoOverpalSesudah) eLinks.push(`<a href="${o.fotoOverpalSesudah}" target="_blank" class="link-btn" style="background:#16a085; color:white; padding:3px 7px; font-size:10px; text-decoration:none; border-radius:4px; display:inline-block;">🔩 Overpal K.</a>`);
         if (eLinks.length > 0) evidenceCol = eLinks.join(' ');
 
         let aksiBtn = `<button onclick="openModalGembokEvidence('${o.name}')" class="link-btn" style="background:${isDiperbarui ? 'transparent' : '#2ecc71'}; border:1px solid #2ecc71; color:${isDiperbarui ? '#2ecc71' : 'white'}; font-size:11px; padding:4px 10px; cursor:pointer; border-radius:4px;">${isDiperbarui ? '✏️ Update' : '+ Perbarui Gembok'}</button>`;
