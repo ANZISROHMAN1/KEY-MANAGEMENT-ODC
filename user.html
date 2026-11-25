@@ -319,15 +319,16 @@
           <label for="g_secure" style="margin:0; cursor:pointer; font-size:14px;">Gembok Tipe Secure</label>
         </div>
 
+        <!-- 4 Foto Upload Evidence -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-          <!-- Foto Sebelum -->
-          <div style="background: var(--bg-color); border: 2px dashed rgba(231, 76, 60, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer;" onclick="document.getElementById('g_foto_before_file').click()">
+          <!-- 1. Foto Sebelum -->
+          <div style="background: var(--bg-color); border: 2px dashed rgba(231, 76, 60, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('g_foto_before_file').click()">
             <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #e74c3c; cursor: pointer;">
-              1. Foto SEBELUM<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Kondisi Gembok Rusak)</span>
+              1. Sebelum Pergantian Kunci<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Kondisi Gembok Lama/Rusak)</span>
             </label>
             
             <div id="g_preview_before_box" style="display: none; margin-bottom: 6px;">
-              <img id="g_preview_before_img" src="" style="width: 100%; max-height: 100px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
+              <img id="g_preview_before_img" src="" style="width: 100%; max-height: 90px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
             </div>
 
             <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 11px; color: #e74c3c; font-weight: bold;">
@@ -335,17 +336,17 @@
             </div>
             
             <input type="file" id="g_foto_before_file" accept="image/*" style="display:none;" onchange="handleGantiFotoUpload(event, 'before')">
-            <input type="hidden" id="g_foto_before_evidence" required>
+            <input type="hidden" id="g_foto_before_evidence">
           </div>
 
-          <!-- Foto Sesudah -->
-          <div style="background: var(--bg-color); border: 2px dashed rgba(46, 204, 113, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer;" onclick="document.getElementById('g_foto_after_file').click()">
+          <!-- 2. Foto Sesudah -->
+          <div style="background: var(--bg-color); border: 2px dashed rgba(46, 204, 113, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('g_foto_after_file').click()">
             <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #2ecc71; cursor: pointer;">
-              2. Foto SESUDAH<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Gembok Baru Terpasang)</span>
+              2. Sesudah Pergantian Kunci<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Gembok Baru Terpasang)</span>
             </label>
             
             <div id="g_preview_after_box" style="display: none; margin-bottom: 6px;">
-              <img id="g_preview_after_img" src="" style="width: 100%; max-height: 100px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
+              <img id="g_preview_after_img" src="" style="width: 100%; max-height: 90px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
             </div>
 
             <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 11px; color: #2ecc71; font-weight: bold;">
@@ -353,7 +354,89 @@
             </div>
             
             <input type="file" id="g_foto_after_file" accept="image/*" style="display:none;" onchange="handleGantiFotoUpload(event, 'after')">
-            <input type="hidden" id="g_foto_after_evidence" required>
+            <input type="hidden" id="g_foto_after_evidence">
+          </div>
+
+          <!-- 3. Foto Tampak Samping -->
+          <div style="background: var(--bg-color); border: 2px dashed rgba(52, 152, 219, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('g_foto_side_file').click()">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #3498db; cursor: pointer;">
+              3. Tampak Samping<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Foto Samping ODC)</span>
+            </label>
+            
+            <div id="g_preview_side_box" style="display: none; margin-bottom: 6px;">
+              <img id="g_preview_side_img" src="" style="width: 100%; max-height: 90px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(52, 152, 219, 0.1); border: 1px solid rgba(52, 152, 219, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 11px; color: #3498db; font-weight: bold;">
+              <span>📷</span> <span id="g_status_side">Pilih Foto</span>
+            </div>
+            
+            <input type="file" id="g_foto_side_file" accept="image/*" style="display:none;" onchange="handleGantiFotoUpload(event, 'side')">
+            <input type="hidden" id="g_foto_side_evidence">
+          </div>
+
+          <!-- 4. Foto Tampak Dalam -->
+          <div style="background: var(--bg-color); border: 2px dashed rgba(155, 89, 182, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('g_foto_inside_file').click()">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #9b59b6; cursor: pointer;">
+              4. Tampak Dalam<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Foto Bagian Dalam ODC)</span>
+            </label>
+            
+            <div id="g_preview_inside_box" style="display: none; margin-bottom: 6px;">
+              <img id="g_preview_inside_img" src="" style="width: 100%; max-height: 90px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(155, 89, 182, 0.1); border: 1px solid rgba(155, 89, 182, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 11px; color: #9b59b6; font-weight: bold;">
+              <span>📷</span> <span id="g_status_inside">Pilih Foto</span>
+            </div>
+            
+            <input type="file" id="g_foto_inside_file" accept="image/*" style="display:none;" onchange="handleGantiFotoUpload(event, 'inside')">
+            <input type="hidden" id="g_foto_inside_evidence">
+          </div>
+        </div>
+
+        <!-- Section Pergantian Overpal -->
+        <div style="margin-top: 10px; margin-bottom: 12px; padding: 10px 14px; background: rgba(230, 126, 34, 0.08); border-left: 3px solid #e67e22; border-radius: 6px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 12px; font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+            <span>🔩</span> Evidence Pergantian Overpal
+          </div>
+          <span style="font-size: 11px; color: var(--text-muted);">(Opsional / Jika diganti)</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+          <!-- 5. Foto Sebelum Overpal -->
+          <div style="background: var(--bg-color); border: 2px dashed rgba(230, 126, 34, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('g_foto_overpal_before_file').click()">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #e67e22; cursor: pointer;">
+              Sebelum Ganti Overpal<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Kondisi Overpal Lama/Rusak)</span>
+            </label>
+            
+            <div id="g_preview_overpal_before_box" style="display: none; margin-bottom: 6px;">
+              <img id="g_preview_overpal_before_img" src="" style="width: 100%; max-height: 90px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(230, 126, 34, 0.1); border: 1px solid rgba(230, 126, 34, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 11px; color: #e67e22; font-weight: bold;">
+              <span>📷</span> <span id="g_status_overpal_before">Pilih Foto</span>
+            </div>
+            
+            <input type="file" id="g_foto_overpal_before_file" accept="image/*" style="display:none;" onchange="handleGantiFotoUpload(event, 'overpal_before')">
+            <input type="hidden" id="g_foto_overpal_before_evidence">
+          </div>
+
+          <!-- 6. Foto Sesudah Overpal -->
+          <div style="background: var(--bg-color); border: 2px dashed rgba(22, 160, 133, 0.4); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('g_foto_overpal_after_file').click()">
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #16a085; cursor: pointer;">
+              Sesudah Ganti Overpal<br><span style="font-weight: normal; font-size: 10px; color: var(--text-muted);">(Overpal Baru Terpasang)</span>
+            </label>
+            
+            <div id="g_preview_overpal_after_box" style="display: none; margin-bottom: 6px;">
+              <img id="g_preview_overpal_after_img" src="" style="width: 100%; max-height: 90px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);">
+            </div>
+
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(22, 160, 133, 0.1); border: 1px solid rgba(22, 160, 133, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 11px; color: #16a085; font-weight: bold;">
+              <span>📷</span> <span id="g_status_overpal_after">Pilih Foto</span>
+            </div>
+            
+            <input type="file" id="g_foto_overpal_after_file" accept="image/*" style="display:none;" onchange="handleGantiFotoUpload(event, 'overpal_after')">
+            <input type="hidden" id="g_foto_overpal_after_evidence">
           </div>
         </div>
 
@@ -1085,14 +1168,16 @@
 
     async function handleGantiFotoUpload(event, type) {
       const file = event.target.files[0];
-      const hiddenInputId = (type === 'before') ? 'g_foto_before_evidence' : 'g_foto_after_evidence';
-      const previewBoxId = (type === 'before') ? 'g_preview_before_box' : 'g_preview_after_box';
-      const previewImgId = (type === 'before') ? 'g_preview_before_img' : 'g_preview_after_img';
-      const statusText = document.getElementById(type === 'before' ? 'g_status_before' : 'g_status_after');
+      const hiddenInputId = `g_foto_${type}_evidence`;
+      const previewBoxId = `g_preview_${type}_box`;
+      const previewImgId = `g_preview_${type}_img`;
+      const statusText = document.getElementById(`g_status_${type}`);
 
       if (!file) {
-        document.getElementById(hiddenInputId).value = '';
-        document.getElementById(previewBoxId).style.display = 'none';
+        const hid = document.getElementById(hiddenInputId);
+        if (hid) hid.value = '';
+        const box = document.getElementById(previewBoxId);
+        if (box) box.style.display = 'none';
         if (statusText) statusText.innerText = 'Pilih Foto';
         return;
       }
@@ -1122,13 +1207,17 @@
       const isSecure = document.getElementById('g_secure').checked;
       const photoBefore = document.getElementById('g_foto_before_evidence').value;
       const photoAfter = document.getElementById('g_foto_after_evidence').value;
+      const photoSide = document.getElementById('g_foto_side_evidence').value;
+      const photoInside = document.getElementById('g_foto_inside_evidence').value;
+      const photoOverpalBefore = document.getElementById('g_foto_overpal_before_evidence').value;
+      const photoOverpalAfter = document.getElementById('g_foto_overpal_after_evidence').value;
 
       if (!photoBefore) {
-        showToast('Silakan pilih foto SEBELUM diganti terlebih dahulu!', 'error');
+        showToast('Silakan pilih foto 1. Sebelum Pergantian Kunci terlebih dahulu!', 'error');
         return;
       }
       if (!photoAfter) {
-        showToast('Silakan pilih foto SESUDAH diganti (gembok baru)!', 'error');
+        showToast('Silakan pilih foto 2. Sesudah Pergantian Kunci terlebih dahulu!', 'error');
         return;
       }
 
@@ -1153,7 +1242,11 @@
           keterangan: keterangan,
           isSecure: isSecure,
           photoBefore: photoBefore,
-          photoAfter: photoAfter
+          photoAfter: photoAfter,
+          photoSide: photoSide,
+          photoInside: photoInside,
+          photoOverpalBefore: photoOverpalBefore,
+          photoOverpalAfter: photoOverpalAfter
         };
 
         const res = await fetch(API_URL, {
@@ -1166,18 +1259,18 @@
 
         const data = await res.json();
         if (data.success) {
-          showToast('Berhasil submit evidence pergantian kunci!', 'success');
-          showSuccessModal('PERGANTIAN KUNCI BERHASIL!', `Evidence foto sebelum & sesudah pergantian gembok ODC ${odc} berhasil dicatat.`);
+          showToast('Berhasil submit evidence pergantian kunci & overpal!', 'success');
+          showSuccessModal('PERGANTIAN KUNCI BERHASIL!', `Evidence foto pergantian gembok & overpal ODC ${odc} berhasil dicatat.`);
           document.getElementById('gantiForm').reset();
-          document.getElementById('g_foto_before_evidence').value = '';
-          document.getElementById('g_foto_after_evidence').value = '';
-          document.getElementById('g_preview_before_box').style.display = 'none';
-          document.getElementById('g_preview_after_box').style.display = 'none';
+          ['before', 'after', 'side', 'inside', 'overpal_before', 'overpal_after'].forEach(type => {
+            const hid = document.getElementById(`g_foto_${type}_evidence`);
+            if (hid) hid.value = '';
+            const box = document.getElementById(`g_preview_${type}_box`);
+            if (box) box.style.display = 'none';
+            const st = document.getElementById(`g_status_${type}`);
+            if (st) st.innerText = 'Pilih Foto';
+          });
           document.getElementById('g_tanggal').value = new Date().toISOString().split('T')[0];
-          const stB = document.getElementById('g_status_before');
-          if (stB) stB.innerText = 'Pilih Foto';
-          const stA = document.getElementById('g_status_after');
-          if (stA) stA.innerText = 'Pilih Foto';
           
           // Re-populate username
           const savedUser = localStorage.getItem('teknisi_user');
