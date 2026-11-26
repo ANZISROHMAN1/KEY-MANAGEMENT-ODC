@@ -83,6 +83,9 @@
         <li id="menuMonitoringGembok">
           <a href="#" onclick="showMonitoringGembokView('all')"><span class="icon">🔐</span> Monitoring Gembok</a>
         </li>
+        <li id="menuMonitoringEvidence">
+          <a href="#" onclick="showMonitoringEvidenceView('all')"><span class="icon">📸</span> Monitoring Evidence</a>
+        </li>
         <li id="menuGlobalHistory">
           <a href="#" onclick="showGlobalHistoryView()"><span class="icon">📝</span> History</a>
         </li>
@@ -298,6 +301,138 @@
               </thead>
               <tbody id="monitoringGembokTableBody">
                 <tr><td colspan="9" style="text-align:center;">Memuat data monitoring...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Monitoring Kelengkapan Evidence View -->
+        <div id="monitoringEvidenceView" class="card-section" style="display:none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <button onclick="backToDashboard()" class="btn-back" style="margin: 0;">&larr; Dashboard</button>
+              <div>
+                <h2 style="margin: 0; font-size: 20px; font-weight: 700;">📸 MONITORING KELENGKAPAN EVIDENCE ODC</h2>
+                <p style="margin: 4px 0 0; color: var(--text-muted); font-size: 12px;">
+                  Monitoring kepatuhan & kelengkapan submit foto pergantian gembok (Sebelum, Sesudah, Tampak Samping, Tampak Dalam & Overpal).
+                </p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button onclick="openModalGembokEvidence()" class="btn-submit" style="background: #2ecc71; width: auto; margin: 0; padding: 7px 16px; font-size: 12px; cursor: pointer;">
+                + Submit Evidence Baru
+              </button>
+              <button onclick="exportEvidenceToCsv()" class="link-btn" style="background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-main); padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                <span>📥</span> Export CSV
+              </button>
+              <button onclick="fetchInitialData(true)" class="link-btn" style="background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-main); padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                <span>🔄</span> Refresh
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Stat Cards -->
+          <div class="stat-cards" style="margin-bottom: 20px;">
+            <div class="stat-card blue" style="cursor: pointer;" onclick="filterEvidenceTable('all')">
+              <div class="stat-title">TOTAL ODC</div>
+              <div class="stat-value"><span id="evidCountTotal">0</span> <span class="icon">📦</span></div>
+              <div style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">Semua ODC Terdaftar</div>
+            </div>
+            <div class="stat-card green" style="cursor: pointer;" onclick="filterEvidenceTable('lengkap')">
+              <div class="stat-title">SUDAH SUBMIT (LENGKAP)</div>
+              <div class="stat-value"><span id="evidCountLengkap">0</span> <span class="icon">✅</span></div>
+              <div id="evidSubtextLengkap" style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">0% (4 Foto Lengkap)</div>
+            </div>
+            <div class="stat-card orange" style="cursor: pointer;" onclick="filterEvidenceTable('kurang')">
+              <div class="stat-title">SUBMIT KURANG (BELUM LENGKAP)</div>
+              <div class="stat-value"><span id="evidCountKurang">0</span> <span class="icon">⚠️</span></div>
+              <div id="evidSubtextKurang" style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">0% (Ada Foto Kurang)</div>
+            </div>
+            <div class="stat-card red" style="cursor: pointer;" onclick="filterEvidenceTable('belum')">
+              <div class="stat-title">BELUM SUBMIT</div>
+              <div class="stat-value"><span id="evidCountBelum">0</span> <span class="icon">❌</span></div>
+              <div id="evidSubtextBelum" style="font-size: 11px; opacity: 0.85; margin-top: 3px; font-weight: 500;">0% (Belum Ada Evidence)</div>
+            </div>
+          </div>
+
+          <!-- Progress Completion Ratio Bar -->
+          <div style="background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px 20px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; font-size: 13px;">
+              <div>
+                <strong>Kelengkapan Submission Evidence:</strong>
+                <span style="color: var(--stat-green); font-weight: bold; margin-left: 10px;">🟢 Lengkap: <span id="evidRatioTextLengkap">0</span> (<span id="evidRatioPctLengkap">0%</span>)</span>
+                <span style="color: var(--stat-orange); font-weight: bold; margin-left: 15px;">🟠 Kurang: <span id="evidRatioTextKurang">0</span> (<span id="evidRatioPctKurang">0%</span>)</span>
+                <span style="color: var(--stat-red); font-weight: bold; margin-left: 15px;">🔴 Belum Submit: <span id="evidRatioTextBelum">0</span> (<span id="evidRatioPctBelum">0%</span>)</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted);">
+                Target: <strong style="color: var(--text-main);">100% Lengkap (4 Foto)</strong>
+              </div>
+            </div>
+            <!-- Progress Bar Segments -->
+            <div style="height: 12px; width: 100%; background: #334155; border-radius: 6px; overflow: hidden; display: flex;">
+              <div id="evidBarLengkap" style="height: 100%; width: 0%; background: #10b981; transition: width 0.5s ease;" title="Sudah Submit Lengkap"></div>
+              <div id="evidBarKurang" style="height: 100%; width: 0%; background: #f59e0b; transition: width 0.5s ease;" title="Submit Kurang"></div>
+              <div id="evidBarBelum" style="height: 100%; width: 100%; background: #ef4444; transition: width 0.5s ease;" title="Belum Submit"></div>
+            </div>
+          </div>
+
+          <!-- Filter & Search Controls -->
+          <div style="background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px;">
+            <!-- Category Tabs -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button id="btnEvidFilterAll" onclick="filterEvidenceTable('all')" class="link-btn" style="background: var(--primary-color); color: white; padding: 6px 14px; border-radius: 20px; border: none; font-size: 12px; cursor: pointer; font-weight: 600;">
+                Semua ODC (<span id="pillEvidTotal">0</span>)
+              </button>
+              <button id="btnEvidFilterLengkap" onclick="filterEvidenceTable('lengkap')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+                ✅ Sudah Submit Lengkap (<span id="pillEvidLengkap">0</span>)
+              </button>
+              <button id="btnEvidFilterKurang" onclick="filterEvidenceTable('kurang')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+                ⚠️ Submit Kurang (<span id="pillEvidKurang">0</span>)
+              </button>
+              <button id="btnEvidFilterBelum" onclick="filterEvidenceTable('belum')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+                ❌ Belum Submit (<span id="pillEvidBelum">0</span>)
+              </button>
+            </div>
+
+            <!-- Search and Dropdowns -->
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+              <div style="flex: 1; min-width: 200px;">
+                <input type="text" id="evidSearchInput" oninput="filterEvidenceTable(window.currentEvidenceFilter || 'all')" placeholder="🔍 Cari ODC, STO, atau Tikor..." style="width: 100%; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 12px;">
+              </div>
+              <div style="min-width: 140px;">
+                <select id="evidFilterSto" onchange="filterEvidenceTable(window.currentEvidenceFilter || 'all')" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 12px; cursor: pointer;">
+                  <option value="all">Semua STO</option>
+                </select>
+              </div>
+              <div style="min-width: 150px;">
+                <select id="evidFilterKondisi" onchange="filterEvidenceTable(window.currentEvidenceFilter || 'all')" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 12px; cursor: pointer;">
+                  <option value="all">Semua Kondisi Fisik</option>
+                  <option value="rusak">Gembok Rusak / No Gembok</option>
+                  <option value="bagus">Gembok Bagus / Secure</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 40px;">#</th>
+                  <th>STO</th>
+                  <th>Kode ODC & Tikor</th>
+                  <th>Kondisi Fisik</th>
+                  <th>Status Evidence</th>
+                  <th>Checklist Foto</th>
+                  <th>Preview Evidence</th>
+                  <th>Kekurangan Evidence</th>
+                  <th>Update Terakhir</th>
+                  <th style="text-align: center;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="monitoringEvidenceTableBody">
+                <tr><td colspan="10" style="text-align:center; padding: 25px;">Memuat data kelengkapan evidence...</td></tr>
               </tbody>
             </table>
           </div>
@@ -694,6 +829,7 @@
             
             <input type="file" id="ag_photo_before_file" accept="image/*" style="display: none;" onchange="handleAdminPhotoPreview(event, 'before')">
             <input type="hidden" id="ag_photo_before_base64">
+            <input type="hidden" id="ag_photo_before_url">
           </div>
 
           <!-- 2. Foto Sesudah -->
@@ -712,6 +848,7 @@
             
             <input type="file" id="ag_photo_after_file" accept="image/*" style="display: none;" onchange="handleAdminPhotoPreview(event, 'after')">
             <input type="hidden" id="ag_photo_after_base64">
+            <input type="hidden" id="ag_photo_after_url">
           </div>
 
           <!-- 3. Foto Tampak Samping -->
@@ -730,6 +867,7 @@
             
             <input type="file" id="ag_photo_side_file" accept="image/*" style="display: none;" onchange="handleAdminPhotoPreview(event, 'side')">
             <input type="hidden" id="ag_photo_side_base64">
+            <input type="hidden" id="ag_photo_side_url">
           </div>
 
           <!-- 4. Foto Tampak Dalam -->
@@ -748,6 +886,7 @@
             
             <input type="file" id="ag_photo_inside_file" accept="image/*" style="display: none;" onchange="handleAdminPhotoPreview(event, 'inside')">
             <input type="hidden" id="ag_photo_inside_base64">
+            <input type="hidden" id="ag_photo_inside_url">
           </div>
         </div>
 
@@ -776,6 +915,7 @@
             
             <input type="file" id="ag_photo_overpal_before_file" accept="image/*" style="display: none;" onchange="handleAdminPhotoPreview(event, 'overpal_before')">
             <input type="hidden" id="ag_photo_overpal_before_base64">
+            <input type="hidden" id="ag_photo_overpal_before_url">
           </div>
 
           <!-- 6. Foto Sesudah Overpal -->
@@ -794,6 +934,7 @@
             
             <input type="file" id="ag_photo_overpal_after_file" accept="image/*" style="display: none;" onchange="handleAdminPhotoPreview(event, 'overpal_after')">
             <input type="hidden" id="ag_photo_overpal_after_base64">
+            <input type="hidden" id="ag_photo_overpal_after_url">
           </div>
         </div>
 
@@ -802,6 +943,23 @@
           <button type="submit" id="btnSubmitAdminGembok" class="btn-submit" style="background: #2ecc71; width: auto; padding: 8px 22px; margin: 0; cursor: pointer; font-size: 13px; font-weight: bold;">Simpan Evidence</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Image Viewer / Lightbox -->
+  <div id="imageViewerModal" class="modal" style="overflow-y: auto; padding: 20px 10px; background: rgba(0,0,0,0.85); z-index: 9999;" onclick="if(event.target === this) closeImageViewerModal()">
+    <div style="position: relative; max-width: 800px; margin: 30px auto; background: var(--bg-panel); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); box-shadow: 0 20px 40px rgba(0,0,0,0.6); text-align: center;">
+      <span class="close-btn" onclick="closeImageViewerModal()" style="position: absolute; top: 12px; right: 18px; font-size: 26px; cursor: pointer;">&times;</span>
+      <h3 id="imageViewerCaption" style="margin-top: 0; margin-bottom: 12px; font-size: 15px; color: var(--primary-color);">Preview Evidence Foto</h3>
+      <div style="max-height: 70vh; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #0b0f19; border-radius: 8px; border: 1px solid var(--border-color);">
+        <img id="imageViewerImg" src="" style="max-width: 100%; max-height: 68vh; object-fit: contain;">
+      </div>
+      <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <span id="imageViewerSubcaption" style="font-size: 12px; color: var(--text-muted);"></span>
+        <a id="imageViewerLink" href="#" target="_blank" class="link-btn" style="background: var(--primary-color); color: white; padding: 6px 14px; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 600;">
+          Buka Tab Baru ↗
+        </a>
+      </div>
     </div>
   </div>
 
@@ -1013,6 +1171,9 @@
       if (document.getElementById('monitoringGembokView')?.style.display === 'block') {
         filterGembokTable(window.currentGembokFilter || 'all');
       }
+      if (document.getElementById('monitoringEvidenceView')?.style.display === 'block') {
+        filterEvidenceTable(window.currentEvidenceFilter || 'all');
+      }
     }
 
     async function fetchInitialData() {
@@ -1185,6 +1346,12 @@
       
       if (isDetailViewOpen && window.currentStoName && window.currentSaName) {
         handleStoClick({stopPropagation: () => {}}, window.currentStoName, window.currentSaName);
+      }
+      if (document.getElementById('monitoringEvidenceView')?.style.display === 'block') {
+        filterEvidenceTable(window.currentEvidenceFilter || 'all');
+      }
+      if (document.getElementById('monitoringGembokView')?.style.display === 'block') {
+        filterGembokTable(window.currentGembokFilter || 'all');
       }
     }
 
@@ -1375,6 +1542,9 @@
 
       const monitoringView = document.getElementById('monitoringGembokView');
       if(monitoringView) monitoringView.style.display = 'none';
+
+      const monitoringEvidenceView = document.getElementById('monitoringEvidenceView');
+      if(monitoringEvidenceView) monitoringEvidenceView.style.display = 'none';
 
       document.getElementById('dashboard').style.display = 'grid';
       // Ensure Dashboard ODC menu is active
@@ -1660,9 +1830,12 @@
       const modal = document.getElementById('gembokEvidenceModal');
       const targetOdc = odcName || window.currentSelectedOdc || '';
       document.getElementById('ag_odc').value = targetOdc;
-      document.getElementById('ag_sto').value = window.currentSelectedSto || (targetOdc.includes('-') ? targetOdc.split('-')[0] : '');
       
-      const tikor = window.currentSelectedTikor || (window.allOdcsList?.find(o => o.name === targetOdc)?.tikor) || (window.odcTikorMap ? window.odcTikorMap[targetOdc] : '') || '';
+      const foundOdc = (window.allOdcsList && targetOdc) ? window.allOdcsList.find(o => o.name === targetOdc) : null;
+      const odcSto = window.currentSelectedSto || (foundOdc ? foundOdc.sto : (targetOdc.includes('-') ? targetOdc.split('-')[0] : ''));
+      document.getElementById('ag_sto').value = odcSto;
+      
+      const tikor = window.currentSelectedTikor || (foundOdc ? foundOdc.tikor : '') || (window.odcTikorMap ? (window.odcTikorMap[targetOdc] || window.odcTikorMap[odcSto + '-' + targetOdc]) : '') || '';
       const tikorDisplay = document.getElementById('ag_tikor_display');
       if (tikorDisplay) {
         tikorDisplay.innerHTML = tikor ? `📍 Tikor: <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tikor)}" target="_blank" rel="noopener noreferrer" style="color:var(--primary-color); font-weight:600; text-decoration:none;">${tikor} ↗</a>` : '<span style="opacity:0.6;">📍 Tikor belum diset</span>';
@@ -1672,47 +1845,109 @@
       document.getElementById('ag_tanggal').value = today;
 
       const adminUser = sessionStorage.getItem('adminUser') || localStorage.getItem('odc_admin') || '';
-      if (window.currentPetugasGembok) {
+      if (foundOdc && foundOdc.petugasGembok) {
+        document.getElementById('ag_petugas').value = foundOdc.petugasGembok;
+      } else if (window.currentPetugasGembok) {
         document.getElementById('ag_petugas').value = window.currentPetugasGembok;
       } else if (adminUser) {
         document.getElementById('ag_petugas').value = adminUser;
+      } else {
+        document.getElementById('ag_petugas').value = '';
       }
 
+      if (foundOdc && foundOdc.keteranganGembok) {
+        document.getElementById('ag_keterangan').value = foundOdc.keteranganGembok;
+      } else {
+        document.getElementById('ag_keterangan').value = '';
+      }
+
+      if (foundOdc) {
+        document.getElementById('ag_secure').checked = (foundOdc.gembokSecure === 'YA');
+      }
+
+      // Setup Foto 1 - Sebelum
+      const fSebelum = foundOdc ? foundOdc.fotoSebelum : (window.currentSelectedOdc === targetOdc ? window.currentFotoSebelum : '');
       document.getElementById('ag_photo_before_file').value = '';
       document.getElementById('ag_photo_before_base64').value = '';
-      document.getElementById('ag_preview_before_box').style.display = 'none';
-      const statusB = document.getElementById('ag_status_before');
-      if (statusB) statusB.innerText = 'Pilih Foto';
+      document.getElementById('ag_photo_before_url').value = fSebelum || '';
+      if (fSebelum) {
+        document.getElementById('ag_preview_before_img').src = fSebelum;
+        document.getElementById('ag_preview_before_box').style.display = 'block';
+        document.getElementById('ag_status_before').innerText = 'Tersimpan ✓ (Ganti)';
+      } else {
+        document.getElementById('ag_preview_before_box').style.display = 'none';
+        document.getElementById('ag_status_before').innerText = 'Pilih Foto';
+      }
 
+      // Setup Foto 2 - Sesudah
+      const fSesudah = foundOdc ? (foundOdc.fotoSesudah || foundOdc.fotoGembok) : (window.currentSelectedOdc === targetOdc ? (window.currentFotoSesudah || window.currentFotoGembok) : '');
       document.getElementById('ag_photo_after_file').value = '';
       document.getElementById('ag_photo_after_base64').value = '';
-      document.getElementById('ag_preview_after_box').style.display = 'none';
-      const statusA = document.getElementById('ag_status_after');
-      if (statusA) statusA.innerText = 'Pilih Foto';
+      document.getElementById('ag_photo_after_url').value = fSesudah || '';
+      if (fSesudah) {
+        document.getElementById('ag_preview_after_img').src = fSesudah;
+        document.getElementById('ag_preview_after_box').style.display = 'block';
+        document.getElementById('ag_status_after').innerText = 'Tersimpan ✓ (Ganti)';
+      } else {
+        document.getElementById('ag_preview_after_box').style.display = 'none';
+        document.getElementById('ag_status_after').innerText = 'Pilih Foto';
+      }
 
+      // Setup Foto 3 - Samping
+      const fSamping = foundOdc ? foundOdc.fotoSamping : (window.currentSelectedOdc === targetOdc ? window.currentFotoSamping : '');
       document.getElementById('ag_photo_side_file').value = '';
       document.getElementById('ag_photo_side_base64').value = '';
-      document.getElementById('ag_preview_side_box').style.display = 'none';
-      const statusS = document.getElementById('ag_status_side');
-      if (statusS) statusS.innerText = 'Pilih Foto';
+      document.getElementById('ag_photo_side_url').value = fSamping || '';
+      if (fSamping) {
+        document.getElementById('ag_preview_side_img').src = fSamping;
+        document.getElementById('ag_preview_side_box').style.display = 'block';
+        document.getElementById('ag_status_side').innerText = 'Tersimpan ✓ (Ganti)';
+      } else {
+        document.getElementById('ag_preview_side_box').style.display = 'none';
+        document.getElementById('ag_status_side').innerText = 'Pilih Foto';
+      }
 
+      // Setup Foto 4 - Dalam
+      const fDalam = foundOdc ? foundOdc.fotoDalam : (window.currentSelectedOdc === targetOdc ? window.currentFotoDalam : '');
       document.getElementById('ag_photo_inside_file').value = '';
       document.getElementById('ag_photo_inside_base64').value = '';
-      document.getElementById('ag_preview_inside_box').style.display = 'none';
-      const statusI = document.getElementById('ag_status_inside');
-      if (statusI) statusI.innerText = 'Pilih Foto';
+      document.getElementById('ag_photo_inside_url').value = fDalam || '';
+      if (fDalam) {
+        document.getElementById('ag_preview_inside_img').src = fDalam;
+        document.getElementById('ag_preview_inside_box').style.display = 'block';
+        document.getElementById('ag_status_inside').innerText = 'Tersimpan ✓ (Ganti)';
+      } else {
+        document.getElementById('ag_preview_inside_box').style.display = 'none';
+        document.getElementById('ag_status_inside').innerText = 'Pilih Foto';
+      }
 
+      // Setup Foto 5 - Overpal Sebelum
+      const fOpSebelum = foundOdc ? foundOdc.fotoOverpalSebelum : (window.currentSelectedOdc === targetOdc ? window.currentFotoOverpalSebelum : '');
       document.getElementById('ag_photo_overpal_before_file').value = '';
       document.getElementById('ag_photo_overpal_before_base64').value = '';
-      document.getElementById('ag_preview_overpal_before_box').style.display = 'none';
-      const statusOB = document.getElementById('ag_status_overpal_before');
-      if (statusOB) statusOB.innerText = 'Pilih Foto';
+      document.getElementById('ag_photo_overpal_before_url').value = fOpSebelum || '';
+      if (fOpSebelum) {
+        document.getElementById('ag_preview_overpal_before_img').src = fOpSebelum;
+        document.getElementById('ag_preview_overpal_before_box').style.display = 'block';
+        document.getElementById('ag_status_overpal_before').innerText = 'Tersimpan ✓ (Ganti)';
+      } else {
+        document.getElementById('ag_preview_overpal_before_box').style.display = 'none';
+        document.getElementById('ag_status_overpal_before').innerText = 'Pilih Foto';
+      }
 
+      // Setup Foto 6 - Overpal Sesudah
+      const fOpSesudah = foundOdc ? foundOdc.fotoOverpalSesudah : (window.currentSelectedOdc === targetOdc ? window.currentFotoOverpalSesudah : '');
       document.getElementById('ag_photo_overpal_after_file').value = '';
       document.getElementById('ag_photo_overpal_after_base64').value = '';
-      document.getElementById('ag_preview_overpal_after_box').style.display = 'none';
-      const statusOA = document.getElementById('ag_status_overpal_after');
-      if (statusOA) statusOA.innerText = 'Pilih Foto';
+      document.getElementById('ag_photo_overpal_after_url').value = fOpSesudah || '';
+      if (fOpSesudah) {
+        document.getElementById('ag_preview_overpal_after_img').src = fOpSesudah;
+        document.getElementById('ag_preview_overpal_after_box').style.display = 'block';
+        document.getElementById('ag_status_overpal_after').innerText = 'Tersimpan ✓ (Ganti)';
+      } else {
+        document.getElementById('ag_preview_overpal_after_box').style.display = 'none';
+        document.getElementById('ag_status_overpal_after').innerText = 'Pilih Foto';
+      }
 
       modal.style.display = 'block';
     }
@@ -1807,17 +2042,28 @@
       const keterangan = document.getElementById('ag_keterangan').value.trim();
       const isSecure = document.getElementById('ag_secure').checked;
       const photoBefore = document.getElementById('ag_photo_before_base64').value;
-      const photoAfter = document.getElementById('ag_photo_after_base64').value;
-      const photoSide = document.getElementById('ag_photo_side_base64').value;
-      const photoInside = document.getElementById('ag_photo_inside_base64').value;
-      const photoOverpalBefore = document.getElementById('ag_photo_overpal_before_base64').value;
-      const photoOverpalAfter = document.getElementById('ag_photo_overpal_after_base64').value;
+      const photoBeforeUrl = document.getElementById('ag_photo_before_url').value;
 
-      if (!photoBefore) {
+      const photoAfter = document.getElementById('ag_photo_after_base64').value;
+      const photoAfterUrl = document.getElementById('ag_photo_after_url').value;
+
+      const photoSide = document.getElementById('ag_photo_side_base64').value;
+      const photoSideUrl = document.getElementById('ag_photo_side_url').value;
+
+      const photoInside = document.getElementById('ag_photo_inside_base64').value;
+      const photoInsideUrl = document.getElementById('ag_photo_inside_url').value;
+
+      const photoOverpalBefore = document.getElementById('ag_photo_overpal_before_base64').value;
+      const photoOverpalBeforeUrl = document.getElementById('ag_photo_overpal_before_url').value;
+
+      const photoOverpalAfter = document.getElementById('ag_photo_overpal_after_base64').value;
+      const photoOverpalAfterUrl = document.getElementById('ag_photo_overpal_after_url').value;
+
+      if (!photoBefore && !photoBeforeUrl) {
         alert('Silakan pilih foto 1. Sebelum Pergantian Kunci terlebih dahulu!');
         return;
       }
-      if (!photoAfter) {
+      if (!photoAfter && !photoAfterUrl) {
         alert('Silakan pilih foto 2. Sesudah Pergantian Kunci terlebih dahulu!');
         return;
       }
@@ -1845,11 +2091,17 @@
               keterangan: keterangan,
               isSecure: isSecure,
               photoBefore: photoBefore,
+              photoBeforeUrl: photoBefore ? '' : photoBeforeUrl,
               photoAfter: photoAfter,
+              photoAfterUrl: photoAfter ? '' : photoAfterUrl,
               photoSide: photoSide,
+              photoSideUrl: photoSide ? '' : photoSideUrl,
               photoInside: photoInside,
+              photoInsideUrl: photoInside ? '' : photoInsideUrl,
               photoOverpalBefore: photoOverpalBefore,
-              photoOverpalAfter: photoOverpalAfter
+              photoOverpalBeforeUrl: photoOverpalBefore ? '' : photoOverpalBeforeUrl,
+              photoOverpalAfter: photoOverpalAfter,
+              photoOverpalAfterUrl: photoOverpalAfter ? '' : photoOverpalAfterUrl
             }
           })
         });
@@ -1872,6 +2124,12 @@
           await fetchInitialData();
           if (window.currentSelectedOdc === odc) {
             handleOdcClick(null, odc, 'green', '', tanggal, result.fotoUrl, petugas, sto, 'BAGUS', isSecure ? 'YA' : '', 'YA', result.fotoSebelumUrl, result.fotoSesudahUrl, window.currentSelectedTikor, result.fotoSampingUrl, result.fotoDalamUrl, result.fotoOverpalSebelumUrl, result.fotoOverpalSesudahUrl);
+          }
+          if (document.getElementById('monitoringEvidenceView')?.style.display === 'block') {
+            filterEvidenceTable(window.currentEvidenceFilter || 'all');
+          }
+          if (document.getElementById('monitoringGembokView')?.style.display === 'block') {
+            filterGembokTable(window.currentGembokFilter || 'all');
           }
         } else {
           if (result.message === 'Invalid action') {
@@ -1897,6 +2155,8 @@
       if (oltModal) oltModal.style.display = 'none';
       const gembokModal = document.getElementById('gembokEvidenceModal');
       if (gembokModal) gembokModal.style.display = 'none';
+      const imgModal = document.getElementById('imageViewerModal');
+      if (imgModal) imgModal.style.display = 'none';
     }
 
     window.addEventListener('click', function(event) {
@@ -2070,6 +2330,9 @@
       const pendingTifView = document.getElementById('pendingTifView');
       if (pendingTifView) pendingTifView.style.display = 'none';
 
+      const monitoringEvidenceView = document.getElementById('monitoringEvidenceView');
+      if (monitoringEvidenceView) monitoringEvidenceView.style.display = 'none';
+
       // Tampilkan monitoring view
       const monitoringView = document.getElementById('monitoringGembokView');
       monitoringView.style.display = 'block';
@@ -2203,6 +2466,408 @@
       });
 
       tbody.innerHTML = html;
+    }
+
+    // ========================================================
+    // --- MONITORING KELENGKAPAN EVIDENCE ODC SECTION & LOGIC ---
+    // ========================================================
+    function showMonitoringEvidenceView(filter = 'all') {
+      // Sembunyikan view lain
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('activeBorrowingsSection').style.display = 'none';
+      document.getElementById('stoDetailView').style.display = 'none';
+
+      const odcStatCards = document.getElementById('odcStatCards');
+      if (odcStatCards) odcStatCards.style.display = 'none';
+      const odcDivider = document.getElementById('odcDivider');
+      if (odcDivider) odcDivider.style.display = 'none';
+      const odcHeading = document.getElementById('odcHeading');
+      if (odcHeading) odcHeading.style.display = 'none';
+
+      const oltDashboardView = document.getElementById('oltDashboardView');
+      if (oltDashboardView) oltDashboardView.style.display = 'none';
+      const oltStoDetailView = document.getElementById('oltStoDetailView');
+      if (oltStoDetailView) oltStoDetailView.style.display = 'none';
+
+      const usersView = document.getElementById('usersView');
+      if (usersView) usersView.style.display = 'none';
+      const globalHistoryView = document.getElementById('globalHistoryView');
+      if (globalHistoryView) globalHistoryView.style.display = 'none';
+      const approvedBaView = document.getElementById('approvedBaView');
+      if (approvedBaView) approvedBaView.style.display = 'none';
+      const pendingHsaView = document.getElementById('pendingHsaView');
+      if (pendingHsaView) pendingHsaView.style.display = 'none';
+      const pendingTifView = document.getElementById('pendingTifView');
+      if (pendingTifView) pendingTifView.style.display = 'none';
+      const monitoringView = document.getElementById('monitoringGembokView');
+      if (monitoringView) monitoringView.style.display = 'none';
+
+      // Tampilkan monitoring evidence view
+      const evidView = document.getElementById('monitoringEvidenceView');
+      if (evidView) evidView.style.display = 'block';
+
+      // Update active menu in sidebar
+      document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
+      const menuEvid = document.getElementById('menuMonitoringEvidence');
+      if (menuEvid) menuEvid.classList.add('active');
+
+      filterEvidenceTable(filter);
+    }
+
+    function getOdcEvidenceAnalysis(o) {
+      const has1 = !!o.fotoSebelum;
+      const has2 = !!(o.fotoSesudah || o.fotoGembok);
+      const has3 = !!o.fotoSamping;
+      const has4 = !!o.fotoDalam;
+      const hasOp1 = !!o.fotoOverpalSebelum;
+      const hasOp2 = !!o.fotoOverpalSesudah;
+
+      const mainCount = (has1 ? 1 : 0) + (has2 ? 1 : 0) + (has3 ? 1 : 0) + (has4 ? 1 : 0);
+      const isOverpalReplaced = hasOp1 || hasOp2;
+      const isOverpalComplete = isOverpalReplaced ? (hasOp1 && hasOp2) : true;
+      const isWorkRecorded = !!(o.gembokDiganti || mainCount > 0 || isOverpalReplaced);
+
+      const missingList = [];
+      if (!has1) missingList.push('Sebelum');
+      if (!has2) missingList.push('Sesudah');
+      if (!has3) missingList.push('Tampak Samping');
+      if (!has4) missingList.push('Tampak Dalam');
+      if (hasOp1 && !hasOp2) missingList.push('Overpal Sesudah');
+      if (!hasOp1 && hasOp2) missingList.push('Overpal Sebelum');
+
+      let cat = 'belum'; // 'lengkap' | 'kurang' | 'belum'
+      if (!isWorkRecorded && mainCount === 0 && !isOverpalReplaced) {
+        cat = 'belum';
+      } else if (mainCount === 4 && isOverpalComplete) {
+        cat = 'lengkap';
+      } else {
+        cat = 'kurang';
+      }
+
+      return {
+        cat,
+        has1,
+        has2,
+        has3,
+        has4,
+        hasOp1,
+        hasOp2,
+        isOverpalReplaced,
+        isOverpalComplete,
+        mainCount,
+        missingList,
+        isWorkRecorded
+      };
+    }
+
+    function populateEvidenceStoDropdown(list) {
+      const select = document.getElementById('evidFilterSto');
+      if (!select || select.dataset.populated === 'true') return;
+
+      const stos = Array.from(new Set(list.map(o => o.sto).filter(Boolean))).sort();
+      stos.forEach(sto => {
+        const opt = document.createElement('option');
+        opt.value = sto;
+        opt.innerText = 'STO ' + sto;
+        select.appendChild(opt);
+      });
+      select.dataset.populated = 'true';
+    }
+
+    function filterEvidenceTable(filter = 'all') {
+      window.currentEvidenceFilter = filter;
+      const list = window.allOdcsList || [];
+      const tbody = document.getElementById('monitoringEvidenceTableBody');
+      if (!tbody) return;
+
+      populateEvidenceStoDropdown(list);
+
+      // Pre-analyze all ODCs for global stats
+      const analyzedList = list.map(o => {
+        return {
+          odc: o,
+          analysis: getOdcEvidenceAnalysis(o)
+        };
+      });
+
+      const totalAll = analyzedList.length;
+      const countLengkap = analyzedList.filter(item => item.analysis.cat === 'lengkap').length;
+      const countKurang = analyzedList.filter(item => item.analysis.cat === 'kurang').length;
+      const countBelum = analyzedList.filter(item => item.analysis.cat === 'belum').length;
+
+      const pctLengkap = totalAll > 0 ? Math.round((countLengkap / totalAll) * 100) : 0;
+      const pctKurang = totalAll > 0 ? Math.round((countKurang / totalAll) * 100) : 0;
+      const pctBelum = totalAll > 0 ? Math.max(0, 100 - pctLengkap - pctKurang) : 0;
+
+      // Update KPI Stat Cards
+      const evidCountTotal = document.getElementById('evidCountTotal');
+      if (evidCountTotal) evidCountTotal.innerText = totalAll;
+      const evidCountLengkap = document.getElementById('evidCountLengkap');
+      if (evidCountLengkap) evidCountLengkap.innerText = countLengkap;
+      const evidSubtextLengkap = document.getElementById('evidSubtextLengkap');
+      if (evidSubtextLengkap) evidSubtextLengkap.innerText = `${pctLengkap}% (4 Foto Lengkap)`;
+
+      const evidCountKurang = document.getElementById('evidCountKurang');
+      if (evidCountKurang) evidCountKurang.innerText = countKurang;
+      const evidSubtextKurang = document.getElementById('evidSubtextKurang');
+      if (evidSubtextKurang) evidSubtextKurang.innerText = `${pctKurang}% (Ada Foto Kurang)`;
+
+      const evidCountBelum = document.getElementById('evidCountBelum');
+      if (evidCountBelum) evidCountBelum.innerText = countBelum;
+      const evidSubtextBelum = document.getElementById('evidSubtextBelum');
+      if (evidSubtextBelum) evidSubtextBelum.innerText = `${pctBelum}% (Belum Ada Evidence)`;
+
+      // Update Ratio Bar
+      const rTextLengkap = document.getElementById('evidRatioTextLengkap');
+      if (rTextLengkap) rTextLengkap.innerText = countLengkap;
+      const rPctLengkap = document.getElementById('evidRatioPctLengkap');
+      if (rPctLengkap) rPctLengkap.innerText = pctLengkap + '%';
+
+      const rTextKurang = document.getElementById('evidRatioTextKurang');
+      if (rTextKurang) rTextKurang.innerText = countKurang;
+      const rPctKurang = document.getElementById('evidRatioPctKurang');
+      if (rPctKurang) rPctKurang.innerText = pctKurang + '%';
+
+      const rTextBelum = document.getElementById('evidRatioTextBelum');
+      if (rTextBelum) rTextBelum.innerText = countBelum;
+      const rPctBelum = document.getElementById('evidRatioPctBelum');
+      if (rPctBelum) rPctBelum.innerText = pctBelum + '%';
+
+      const barL = document.getElementById('evidBarLengkap');
+      if (barL) barL.style.width = pctLengkap + '%';
+      const barK = document.getElementById('evidBarKurang');
+      if (barK) barK.style.width = pctKurang + '%';
+      const barB = document.getElementById('evidBarBelum');
+      if (barB) barB.style.width = pctBelum + '%';
+
+      // Update Tab Pills Count
+      const pillTotal = document.getElementById('pillEvidTotal');
+      if (pillTotal) pillTotal.innerText = totalAll;
+      const pillLengkap = document.getElementById('pillEvidLengkap');
+      if (pillLengkap) pillLengkap.innerText = countLengkap;
+      const pillKurang = document.getElementById('pillEvidKurang');
+      if (pillKurang) pillKurang.innerText = countKurang;
+      const pillBelum = document.getElementById('pillEvidBelum');
+      if (pillBelum) pillBelum.innerText = countBelum;
+
+      // Update Active Category Pill Button Styles
+      ['all', 'lengkap', 'kurang', 'belum'].forEach(tab => {
+        const btn = document.getElementById('btnEvidFilter' + tab.charAt(0).toUpperCase() + tab.slice(1));
+        if (btn) {
+          if (tab === filter) {
+            btn.style.background = 'var(--primary-color)';
+            btn.style.color = '#fff';
+            btn.style.border = 'none';
+            btn.style.fontWeight = 'bold';
+          } else {
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--text-main)';
+            btn.style.border = '1px solid var(--border-color)';
+            btn.style.fontWeight = 'normal';
+          }
+        }
+      });
+
+      // Filter by Category
+      let filtered = analyzedList;
+      if (filter !== 'all') {
+        filtered = filtered.filter(item => item.analysis.cat === filter);
+      }
+
+      // Filter by STO
+      const selectedSto = document.getElementById('evidFilterSto')?.value || 'all';
+      if (selectedSto !== 'all') {
+        filtered = filtered.filter(item => item.odc.sto === selectedSto);
+      }
+
+      // Filter by Kondisi Fisik
+      const selectedKondisi = document.getElementById('evidFilterKondisi')?.value || 'all';
+      if (selectedKondisi === 'rusak') {
+        filtered = filtered.filter(item => item.odc.kondisiGembok === 'RUSAK' || item.odc.adaGembok === 'TIDAK');
+      } else if (selectedKondisi === 'bagus') {
+        filtered = filtered.filter(item => item.odc.kondisiGembok !== 'RUSAK' && item.odc.adaGembok !== 'TIDAK');
+      }
+
+      // Filter by Search Query
+      const query = (document.getElementById('evidSearchInput')?.value || '').toLowerCase().trim();
+      if (query) {
+        filtered = filtered.filter(item => {
+          const o = item.odc;
+          return (o.name && o.name.toLowerCase().includes(query)) ||
+                 (o.sto && o.sto.toLowerCase().includes(query)) ||
+                 (o.tikor && o.tikor.toLowerCase().includes(query)) ||
+                 (o.petugasGembok && o.petugasGembok.toLowerCase().includes(query));
+        });
+      }
+
+      window.currentFilteredEvidenceList = filtered;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:#888;">Tidak ada data ODC yang sesuai dengan filter atau pencarian.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      filtered.forEach((item, index) => {
+        const o = item.odc;
+        const an = item.analysis;
+
+        // Physical status badge
+        let physBadge = '<span style="background:#2ecc71; color:white; padding:2px 7px; border-radius:10px; font-size:10px; font-weight:bold;">BAGUS</span>';
+        if (o.adaGembok === 'TIDAK') {
+          physBadge = '<span style="background:#f39c12; color:white; padding:2px 7px; border-radius:10px; font-size:10px; font-weight:bold;">NO GEMBOK</span>';
+        } else if (o.kondisiGembok === 'RUSAK') {
+          physBadge = '<span style="background:#e74c3c; color:white; padding:2px 7px; border-radius:10px; font-size:10px; font-weight:bold;">RUSAK</span>';
+        } else if (o.gembokSecure === 'YA') {
+          physBadge = '<span style="background:#3498db; color:white; padding:2px 7px; border-radius:10px; font-size:10px; font-weight:bold;">SECURE</span>';
+        }
+
+        // Evidence compliance badge
+        let evidBadge = '';
+        if (an.cat === 'lengkap') {
+          evidBadge = '<span style="background:rgba(46,204,113,0.15); border:1px solid #2ecc71; color:#2ecc71; padding:3px 9px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:4px;">✅ Lengkap (4/4)</span>';
+        } else if (an.cat === 'kurang') {
+          evidBadge = `<span style="background:rgba(243,156,18,0.15); border:1px solid #f39c12; color:#f39c12; padding:3px 9px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:4px;">⚠️ Kurang (${an.mainCount}/4)</span>`;
+        } else {
+          evidBadge = '<span style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; color:#e74c3c; padding:3px 9px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:4px;">❌ Belum Submit</span>';
+        }
+
+        // Checklist 4 photos + overpal
+        const c1 = an.has1 ? '<span title="1. Foto Sebelum: Ada" style="color:#2ecc71; font-weight:bold; margin-right:4px;">[1.✓]</span>' : '<span title="1. Foto Sebelum: Belum Ada" style="color:#e74c3c; font-weight:bold; margin-right:4px;">[1.✗]</span>';
+        const c2 = an.has2 ? '<span title="2. Foto Sesudah: Ada" style="color:#2ecc71; font-weight:bold; margin-right:4px;">[2.✓]</span>' : '<span title="2. Foto Sesudah: Belum Ada" style="color:#e74c3c; font-weight:bold; margin-right:4px;">[2.✗]</span>';
+        const c3 = an.has3 ? '<span title="3. Foto Samping: Ada" style="color:#2ecc71; font-weight:bold; margin-right:4px;">[3.✓]</span>' : '<span title="3. Foto Samping: Belum Ada" style="color:#e74c3c; font-weight:bold; margin-right:4px;">[3.✗]</span>';
+        const c4 = an.has4 ? '<span title="4. Foto Dalam: Ada" style="color:#2ecc71; font-weight:bold; margin-right:4px;">[4.✓]</span>' : '<span title="4. Foto Dalam: Belum Ada" style="color:#e74c3c; font-weight:bold; margin-right:4px;">[4.✗]</span>';
+        let cOp = '<span style="color:var(--text-muted); font-size:10px;">-</span>';
+        if (an.isOverpalReplaced) {
+          cOp = an.isOverpalComplete ? '<span title="Overpal Lengkap (Sebelum & Sesudah)" style="color:#16a085; font-weight:bold; font-size:10.5px;">🔩 OP[✓]</span>' : '<span title="Overpal Belum Lengkap" style="color:#e67e22; font-weight:bold; font-size:10.5px;">🔩 OP[⚠️]</span>';
+        }
+        const checklistHtml = `<div style="font-family:monospace; font-size:11px; white-space:nowrap;">${c1}${c2}${c3}${c4} ${cOp}</div>`;
+
+        // Preview Chips
+        let pChips = [];
+        if (o.fotoSebelum) pChips.push(`<button onclick="openImageViewer('${o.fotoSebelum}', '1. Sebelum Pergantian Kunci - ${o.name}', 'STO ${o.sto || '-'}') " class="link-btn" style="background:#e74c3c; color:white; padding:2px 6px; font-size:10px; border-radius:4px; border:none; cursor:pointer; margin-right:3px; margin-bottom:3px;">📷 Sebelum</button>`);
+        if (o.fotoSesudah || o.fotoGembok) pChips.push(`<button onclick="openImageViewer('${o.fotoSesudah || o.fotoGembok}', '2. Sesudah Pergantian Kunci - ${o.name}', 'STO ${o.sto || '-'}') " class="link-btn" style="background:#2ecc71; color:white; padding:2px 6px; font-size:10px; border-radius:4px; border:none; cursor:pointer; margin-right:3px; margin-bottom:3px;">📷 Sesudah</button>`);
+        if (o.fotoSamping) pChips.push(`<button onclick="openImageViewer('${o.fotoSamping}', '3. Tampak Samping - ${o.name}', 'STO ${o.sto || '-'}') " class="link-btn" style="background:#3498db; color:white; padding:2px 6px; font-size:10px; border-radius:4px; border:none; cursor:pointer; margin-right:3px; margin-bottom:3px;">📷 Samping</button>`);
+        if (o.fotoDalam) pChips.push(`<button onclick="openImageViewer('${o.fotoDalam}', '4. Tampak Dalam - ${o.name}', 'STO ${o.sto || '-'}') " class="link-btn" style="background:#9b59b6; color:white; padding:2px 6px; font-size:10px; border-radius:4px; border:none; cursor:pointer; margin-right:3px; margin-bottom:3px;">📷 Dalam</button>`);
+        if (o.fotoOverpalSebelum) pChips.push(`<button onclick="openImageViewer('${o.fotoOverpalSebelum}', 'Overpal Sebelum - ${o.name}', 'STO ${o.sto || '-'}') " class="link-btn" style="background:#e67e22; color:white; padding:2px 6px; font-size:10px; border-radius:4px; border:none; cursor:pointer; margin-right:3px; margin-bottom:3px;">🔩 OP S.</button>`);
+        if (o.fotoOverpalSesudah) pChips.push(`<button onclick="openImageViewer('${o.fotoOverpalSesudah}', 'Overpal Sesudah - ${o.name}', 'STO ${o.sto || '-'}') " class="link-btn" style="background:#16a085; color:white; padding:2px 6px; font-size:10px; border-radius:4px; border:none; cursor:pointer; margin-bottom:3px;">🔩 OP K.</button>`);
+        const previewHtml = pChips.length > 0 ? `<div style="display:flex; flex-wrap:wrap; max-width:180px;">${pChips.join('')}</div>` : '<span style="color:var(--text-muted); font-size:11px;">-</span>';
+
+        // Missing items tags
+        let missingHtml = '';
+        if (an.cat === 'lengkap') {
+          missingHtml = '<span style="color:#2ecc71; font-weight:600; font-size:11px;">✓ Semua Lengkap</span>';
+        } else if (an.cat === 'kurang') {
+          missingHtml = an.missingList.map(m => `<span style="background:rgba(231,76,60,0.1); color:#e74c3c; border:1px solid rgba(231,76,60,0.3); padding:2px 6px; border-radius:4px; font-size:10px; display:inline-block; margin-right:3px; margin-bottom:2px;">Kurang: ${m}</span>`).join('');
+        } else {
+          missingHtml = '<span style="color:#e74c3c; font-size:11px; opacity:0.85;">Belum ada evidence</span>';
+        }
+
+        // Action button
+        let actionBtn = '';
+        if (an.cat === 'lengkap') {
+          actionBtn = `<button onclick="openModalGembokEvidence('${o.name}')" class="link-btn" style="background:transparent; border:1px solid #2ecc71; color:#2ecc71; font-size:11px; padding:4px 10px; cursor:pointer; border-radius:6px; font-weight:600; white-space:nowrap;">✏️ Edit / Lihat</button>`;
+        } else if (an.cat === 'kurang') {
+          actionBtn = `<button onclick="openModalGembokEvidence('${o.name}')" class="link-btn" style="background:#f39c12; border:none; color:white; font-size:11px; padding:4px 11px; cursor:pointer; border-radius:6px; font-weight:bold; white-space:nowrap; box-shadow:0 2px 5px rgba(243,156,18,0.3);">📸 Lengkapi Foto</button>`;
+        } else {
+          actionBtn = `<button onclick="openModalGembokEvidence('${o.name}')" class="link-btn" style="background:#2ecc71; border:none; color:white; font-size:11px; padding:4px 11px; cursor:pointer; border-radius:6px; font-weight:bold; white-space:nowrap; box-shadow:0 2px 5px rgba(46,204,113,0.3);">+ Submit Evidence</button>`;
+        }
+
+        const oTikor = o.tikor || (window.odcTikorMap ? (window.odcTikorMap[o.name] || window.odcTikorMap[(o.sto || '') + '-' + o.name]) : '') || '';
+
+        html += `
+          <tr>
+            <td>${index + 1}</td>
+            <td><strong>${o.sto || '-'}</strong></td>
+            <td>
+              <div style="font-weight:bold; color:var(--primary-color);">${o.name}</div>
+              ${oTikor ? `<div style="font-size:10px; margin-top:2px;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(oTikor)}" target="_blank" rel="noopener noreferrer" style="color:var(--text-muted); text-decoration:none; display:inline-flex; align-items:center; gap:2px;">📍 ${oTikor} ↗</a></div>` : '<div style="font-size:10px; color:var(--text-muted); opacity:0.6;">📍 -</div>'}
+            </td>
+            <td>${physBadge}</td>
+            <td>${evidBadge}</td>
+            <td>${checklistHtml}</td>
+            <td>${previewHtml}</td>
+            <td style="max-width:200px;">${missingHtml}</td>
+            <td style="font-size:11.5px; white-space:nowrap;">
+              <div>${o.gembokDiganti || '-'}</div>
+              ${o.petugasGembok ? `<div style="font-size:10px; color:var(--text-muted);">Oleh: ${o.petugasGembok}</div>` : ''}
+            </td>
+            <td style="text-align:center;">${actionBtn}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function exportEvidenceToCsv() {
+      const list = window.currentFilteredEvidenceList || (window.allOdcsList || []).map(o => ({ odc: o, analysis: getOdcEvidenceAnalysis(o) }));
+      if (!list || list.length === 0) {
+        alert('Tidak ada data untuk diekspor!');
+        return;
+      }
+
+      let csv = 'No,STO,Kode ODC,Tikor,Kondisi Fisik,Status Evidence,Foto Lengkap,Foto Kurang,Petugas,Tanggal Update,Foto Sebelum,Foto Sesudah,Foto Samping,Foto Dalam,Foto Overpal Sebelum,Foto Overpal Sesudah\n';
+
+      list.forEach((item, idx) => {
+        const o = item.odc;
+        const an = item.analysis;
+        const oTikor = o.tikor || (window.odcTikorMap ? (window.odcTikorMap[o.name] || window.odcTikorMap[(o.sto || '') + '-' + o.name]) : '') || '';
+        
+        let statusEvid = an.cat === 'lengkap' ? 'Lengkap' : (an.cat === 'kurang' ? 'Kurang' : 'Belum Submit');
+        let itemKurang = an.missingList.join('; ');
+
+        const row = [
+          idx + 1,
+          `"${(o.sto || '').replace(/"/g, '""')}"`,
+          `"${(o.name || '').replace(/"/g, '""')}"`,
+          `"${oTikor.replace(/"/g, '""')}"`,
+          `"${(o.kondisiGembok || 'BAGUS').replace(/"/g, '""')}"`,
+          `"${statusEvid}"`,
+          `"${an.mainCount}/4"`,
+          `"${itemKurang.replace(/"/g, '""')}"`,
+          `"${(o.petugasGembok || '').replace(/"/g, '""')}"`,
+          `"${(o.gembokDiganti || '').replace(/"/g, '""')}"`,
+          `"${(o.fotoSebelum || '').replace(/"/g, '""')}"`,
+          `"${(o.fotoSesudah || o.fotoGembok || '').replace(/"/g, '""')}"`,
+          `"${(o.fotoSamping || '').replace(/"/g, '""')}"`,
+          `"${(o.fotoDalam || '').replace(/"/g, '""')}"`,
+          `"${(o.fotoOverpalSebelum || '').replace(/"/g, '""')}"`,
+          `"${(o.fotoOverpalSesudah || '').replace(/"/g, '""')}"`
+        ];
+        csv += row.join(',') + '\n';
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Monitoring_Kelengkapan_Evidence_ODC_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function openImageViewer(url, caption = '', subcaption = '') {
+      if (!url) return;
+      const modal = document.getElementById('imageViewerModal');
+      const img = document.getElementById('imageViewerImg');
+      const cap = document.getElementById('imageViewerCaption');
+      const sub = document.getElementById('imageViewerSubcaption');
+      const link = document.getElementById('imageViewerLink');
+
+      if (img) img.src = url;
+      if (cap) cap.innerText = caption || 'Preview Evidence Foto';
+      if (sub) sub.innerText = subcaption || '';
+      if (link) link.href = url;
+      if (modal) modal.style.display = 'block';
+    }
+
+    function closeImageViewerModal() {
+      const modal = document.getElementById('imageViewerModal');
+      if (modal) modal.style.display = 'none';
+      const img = document.getElementById('imageViewerImg');
+      if (img) img.src = '';
     }
 
     // ==========================================
@@ -2427,6 +3092,8 @@
       if (pendingTifView) pendingTifView.style.display = 'none';
       const monitoringView = document.getElementById('monitoringGembokView');
       if (monitoringView) monitoringView.style.display = 'none';
+      const monitoringEvidenceView = document.getElementById('monitoringEvidenceView');
+      if (monitoringEvidenceView) monitoringEvidenceView.style.display = 'none';
 
       // Tampilkan Dashboard OLT
       const oltView = document.getElementById('oltDashboardView');
@@ -2862,6 +3529,11 @@
       
       const pendingTifView = document.getElementById('pendingTifView');
       if (pendingTifView) pendingTifView.style.display = 'none';
+
+      const monitoringView = document.getElementById('monitoringGembokView');
+      if (monitoringView) monitoringView.style.display = 'none';
+      const monitoringEvidenceView = document.getElementById('monitoringEvidenceView');
+      if (monitoringEvidenceView) monitoringEvidenceView.style.display = 'none';
       
       // Update UI menus
       document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
@@ -3040,8 +3712,11 @@
       if (pendingHsaView) pendingHsaView.style.display = 'none';
       const pendingTifView = document.getElementById('pendingTifView');
       if (pendingTifView) pendingTifView.style.display = 'none';
+
       const monitoringView = document.getElementById('monitoringGembokView');
       if (monitoringView) monitoringView.style.display = 'none';
+      const monitoringEvidenceView = document.getElementById('monitoringEvidenceView');
+      if (monitoringEvidenceView) monitoringEvidenceView.style.display = 'none';
       
       document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
     }
