@@ -395,21 +395,22 @@
             <!-- Kondisi Fisik Tabs / Quick Filter Pills -->
             <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding-top: 10px; border-top: 1px dashed var(--border-color);">
               <span style="font-size: 11.5px; font-weight: 600; color: var(--text-muted); margin-right: 4px;">Kondisi Fisik:</span>
-              <button id="btnKondisiFilterAll" onclick="setKondisiFisikFilter('all')" class="link-btn" style="background: var(--primary-color); color: white; padding: 4px 12px; border-radius: 16px; border: none; font-size: 11.5px; cursor: pointer; font-weight: 600;">
+              <button id="btnKondisiFilterAll" onclick="toggleKondisiPill('all')" class="link-btn" style="background: var(--primary-color); color: white; padding: 4px 12px; border-radius: 16px; border: none; font-size: 11.5px; cursor: pointer; font-weight: 600;">
                 Semua (<span id="pillKondisiTotal">0</span>)
               </button>
-              <button id="btnKondisiFilterBagus" onclick="setKondisiFisikFilter('bagus')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
+              <button id="btnKondisiFilterBagus" onclick="toggleKondisiPill('bagus')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
                 🟢 Bagus (<span id="pillKondisiBagus">0</span>)
               </button>
-              <button id="btnKondisiFilterRusak" onclick="setKondisiFisikFilter('rusak')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
+              <button id="btnKondisiFilterRusak" onclick="toggleKondisiPill('rusak')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
                 🔴 Rusak (<span id="pillKondisiRusak">0</span>)
               </button>
-              <button id="btnKondisiFilterNoGembok" onclick="setKondisiFisikFilter('nogembok')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
+              <button id="btnKondisiFilterNoGembok" onclick="toggleKondisiPill('nogembok')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
                 🟠 No Gembok (<span id="pillKondisiNoGembok">0</span>)
               </button>
-              <button id="btnKondisiFilterSecure" onclick="setKondisiFisikFilter('secure')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
+              <button id="btnKondisiFilterSecure" onclick="toggleKondisiPill('secure')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
                 🔵 Secure (<span id="pillKondisiSecure">0</span>)
               </button>
+              <span style="font-size: 11px; color: var(--text-muted); opacity: 0.8; margin-left: 4px;">(Bisa pilih lebih dari 1)</span>
             </div>
 
             <!-- Search and Dropdowns -->
@@ -422,16 +423,39 @@
                   <option value="all">Semua STO</option>
                 </select>
               </div>
-              <div style="min-width: 170px;">
-                <select id="evidFilterKondisi" onchange="setKondisiFisikFilter(this.value)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 12px; cursor: pointer;">
-                  <option value="all">Semua Kondisi Fisik</option>
-                  <option value="bagus">🟢 Gembok Bagus</option>
-                  <option value="rusak">🔴 Gembok Rusak</option>
-                  <option value="nogembok">🟠 No Gembok</option>
-                  <option value="secure">🔵 Gembok Secure</option>
-                  <option value="rusak_all">⚠️ Rusak &amp; No Gembok</option>
-                  <option value="bagus_all">🔒 Bagus &amp; Secure</option>
-                </select>
+              <div style="min-width: 180px; position: relative;">
+                <button type="button" id="barKondisiDropdownBtn" onclick="toggleKondisiDropdownMenu('bar', event)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                  <span id="barKondisiBtnLabel" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 155px;">🔒 Semua Kondisi Fisik</span>
+                  <span style="font-size: 9px; opacity: 0.7; margin-left: 6px;">▼</span>
+                </button>
+                <!-- Popover Menu Bar -->
+                <div id="barKondisiDropdownMenu" style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 230px; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 1000; padding: 10px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--border-color); font-size: 11px; font-weight: 600;">
+                    <span>Filter Kondisi Fisik</span>
+                    <a href="javascript:void(0)" onclick="resetKondisiFilter(event)" style="color: var(--primary-color); text-decoration: none; font-size: 10.5px;">Reset Semua</a>
+                  </div>
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 5px 6px; cursor: pointer; border-radius: 4px; font-size: 11.5px;">
+                    <input type="checkbox" id="chkKondisiBar_all" onchange="handleKondisiCheckboxChange('all', this.checked)" checked style="cursor: pointer;">
+                    <span style="font-weight: 600;">Pilih Semua</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 5px 6px; cursor: pointer; border-radius: 4px; font-size: 11.5px;">
+                    <input type="checkbox" id="chkKondisiBar_bagus" onchange="handleKondisiCheckboxChange('bagus', this.checked)" style="cursor: pointer;">
+                    <span>🟢 Bagus (<span id="chkCountBar_bagus">0</span>)</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 5px 6px; cursor: pointer; border-radius: 4px; font-size: 11.5px;">
+                    <input type="checkbox" id="chkKondisiBar_rusak" onchange="handleKondisiCheckboxChange('rusak', this.checked)" style="cursor: pointer;">
+                    <span>🔴 Rusak (<span id="chkCountBar_rusak">0</span>)</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 5px 6px; cursor: pointer; border-radius: 4px; font-size: 11.5px;">
+                    <input type="checkbox" id="chkKondisiBar_nogembok" onchange="handleKondisiCheckboxChange('nogembok', this.checked)" style="cursor: pointer;">
+                    <span>🟠 No Gembok (<span id="chkCountBar_nogembok">0</span>)</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 5px 6px; cursor: pointer; border-radius: 4px; font-size: 11.5px;">
+                    <input type="checkbox" id="chkKondisiBar_secure" onchange="handleKondisiCheckboxChange('secure', this.checked)" style="cursor: pointer;">
+                    <span>🔵 Secure (<span id="chkCountBar_secure">0</span>)</span>
+                  </label>
+                  <button type="button" onclick="closeAllKondisiDropdowns()" style="width: 100%; margin-top: 8px; padding: 6px; font-size: 11.5px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Terapkan &amp; Tutup</button>
+                </div>
               </div>
             </div>
           </div>
@@ -444,18 +468,40 @@
                   <th style="width: 40px;">#</th>
                   <th>STO</th>
                   <th>Kode ODC & Tikor</th>
-                  <th style="min-width: 140px;">
+                  <th style="min-width: 145px; position: relative;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
                       <span>Kondisi Fisik</span>
-                      <select id="thEvidFilterKondisi" onchange="setKondisiFisikFilter(this.value)" title="Filter berdasarkan Kondisi Fisik" style="padding: 2px 5px; font-size: 10px; font-weight: normal; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-main); cursor: pointer; outline: none;">
-                        <option value="all">Semua</option>
-                        <option value="bagus">🟢 Bagus</option>
-                        <option value="rusak">🔴 Rusak</option>
-                        <option value="nogembok">🟠 No Gembok</option>
-                        <option value="secure">🔵 Secure</option>
-                        <option value="rusak_all">⚠️ Rusak &amp; Hilang</option>
-                        <option value="bagus_all">🔒 Bagus &amp; Secure</option>
-                      </select>
+                      <button type="button" id="thKondisiDropdownBtn" onclick="toggleKondisiDropdownMenu('th', event)" title="Klik untuk memfilter lebih dari 1 kondisi fisik" style="padding: 2px 7px; font-size: 10.5px; font-weight: normal; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-main); cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                        <span id="thKondisiBtnLabel">Semua</span> <span style="font-size: 8px; opacity: 0.7;">▼</span>
+                      </button>
+                    </div>
+                    <!-- Popover Menu Header -->
+                    <div id="thKondisiDropdownMenu" style="display: none; position: fixed; min-width: 210px; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 99999; padding: 10px; text-align: left;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--border-color); font-size: 11px; font-weight: 600;">
+                        <span>Filter Kondisi Fisik</span>
+                        <a href="javascript:void(0)" onclick="resetKondisiFilter(event)" style="color: var(--primary-color); text-decoration: none; font-size: 10.5px;">Reset</a>
+                      </div>
+                      <label style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; cursor: pointer; border-radius: 4px; font-size: 11px; color: var(--text-main);">
+                        <input type="checkbox" id="chkKondisiTh_all" onchange="handleKondisiCheckboxChange('all', this.checked)" checked style="cursor: pointer;">
+                        <span style="font-weight: 600;">Pilih Semua</span>
+                      </label>
+                      <label style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; cursor: pointer; border-radius: 4px; font-size: 11px; color: var(--text-main);">
+                        <input type="checkbox" id="chkKondisiTh_bagus" onchange="handleKondisiCheckboxChange('bagus', this.checked)" style="cursor: pointer;">
+                        <span>🟢 Bagus (<span id="chkCountTh_bagus">0</span>)</span>
+                      </label>
+                      <label style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; cursor: pointer; border-radius: 4px; font-size: 11px; color: var(--text-main);">
+                        <input type="checkbox" id="chkKondisiTh_rusak" onchange="handleKondisiCheckboxChange('rusak', this.checked)" style="cursor: pointer;">
+                        <span>🔴 Rusak (<span id="chkCountTh_rusak">0</span>)</span>
+                      </label>
+                      <label style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; cursor: pointer; border-radius: 4px; font-size: 11px; color: var(--text-main);">
+                        <input type="checkbox" id="chkKondisiTh_nogembok" onchange="handleKondisiCheckboxChange('nogembok', this.checked)" style="cursor: pointer;">
+                        <span>🟠 No Gembok (<span id="chkCountTh_nogembok">0</span>)</span>
+                      </label>
+                      <label style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; cursor: pointer; border-radius: 4px; font-size: 11px; color: var(--text-main);">
+                        <input type="checkbox" id="chkKondisiTh_secure" onchange="handleKondisiCheckboxChange('secure', this.checked)" style="cursor: pointer;">
+                        <span>🔵 Secure (<span id="chkCountTh_secure">0</span>)</span>
+                      </label>
+                      <button type="button" onclick="closeAllKondisiDropdowns()" style="width: 100%; margin-top: 6px; padding: 5px; font-size: 11px; background: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">Selesai</button>
                     </div>
                   </th>
                   <th>Status Evidence</th>
@@ -3091,13 +3137,231 @@
       return 'bagus';
     }
 
-    function setKondisiFisikFilter(val = 'all') {
-      window.currentEvidenceKondisiFilter = val;
-      const selKond = document.getElementById('evidFilterKondisi');
-      if (selKond && selKond.value !== val) selKond.value = val;
-      const thSelKond = document.getElementById('thEvidFilterKondisi');
-      if (thSelKond && thSelKond.value !== val) thSelKond.value = val;
+    // --- Multi-Select Kondisi Fisik Logic ---
+    window.selectedEvidenceKondisi = []; // Empty array means 'Semua'
+
+    function toggleKondisiDropdownMenu(type, event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      const thMenu = document.getElementById('thKondisiDropdownMenu');
+      const barMenu = document.getElementById('barKondisiDropdownMenu');
+
+      if (type === 'th') {
+        if (barMenu) barMenu.style.display = 'none';
+        if (!thMenu) return;
+        const isVisible = thMenu.style.display === 'block';
+        if (isVisible) {
+          thMenu.style.display = 'none';
+        } else {
+          const btn = document.getElementById('thKondisiDropdownBtn');
+          if (btn) {
+            const rect = btn.getBoundingClientRect();
+            thMenu.style.top = (rect.bottom + 4) + 'px';
+            thMenu.style.left = Math.min(rect.left, window.innerWidth - 225) + 'px';
+          }
+          thMenu.style.display = 'block';
+        }
+      } else if (type === 'bar') {
+        if (thMenu) thMenu.style.display = 'none';
+        if (!barMenu) return;
+        barMenu.style.display = barMenu.style.display === 'block' ? 'none' : 'block';
+      }
+    }
+
+    function closeAllKondisiDropdowns() {
+      const thMenu = document.getElementById('thKondisiDropdownMenu');
+      if (thMenu) thMenu.style.display = 'none';
+      const barMenu = document.getElementById('barKondisiDropdownMenu');
+      if (barMenu) barMenu.style.display = 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#thKondisiDropdownBtn') && !e.target.closest('#thKondisiDropdownMenu')) {
+        const m = document.getElementById('thKondisiDropdownMenu');
+        if (m) m.style.display = 'none';
+      }
+      if (!e.target.closest('#barKondisiDropdownBtn') && !e.target.closest('#barKondisiDropdownMenu')) {
+        const m = document.getElementById('barKondisiDropdownMenu');
+        if (m) m.style.display = 'none';
+      }
+    });
+
+    window.addEventListener('scroll', function() {
+      const thMenu = document.getElementById('thKondisiDropdownMenu');
+      if (thMenu && thMenu.style.display === 'block') {
+        const btn = document.getElementById('thKondisiDropdownBtn');
+        if (btn) {
+          const rect = btn.getBoundingClientRect();
+          thMenu.style.top = (rect.bottom + 4) + 'px';
+          thMenu.style.left = Math.min(rect.left, window.innerWidth - 225) + 'px';
+        }
+      }
+    }, { passive: true });
+
+    function toggleKondisiPill(cat) {
+      if (!window.selectedEvidenceKondisi) window.selectedEvidenceKondisi = [];
+
+      if (cat === 'all') {
+        window.selectedEvidenceKondisi = [];
+      } else {
+        if (window.selectedEvidenceKondisi.length === 0) {
+          window.selectedEvidenceKondisi = [cat];
+        } else if (window.selectedEvidenceKondisi.includes(cat)) {
+          window.selectedEvidenceKondisi = window.selectedEvidenceKondisi.filter(c => c !== cat);
+        } else {
+          window.selectedEvidenceKondisi.push(cat);
+        }
+
+        if (window.selectedEvidenceKondisi.length === 4) {
+          window.selectedEvidenceKondisi = [];
+        }
+      }
+
+      syncKondisiFilterUI();
       filterEvidenceTable(window.currentEvidenceFilter || 'all');
+    }
+
+    function handleKondisiCheckboxChange(cat, isChecked) {
+      if (!window.selectedEvidenceKondisi) window.selectedEvidenceKondisi = [];
+
+      if (cat === 'all') {
+        window.selectedEvidenceKondisi = [];
+      } else {
+        if (window.selectedEvidenceKondisi.length === 0) {
+          if (isChecked) {
+            window.selectedEvidenceKondisi = [cat];
+          } else {
+            const allKeys = ['bagus', 'rusak', 'nogembok', 'secure'];
+            window.selectedEvidenceKondisi = allKeys.filter(k => k !== cat);
+          }
+        } else {
+          if (isChecked) {
+            if (!window.selectedEvidenceKondisi.includes(cat)) {
+              window.selectedEvidenceKondisi.push(cat);
+            }
+          } else {
+            window.selectedEvidenceKondisi = window.selectedEvidenceKondisi.filter(c => c !== cat);
+          }
+
+          if (window.selectedEvidenceKondisi.length === 4 || window.selectedEvidenceKondisi.length === 0) {
+            window.selectedEvidenceKondisi = [];
+          }
+        }
+      }
+
+      syncKondisiFilterUI();
+      filterEvidenceTable(window.currentEvidenceFilter || 'all');
+    }
+
+    function resetKondisiFilter(e) {
+      if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      window.selectedEvidenceKondisi = [];
+      syncKondisiFilterUI();
+      filterEvidenceTable(window.currentEvidenceFilter || 'all');
+    }
+
+    function syncKondisiFilterUI() {
+      const selected = window.selectedEvidenceKondisi || [];
+      const isAll = selected.length === 0 || selected.length === 4;
+
+      ['Th', 'Bar'].forEach(prefix => {
+        const chkAll = document.getElementById(`chkKondisi${prefix}_all`);
+        if (chkAll) chkAll.checked = isAll;
+
+        ['bagus', 'rusak', 'nogembok', 'secure'].forEach(k => {
+          const chk = document.getElementById(`chkKondisi${prefix}_${k}`);
+          if (chk) chk.checked = isAll ? false : selected.includes(k);
+        });
+      });
+
+      const names = {
+        bagus: '🟢 Bagus',
+        rusak: '🔴 Rusak',
+        nogembok: '🟠 No Gembok',
+        secure: '🔵 Secure'
+      };
+
+      let labelShort = 'Semua';
+      let labelLong = '🔒 Semua Kondisi Fisik';
+
+      if (!isAll) {
+        if (selected.length === 1) {
+          labelShort = names[selected[0]] || selected[0];
+          labelLong = names[selected[0]] || selected[0];
+        } else {
+          labelShort = `${selected.length} dipilih`;
+          labelLong = `${selected.length} Dipilih (${selected.map(k => names[k] || k).join(', ')})`;
+        }
+      }
+
+      const thLabel = document.getElementById('thKondisiBtnLabel');
+      if (thLabel) thLabel.innerText = labelShort;
+      const thBtn = document.getElementById('thKondisiDropdownBtn');
+      if (thBtn) {
+        if (!isAll) {
+          thBtn.style.background = 'var(--primary-color)';
+          thBtn.style.color = '#fff';
+          thBtn.style.border = 'none';
+          thBtn.style.fontWeight = 'bold';
+        } else {
+          thBtn.style.background = 'var(--bg-panel)';
+          thBtn.style.color = 'var(--text-main)';
+          thBtn.style.border = '1px solid var(--border-color)';
+          thBtn.style.fontWeight = 'normal';
+        }
+      }
+
+      const barLabel = document.getElementById('barKondisiBtnLabel');
+      if (barLabel) barLabel.innerText = labelLong;
+      const barBtn = document.getElementById('barKondisiDropdownBtn');
+      if (barBtn) {
+        if (!isAll) {
+          barBtn.style.borderColor = 'var(--primary-color)';
+          barBtn.style.fontWeight = '600';
+        } else {
+          barBtn.style.borderColor = 'var(--border-color)';
+          barBtn.style.fontWeight = 'normal';
+        }
+      }
+
+      // Update Quick Filter Pills
+      const btnAll = document.getElementById('btnKondisiFilterAll');
+      if (btnAll) {
+        if (isAll) {
+          btnAll.style.background = 'var(--primary-color)';
+          btnAll.style.color = '#fff';
+          btnAll.style.border = 'none';
+          btnAll.style.fontWeight = 'bold';
+        } else {
+          btnAll.style.background = 'transparent';
+          btnAll.style.color = 'var(--text-main)';
+          btnAll.style.border = '1px solid var(--border-color)';
+          btnAll.style.fontWeight = 'normal';
+        }
+      }
+
+      ['bagus', 'rusak', 'nogembok', 'secure'].forEach(k => {
+        const btn = document.getElementById('btnKondisiFilter' + k.charAt(0).toUpperCase() + k.slice(1));
+        if (btn) {
+          const active = !isAll && selected.includes(k);
+          if (active) {
+            btn.style.background = 'var(--primary-color)';
+            btn.style.color = '#fff';
+            btn.style.border = 'none';
+            btn.style.fontWeight = 'bold';
+          } else {
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--text-main)';
+            btn.style.border = '1px solid var(--border-color)';
+            btn.style.fontWeight = 'normal';
+          }
+        }
+      });
     }
 
     function populateEvidenceStoDropdown(list) {
@@ -3208,6 +3472,17 @@
       const pKondSecure = document.getElementById('pillKondisiSecure');
       if (pKondSecure) pKondSecure.innerText = countKondSecure;
 
+      ['Th', 'Bar'].forEach(prefix => {
+        const cBagus = document.getElementById(`chkCount${prefix}_bagus`);
+        if (cBagus) cBagus.innerText = countKondBagus;
+        const cRusak = document.getElementById(`chkCount${prefix}_rusak`);
+        if (cRusak) cRusak.innerText = countKondRusak;
+        const cNoG = document.getElementById(`chkCount${prefix}_nogembok`);
+        if (cNoG) cNoG.innerText = countKondNoGembok;
+        const cSec = document.getElementById(`chkCount${prefix}_secure`);
+        if (cSec) cSec.innerText = countKondSecure;
+      });
+
       // Update Active Category Pill Button Styles
       ['all', 'lengkap', 'kurang', 'belum'].forEach(tab => {
         const btn = document.getElementById('btnEvidFilter' + tab.charAt(0).toUpperCase() + tab.slice(1));
@@ -3226,36 +3501,7 @@
         }
       });
 
-      // Update Active Kondisi Fisik Pill Styles
-      const currentKond = window.currentEvidenceKondisiFilter || 'all';
-      [
-        { key: 'all', id: 'btnKondisiFilterAll' },
-        { key: 'bagus', id: 'btnKondisiFilterBagus' },
-        { key: 'rusak', id: 'btnKondisiFilterRusak' },
-        { key: 'nogembok', id: 'btnKondisiFilterNoGembok' },
-        { key: 'secure', id: 'btnKondisiFilterSecure' }
-      ].forEach(item => {
-        const btn = document.getElementById(item.id);
-        if (btn) {
-          if (item.key === currentKond) {
-            btn.style.background = 'var(--primary-color)';
-            btn.style.color = '#fff';
-            btn.style.border = 'none';
-            btn.style.fontWeight = 'bold';
-          } else {
-            btn.style.background = 'transparent';
-            btn.style.color = 'var(--text-main)';
-            btn.style.border = '1px solid var(--border-color)';
-            btn.style.fontWeight = 'normal';
-          }
-        }
-      });
-
-      // Synchronize dropdown elements
-      const evidSelKond = document.getElementById('evidFilterKondisi');
-      if (evidSelKond && evidSelKond.value !== currentKond) evidSelKond.value = currentKond;
-      const thSelKond = document.getElementById('thEvidFilterKondisi');
-      if (thSelKond && thSelKond.value !== currentKond) thSelKond.value = currentKond;
+      syncKondisiFilterUI();
 
       // Filter by Category
       let filtered = analyzedList;
@@ -3269,24 +3515,12 @@
         filtered = filtered.filter(item => item.odc.sto === selectedSto);
       }
 
-      // Filter by Kondisi Fisik
-      if (currentKond === 'bagus') {
-        filtered = filtered.filter(item => getOdcPhysicalConditionKey(item.odc) === 'bagus');
-      } else if (currentKond === 'rusak') {
-        filtered = filtered.filter(item => getOdcPhysicalConditionKey(item.odc) === 'rusak');
-      } else if (currentKond === 'nogembok') {
-        filtered = filtered.filter(item => getOdcPhysicalConditionKey(item.odc) === 'nogembok');
-      } else if (currentKond === 'secure') {
-        filtered = filtered.filter(item => getOdcPhysicalConditionKey(item.odc) === 'secure');
-      } else if (currentKond === 'rusak_all') {
+      // Filter by Kondisi Fisik (Multi-select support)
+      const selectedKondisiArr = window.selectedEvidenceKondisi || [];
+      if (selectedKondisiArr.length > 0 && selectedKondisiArr.length < 4) {
         filtered = filtered.filter(item => {
           const k = getOdcPhysicalConditionKey(item.odc);
-          return k === 'rusak' || k === 'nogembok';
-        });
-      } else if (currentKond === 'bagus_all') {
-        filtered = filtered.filter(item => {
-          const k = getOdcPhysicalConditionKey(item.odc);
-          return k === 'bagus' || k === 'secure';
+          return selectedKondisiArr.includes(k);
         });
       }
 
