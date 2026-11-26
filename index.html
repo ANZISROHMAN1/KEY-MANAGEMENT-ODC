@@ -2408,6 +2408,7 @@
       } else if (filter === 'diperbarui') {
         filtered = list.filter(o => o.gembokDiganti || o.fotoGembok);
       }
+      window.currentFilteredGembokList = filtered;
 
       if (filtered.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#888;">Tidak ada data ODC untuk kategori ini.</td></tr>';
@@ -2463,6 +2464,493 @@
       });
 
       tbody.innerHTML = html;
+    }
+
+    // --- Helper & Export Functions for Monitoring Gembok (PDF & Word) ---
+    function getGembokReportPayload() {
+      const allList = window.allOdcsList || [];
+      const filter = window.currentGembokFilter || 'all';
+      let list = window.currentFilteredGembokList;
+      if (!list) {
+        if (filter === 'bagus') {
+          list = allList.filter(o => o.kondisiGembok !== 'RUSAK' && o.adaGembok !== 'TIDAK');
+        } else if (filter === 'rusak') {
+          list = allList.filter(o => o.kondisiGembok === 'RUSAK' || o.adaGembok === 'TIDAK');
+        } else if (filter === 'diperbarui') {
+          list = allList.filter(o => o.gembokDiganti || o.fotoGembok);
+        } else {
+          list = allList;
+        }
+      }
+
+      const totalAll = allList.length;
+      const totalBagus = allList.filter(o => o.kondisiGembok !== 'RUSAK' && o.adaGembok !== 'TIDAK').length;
+      const totalRusak = allList.filter(o => o.kondisiGembok === 'RUSAK' || o.adaGembok === 'TIDAK').length;
+      const totalDiperbarui = allList.filter(o => o.gembokDiganti || o.fotoGembok).length;
+
+      const pctBagus = totalAll > 0 ? Math.round((totalBagus / totalAll) * 100) : 0;
+      const pctRusak = totalAll > 0 ? Math.round((totalRusak / totalAll) * 100) : 0;
+
+      let filterTitle = 'Semua Status Gembok';
+      let filterSlug = 'Semua';
+      if (filter === 'bagus') {
+        filterTitle = 'Gembok Kondisi Bagus / Ada';
+        filterSlug = 'Bagus';
+      } else if (filter === 'rusak') {
+        filterTitle = 'Gembok Kondisi Rusak / Hilang';
+        filterSlug = 'Rusak';
+      } else if (filter === 'diperbarui') {
+        filterTitle = 'Gembok Telah Diperbarui';
+        filterSlug = 'Diperbarui';
+      }
+
+      const now = new Date();
+      const printDate = now.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }) + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ' WIB';
+
+      return {
+        allList,
+        list,
+        filter,
+        filterTitle,
+        filterSlug,
+        totalAll,
+        totalBagus,
+        totalRusak,
+        totalDiperbarui,
+        pctBagus,
+        pctRusak,
+        printDate
+      };
+    }
+
+    function downloadGembokPdf() {
+      const payload = getGembokReportPayload();
+      const printWin = window.open('', '_blank');
+      if (!printWin) {
+        alert('Pop-up terblokir oleh browser. Silakan izinkan pop-up pada peramban Anda untuk mencetak / mendownload PDF.');
+        return;
+      }
+
+      let rowsHtml = '';
+      payload.list.forEach((o, i) => {
+        let badgeColor = '#2ecc71';
+        let statusLabel = 'BAGUS';
+        if (o.adaGembok === 'TIDAK') {
+          badgeColor = '#f39c12';
+          statusLabel = 'NO GEMBOK';
+        } else if (o.kondisiGembok === 'RUSAK') {
+          badgeColor = '#e74c3c';
+          statusLabel = 'RUSAK';
+        } else if (o.gembokSecure === 'YA') {
+          badgeColor = '#3498db';
+          statusLabel = 'SECURE';
+        }
+
+        const oTikor = o.tikor || (window.odcTikorMap ? (window.odcTikorMap[o.name] || window.odcTikorMap[(o.sto || '') + '-' + o.name]) : '') || '-';
+
+        let evArr = [];
+        if (o.fotoSebelum) evArr.push(`<a href="${o.fotoSebelum}" target="_blank" style="color:#e74c3c; text-decoration:none; font-weight:600;">Sebelum</a>`);
+        if (o.fotoSesudah || o.fotoGembok) evArr.push(`<a href="${o.fotoSesudah || o.fotoGembok}" target="_blank" style="color:#2ecc71; text-decoration:none; font-weight:600;">Sesudah</a>`);
+        if (o.fotoSamping) evArr.push(`<a href="${o.fotoSamping}" target="_blank" style="color:#3498db; text-decoration:none; font-weight:600;">Samping</a>`);
+        if (o.fotoDalam) evArr.push(`<a href="${o.fotoDalam}" target="_blank" style="color:#9b59b6; text-decoration:none; font-weight:600;">Dalam</a>`);
+        if (o.fotoOverpalSebelum) evArr.push(`<a href="${o.fotoOverpalSebelum}" target="_blank" style="color:#e67e22; text-decoration:none; font-weight:600;">Overpal S.</a>`);
+        if (o.fotoOverpalSesudah) evArr.push(`<a href="${o.fotoOverpalSesudah}" target="_blank" style="color:#16a085; text-decoration:none; font-weight:600;">Overpal K.</a>`);
+        const evText = evArr.length > 0 ? evArr.join(' &bull; ') : '-';
+
+        rowsHtml += `
+          <tr>
+            <td style="text-align:center;">${i + 1}</td>
+            <td style="font-weight:bold; text-align:center;">${o.sto || '-'}</td>
+            <td style="font-weight:bold; color:#1e3c72;">${o.name}</td>
+            <td style="font-size:8pt; color:#475569;">${oTikor}</td>
+            <td style="text-align:center;"><span style="background:${badgeColor}; color:#fff; padding:2px 7px; border-radius:10px; font-size:7.5pt; font-weight:bold; display:inline-block;">${statusLabel}</span></td>
+            <td style="text-align:center;">${o.gembokDiganti || '-'}</td>
+            <td>${o.petugasGembok || '-'}</td>
+            <td style="font-size:8.5pt;">${o.keteranganGembok || '-'}</td>
+            <td style="font-size:8pt;">${evText}</td>
+          </tr>
+        `;
+      });
+
+      const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Laporan Monitoring Gembok ODC - ${payload.filterSlug}</title>
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 10mm;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      color: #1e293b;
+      background: #ffffff;
+      font-size: 9pt;
+      line-height: 1.4;
+    }
+    .no-print {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 12px 18px;
+      margin-bottom: 20px;
+    }
+    .btn-action {
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .header-box {
+      border-bottom: 3px double #1e3c72;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .title {
+      font-size: 15pt;
+      font-weight: 800;
+      color: #1e3c72;
+      margin: 0 0 4px 0;
+      letter-spacing: 0.3px;
+    }
+    .subtitle {
+      font-size: 9.5pt;
+      color: #64748b;
+      margin: 0;
+    }
+    .kpi-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .kpi-card {
+      flex: 1;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-align: center;
+      background: #f8fafc;
+    }
+    .kpi-val {
+      font-size: 14pt;
+      font-weight: 800;
+    }
+    .kpi-lbl {
+      font-size: 8pt;
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th {
+      background-color: #1e3c72;
+      color: white;
+      padding: 7px 6px;
+      border: 1px solid #cbd5e1;
+      font-size: 8pt;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    td {
+      padding: 5px 6px;
+      border: 1px solid #cbd5e1;
+      font-size: 8pt;
+      vertical-align: middle;
+    }
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+    .signature-row {
+      margin-top: 25px;
+      display: flex;
+      justify-content: space-between;
+      page-break-inside: avoid;
+    }
+    .signature-col {
+      width: 220px;
+      text-align: center;
+      font-size: 9pt;
+    }
+    .signature-space {
+      height: 55px;
+    }
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        padding: 0;
+      }
+      tr {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <div>
+      <strong style="color:#0f172a; font-size:14px;">🖨️ Cetak / Simpan Laporan PDF</strong>
+      <span style="color:#64748b; font-size:12px; margin-left:10px;">(Pilih destination: "Save as PDF" / "Simpan sebagai PDF" di dialog browser)</span>
+    </div>
+    <div>
+      <button class="btn-action" style="background:#e74c3c; color:white;" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+      <button class="btn-action" style="background:#64748b; color:white; margin-left:8px;" onclick="window.close()">Tutup</button>
+    </div>
+  </div>
+
+  <div class="header-box">
+    <div>
+      <div class="title">LAPORAN MONITORING STATUS &amp; PERGANTIAN GEMBOK ODC</div>
+      <div class="subtitle">O-Key Management System &bull; Filter: <strong>${payload.filterTitle}</strong> &bull; Jumlah Data: <strong>${payload.list.length} ODC</strong></div>
+    </div>
+    <div style="text-align: right; font-size: 8pt; color: #64748b;">
+      <div>Waktu Cetak: <strong>${payload.printDate}</strong></div>
+      <div>Status Sistem: <strong style="color:#10b981;">● Online Realtime</strong></div>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:#1e3c72;">${payload.totalAll}</div>
+      <div class="kpi-lbl">Total ODC Terdaftar</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:#2ecc71;">${payload.totalBagus} <span style="font-size:9pt; font-weight:normal;">(${payload.pctBagus}%)</span></div>
+      <div class="kpi-lbl">Gembok Bagus / Ada</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:#e74c3c;">${payload.totalRusak} <span style="font-size:9pt; font-weight:normal;">(${payload.pctRusak}%)</span></div>
+      <div class="kpi-lbl">Gembok Rusak / Hilang</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:#9b59b6;">${payload.totalDiperbarui}</div>
+      <div class="kpi-lbl">Telah Diperbarui (Evidence)</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:26px;">No</th>
+        <th style="width:48px;">STO</th>
+        <th style="width:100px;">Kode ODC</th>
+        <th>Titik Koordinat (Tikor)</th>
+        <th style="width:75px;">Kondisi Fisik</th>
+        <th style="width:80px;">Tgl Ganti</th>
+        <th style="width:100px;">Petugas</th>
+        <th>Catatan Gembok</th>
+        <th style="width:150px;">Bukti Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHtml || '<tr><td colspan="9" style="text-align:center; padding:15px; color:#888;">Tidak ada data ODC.</td></tr>'}
+    </tbody>
+  </table>
+
+  <div class="signature-row">
+    <div class="signature-col">
+      <div>Dibuat Oleh:</div>
+      <div class="signature-space"></div>
+      <div style="font-weight:bold; text-decoration:underline;">Admin O-Key / Petugas</div>
+      <div style="color:#64748b; font-size:8pt;">Unit Assurance / Maintenance</div>
+    </div>
+    <div class="signature-col">
+      <div>Mengetahui:</div>
+      <div class="signature-space"></div>
+      <div style="font-weight:bold; text-decoration:underline;">Team Leader / Supervisor</div>
+      <div style="color:#64748b; font-size:8pt;">Telkom Witel</div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    });
+  <\/script>
+</body>
+</html>`;
+
+      printWin.document.open();
+      printWin.document.write(fullHtml);
+      printWin.document.close();
+    }
+
+    function downloadGembokWord() {
+      const payload = getGembokReportPayload();
+
+      let rowsHtml = '';
+      payload.list.forEach((o, i) => {
+        let badgeColor = '#2ecc71';
+        let statusLabel = 'BAGUS';
+        if (o.adaGembok === 'TIDAK') {
+          badgeColor = '#f39c12';
+          statusLabel = 'NO GEMBOK';
+        } else if (o.kondisiGembok === 'RUSAK') {
+          badgeColor = '#e74c3c';
+          statusLabel = 'RUSAK';
+        } else if (o.gembokSecure === 'YA') {
+          badgeColor = '#3498db';
+          statusLabel = 'SECURE';
+        }
+
+        const oTikor = o.tikor || (window.odcTikorMap ? (window.odcTikorMap[o.name] || window.odcTikorMap[(o.sto || '') + '-' + o.name]) : '') || '-';
+
+        let evArr = [];
+        if (o.fotoSebelum) evArr.push(`<a href="${o.fotoSebelum}" target="_blank">Sebelum</a>`);
+        if (o.fotoSesudah || o.fotoGembok) evArr.push(`<a href="${o.fotoSesudah || o.fotoGembok}" target="_blank">Sesudah</a>`);
+        if (o.fotoSamping) evArr.push(`<a href="${o.fotoSamping}" target="_blank">Samping</a>`);
+        if (o.fotoDalam) evArr.push(`<a href="${o.fotoDalam}" target="_blank">Dalam</a>`);
+        if (o.fotoOverpalSebelum) evArr.push(`<a href="${o.fotoOverpalSebelum}" target="_blank">Overpal S.</a>`);
+        if (o.fotoOverpalSesudah) evArr.push(`<a href="${o.fotoOverpalSesudah}" target="_blank">Overpal K.</a>`);
+        const evText = evArr.length > 0 ? evArr.join(' &bull; ') : '-';
+
+        rowsHtml += `
+          <tr>
+            <td style="text-align:center; border:1px solid #cccccc; padding:5px;">${i + 1}</td>
+            <td style="font-weight:bold; text-align:center; border:1px solid #cccccc; padding:5px;">${o.sto || '-'}</td>
+            <td style="font-weight:bold; color:#1e3c72; border:1px solid #cccccc; padding:5px;">${o.name}</td>
+            <td style="font-size:8.5pt; border:1px solid #cccccc; padding:5px;">${oTikor}</td>
+            <td style="text-align:center; border:1px solid #cccccc; padding:5px;"><span style="background-color:${badgeColor}; color:#ffffff; padding:2px 6px; font-weight:bold; font-size:7.5pt; border-radius:3px;">${statusLabel}</span></td>
+            <td style="text-align:center; border:1px solid #cccccc; padding:5px;">${o.gembokDiganti || '-'}</td>
+            <td style="border:1px solid #cccccc; padding:5px;">${o.petugasGembok || '-'}</td>
+            <td style="font-size:8.5pt; border:1px solid #cccccc; padding:5px;">${o.keteranganGembok || '-'}</td>
+            <td style="font-size:8pt; border:1px solid #cccccc; padding:5px;">${evText}</td>
+          </tr>
+        `;
+      });
+
+      const wordHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+  <meta charset='utf-8'>
+  <title>Laporan Monitoring Gembok ODC - ${payload.filterSlug}</title>
+  <!--[if gte mso 9]>
+  <xml>
+  <w:WordDocument>
+    <w:View>Print</w:View>
+    <w:Zoom>100</w:Zoom>
+    <w:DoNotOptimizeForBrowser/>
+  </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    @page Section1 {
+      size: 841.9pt 595.3pt; /* A4 Landscape */
+      mso-page-orientation: landscape;
+      margin: 36.0pt 36.0pt 36.0pt 36.0pt;
+      mso-header-margin: 36.0pt;
+      mso-footer-margin: 36.0pt;
+      mso-paper-source: 0;
+    }
+    div.Section1 { page: Section1; }
+    body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 9.5pt; color: #222222; }
+    table { border-collapse: collapse; width: 100%; }
+    th { background-color: #1e3c72; color: #ffffff; padding: 6px; border: 1px solid #999999; font-weight: bold; font-size: 8.5pt; }
+    td { padding: 5px; border: 1px solid #cccccc; }
+  </style>
+</head>
+<body>
+<div class="Section1">
+  <div style="border-bottom: 2px solid #1e3c72; padding-bottom: 8px; margin-bottom: 12px;">
+    <h2 style="color: #1e3c72; margin: 0 0 4px 0; font-size: 14pt;">LAPORAN MONITORING STATUS &amp; PERGANTIAN GEMBOK ODC</h2>
+    <p style="margin: 0; color: #555555; font-size: 9pt;">O-Key Management System &bull; Filter: <strong>${payload.filterTitle}</strong> &bull; Total Baris: <strong>${payload.list.length}</strong> &bull; Dicetak: <strong>${payload.printDate}</strong></p>
+  </div>
+
+  <table style="width: 100%; margin-bottom: 15px; border: none;">
+    <tr>
+      <td style="border: 1px solid #ddd; background-color: #f1f5f9; text-align: center; padding: 8px;">
+        <div style="font-size: 13pt; font-weight: bold; color: #1e3c72;">${payload.totalAll}</div>
+        <div style="font-size: 7.5pt; color: #64748b; font-weight: bold;">TOTAL ODC</div>
+      </td>
+      <td style="border: 1px solid #ddd; background-color: #eafaf1; text-align: center; padding: 8px;">
+        <div style="font-size: 13pt; font-weight: bold; color: #2ecc71;">${payload.totalBagus} (${payload.pctBagus}%)</div>
+        <div style="font-size: 7.5pt; color: #27ae60; font-weight: bold;">GEMBOK BAGUS / ADA</div>
+      </td>
+      <td style="border: 1px solid #ddd; background-color: #fdedec; text-align: center; padding: 8px;">
+        <div style="font-size: 13pt; font-weight: bold; color: #e74c3c;">${payload.totalRusak} (${payload.pctRusak}%)</div>
+        <div style="font-size: 7.5pt; color: #c0392b; font-weight: bold;">GEMBOK RUSAK / HILANG</div>
+      </td>
+      <td style="border: 1px solid #ddd; background-color: #f5eef8; text-align: center; padding: 8px;">
+        <div style="font-size: 13pt; font-weight: bold; color: #9b59b6;">${payload.totalDiperbarui}</div>
+        <div style="font-size: 7.5pt; color: #8e44ad; font-weight: bold;">TELAH DIPERBARUI</div>
+      </td>
+    </tr>
+  </table>
+
+  <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
+    <thead>
+      <tr style="background-color: #1e3c72; color: #ffffff;">
+        <th style="width: 26px; text-align: center; border: 1px solid #999999; padding: 5px;">No</th>
+        <th style="width: 48px; text-align: center; border: 1px solid #999999; padding: 5px;">STO</th>
+        <th style="width: 100px; border: 1px solid #999999; padding: 5px;">Kode ODC</th>
+        <th style="border: 1px solid #999999; padding: 5px;">Titik Koordinat (Tikor)</th>
+        <th style="width: 75px; text-align: center; border: 1px solid #999999; padding: 5px;">Kondisi Fisik</th>
+        <th style="width: 80px; text-align: center; border: 1px solid #999999; padding: 5px;">Tgl Ganti</th>
+        <th style="width: 100px; border: 1px solid #999999; padding: 5px;">Petugas</th>
+        <th style="border: 1px solid #999999; padding: 5px;">Catatan Gembok</th>
+        <th style="width: 150px; border: 1px solid #999999; padding: 5px;">Bukti Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHtml || '<tr><td colspan="9" style="text-align:center; padding:15px; border:1px solid #ccc; color:#888;">Tidak ada data ODC.</td></tr>'}
+    </tbody>
+  </table>
+
+  <table style="width: 100%; margin-top: 35px; border: none;">
+    <tr>
+      <td style="width: 50%; border: none; text-align: center; font-size: 9pt;">
+        <div>Dibuat Oleh,</div>
+        <div style="height: 50px;"></div>
+        <div style="font-weight: bold; text-decoration: underline;">Admin O-Key / Petugas</div>
+        <div style="color: #64748b; font-size: 8pt;">Unit Assurance / Maintenance</div>
+      </td>
+      <td style="width: 50%; border: none; text-align: center; font-size: 9pt;">
+        <div>Mengetahui,</div>
+        <div style="height: 50px;"></div>
+        <div style="font-weight: bold; text-decoration: underline;">Team Leader / Supervisor</div>
+        <div style="color: #64748b; font-size: 8pt;">Telkom Witel</div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
+</html>`;
+
+      const blob = new Blob(['\ufeff' + wordHtml], { type: 'application/msword;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const d = new Date();
+      const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      a.download = `Laporan_Monitoring_Gembok_ODC_${payload.filterSlug}_${dateStr}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     // ========================================================
