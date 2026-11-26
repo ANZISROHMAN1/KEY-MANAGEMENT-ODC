@@ -375,24 +375,45 @@
 
           <!-- Filter & Search Controls -->
           <div style="background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px;">
-            <!-- Category Tabs -->
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button id="btnEvidFilterAll" onclick="filterEvidenceTable('all')" class="link-btn" style="background: var(--primary-color); color: white; padding: 6px 14px; border-radius: 20px; border: none; font-size: 12px; cursor: pointer; font-weight: 600;">
+            <!-- Category Tabs: Status Evidence -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+              <span style="font-size: 11.5px; font-weight: 600; color: var(--text-muted); margin-right: 4px;">Status Evidence:</span>
+              <button id="btnEvidFilterAll" onclick="filterEvidenceTable('all')" class="link-btn" style="background: var(--primary-color); color: white; padding: 5px 14px; border-radius: 20px; border: none; font-size: 12px; cursor: pointer; font-weight: 600;">
                 Semua ODC (<span id="pillEvidTotal">0</span>)
               </button>
-              <button id="btnEvidFilterLengkap" onclick="filterEvidenceTable('lengkap')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+              <button id="btnEvidFilterLengkap" onclick="filterEvidenceTable('lengkap')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 5px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
                 ✅ Sudah Submit Lengkap (<span id="pillEvidLengkap">0</span>)
               </button>
-              <button id="btnEvidFilterKurang" onclick="filterEvidenceTable('kurang')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+              <button id="btnEvidFilterKurang" onclick="filterEvidenceTable('kurang')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 5px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
                 ⚠️ Submit Kurang (<span id="pillEvidKurang">0</span>)
               </button>
-              <button id="btnEvidFilterBelum" onclick="filterEvidenceTable('belum')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+              <button id="btnEvidFilterBelum" onclick="filterEvidenceTable('belum')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 5px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
                 ❌ Belum Submit (<span id="pillEvidBelum">0</span>)
               </button>
             </div>
 
+            <!-- Kondisi Fisik Tabs / Quick Filter Pills -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding-top: 10px; border-top: 1px dashed var(--border-color);">
+              <span style="font-size: 11.5px; font-weight: 600; color: var(--text-muted); margin-right: 4px;">Kondisi Fisik:</span>
+              <button id="btnKondisiFilterAll" onclick="setKondisiFisikFilter('all')" class="link-btn" style="background: var(--primary-color); color: white; padding: 4px 12px; border-radius: 16px; border: none; font-size: 11.5px; cursor: pointer; font-weight: 600;">
+                Semua (<span id="pillKondisiTotal">0</span>)
+              </button>
+              <button id="btnKondisiFilterBagus" onclick="setKondisiFisikFilter('bagus')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
+                🟢 Bagus (<span id="pillKondisiBagus">0</span>)
+              </button>
+              <button id="btnKondisiFilterRusak" onclick="setKondisiFisikFilter('rusak')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
+                🔴 Rusak (<span id="pillKondisiRusak">0</span>)
+              </button>
+              <button id="btnKondisiFilterNoGembok" onclick="setKondisiFisikFilter('nogembok')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
+                🟠 No Gembok (<span id="pillKondisiNoGembok">0</span>)
+              </button>
+              <button id="btnKondisiFilterSecure" onclick="setKondisiFisikFilter('secure')" class="link-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 12px; border-radius: 16px; font-size: 11.5px; cursor: pointer;">
+                🔵 Secure (<span id="pillKondisiSecure">0</span>)
+              </button>
+            </div>
+
             <!-- Search and Dropdowns -->
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding-top: 2px;">
               <div style="flex: 1; min-width: 200px;">
                 <input type="text" id="evidSearchInput" oninput="filterEvidenceTable(window.currentEvidenceFilter || 'all')" placeholder="🔍 Cari ODC, STO, atau Tikor..." style="width: 100%; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 12px;">
               </div>
@@ -401,11 +422,15 @@
                   <option value="all">Semua STO</option>
                 </select>
               </div>
-              <div style="min-width: 150px;">
-                <select id="evidFilterKondisi" onchange="filterEvidenceTable(window.currentEvidenceFilter || 'all')" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 12px; cursor: pointer;">
+              <div style="min-width: 170px;">
+                <select id="evidFilterKondisi" onchange="setKondisiFisikFilter(this.value)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 12px; cursor: pointer;">
                   <option value="all">Semua Kondisi Fisik</option>
-                  <option value="rusak">Gembok Rusak / No Gembok</option>
-                  <option value="bagus">Gembok Bagus / Secure</option>
+                  <option value="bagus">🟢 Gembok Bagus</option>
+                  <option value="rusak">🔴 Gembok Rusak</option>
+                  <option value="nogembok">🟠 No Gembok</option>
+                  <option value="secure">🔵 Gembok Secure</option>
+                  <option value="rusak_all">⚠️ Rusak &amp; No Gembok</option>
+                  <option value="bagus_all">🔒 Bagus &amp; Secure</option>
                 </select>
               </div>
             </div>
@@ -419,7 +444,20 @@
                   <th style="width: 40px;">#</th>
                   <th>STO</th>
                   <th>Kode ODC & Tikor</th>
-                  <th>Kondisi Fisik</th>
+                  <th style="min-width: 140px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                      <span>Kondisi Fisik</span>
+                      <select id="thEvidFilterKondisi" onchange="setKondisiFisikFilter(this.value)" title="Filter berdasarkan Kondisi Fisik" style="padding: 2px 5px; font-size: 10px; font-weight: normal; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-main); cursor: pointer; outline: none;">
+                        <option value="all">Semua</option>
+                        <option value="bagus">🟢 Bagus</option>
+                        <option value="rusak">🔴 Rusak</option>
+                        <option value="nogembok">🟠 No Gembok</option>
+                        <option value="secure">🔵 Secure</option>
+                        <option value="rusak_all">⚠️ Rusak &amp; Hilang</option>
+                        <option value="bagus_all">🔒 Bagus &amp; Secure</option>
+                      </select>
+                    </div>
+                  </th>
                   <th>Status Evidence</th>
                   <th>Checklist Foto</th>
                   <th>Preview Evidence</th>
@@ -3045,6 +3083,23 @@
       };
     }
 
+    function getOdcPhysicalConditionKey(o) {
+      if (!o) return 'bagus';
+      if (o.adaGembok === 'TIDAK') return 'nogembok';
+      if (o.kondisiGembok === 'RUSAK') return 'rusak';
+      if (o.gembokSecure === 'YA') return 'secure';
+      return 'bagus';
+    }
+
+    function setKondisiFisikFilter(val = 'all') {
+      window.currentEvidenceKondisiFilter = val;
+      const selKond = document.getElementById('evidFilterKondisi');
+      if (selKond && selKond.value !== val) selKond.value = val;
+      const thSelKond = document.getElementById('thEvidFilterKondisi');
+      if (thSelKond && thSelKond.value !== val) thSelKond.value = val;
+      filterEvidenceTable(window.currentEvidenceFilter || 'all');
+    }
+
     function populateEvidenceStoDropdown(list) {
       const select = document.getElementById('evidFilterSto');
       if (!select || select.dataset.populated === 'true') return;
@@ -3135,6 +3190,24 @@
       const pillBelum = document.getElementById('pillEvidBelum');
       if (pillBelum) pillBelum.innerText = countBelum;
 
+      // Update Kondisi Fisik Pills Count
+      const countKondTotal = totalAll;
+      const countKondBagus = analyzedList.filter(item => getOdcPhysicalConditionKey(item.odc) === 'bagus').length;
+      const countKondRusak = analyzedList.filter(item => getOdcPhysicalConditionKey(item.odc) === 'rusak').length;
+      const countKondNoGembok = analyzedList.filter(item => getOdcPhysicalConditionKey(item.odc) === 'nogembok').length;
+      const countKondSecure = analyzedList.filter(item => getOdcPhysicalConditionKey(item.odc) === 'secure').length;
+
+      const pKondTotal = document.getElementById('pillKondisiTotal');
+      if (pKondTotal) pKondTotal.innerText = countKondTotal;
+      const pKondBagus = document.getElementById('pillKondisiBagus');
+      if (pKondBagus) pKondBagus.innerText = countKondBagus;
+      const pKondRusak = document.getElementById('pillKondisiRusak');
+      if (pKondRusak) pKondRusak.innerText = countKondRusak;
+      const pKondNoGembok = document.getElementById('pillKondisiNoGembok');
+      if (pKondNoGembok) pKondNoGembok.innerText = countKondNoGembok;
+      const pKondSecure = document.getElementById('pillKondisiSecure');
+      if (pKondSecure) pKondSecure.innerText = countKondSecure;
+
       // Update Active Category Pill Button Styles
       ['all', 'lengkap', 'kurang', 'belum'].forEach(tab => {
         const btn = document.getElementById('btnEvidFilter' + tab.charAt(0).toUpperCase() + tab.slice(1));
@@ -3153,6 +3226,37 @@
         }
       });
 
+      // Update Active Kondisi Fisik Pill Styles
+      const currentKond = window.currentEvidenceKondisiFilter || 'all';
+      [
+        { key: 'all', id: 'btnKondisiFilterAll' },
+        { key: 'bagus', id: 'btnKondisiFilterBagus' },
+        { key: 'rusak', id: 'btnKondisiFilterRusak' },
+        { key: 'nogembok', id: 'btnKondisiFilterNoGembok' },
+        { key: 'secure', id: 'btnKondisiFilterSecure' }
+      ].forEach(item => {
+        const btn = document.getElementById(item.id);
+        if (btn) {
+          if (item.key === currentKond) {
+            btn.style.background = 'var(--primary-color)';
+            btn.style.color = '#fff';
+            btn.style.border = 'none';
+            btn.style.fontWeight = 'bold';
+          } else {
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--text-main)';
+            btn.style.border = '1px solid var(--border-color)';
+            btn.style.fontWeight = 'normal';
+          }
+        }
+      });
+
+      // Synchronize dropdown elements
+      const evidSelKond = document.getElementById('evidFilterKondisi');
+      if (evidSelKond && evidSelKond.value !== currentKond) evidSelKond.value = currentKond;
+      const thSelKond = document.getElementById('thEvidFilterKondisi');
+      if (thSelKond && thSelKond.value !== currentKond) thSelKond.value = currentKond;
+
       // Filter by Category
       let filtered = analyzedList;
       if (filter !== 'all') {
@@ -3166,11 +3270,24 @@
       }
 
       // Filter by Kondisi Fisik
-      const selectedKondisi = document.getElementById('evidFilterKondisi')?.value || 'all';
-      if (selectedKondisi === 'rusak') {
-        filtered = filtered.filter(item => item.odc.kondisiGembok === 'RUSAK' || item.odc.adaGembok === 'TIDAK');
-      } else if (selectedKondisi === 'bagus') {
-        filtered = filtered.filter(item => item.odc.kondisiGembok !== 'RUSAK' && item.odc.adaGembok !== 'TIDAK');
+      if (currentKond === 'bagus') {
+        filtered = filtered.filter(item => getOdcPhysicalConditionKey(item.odc) === 'bagus');
+      } else if (currentKond === 'rusak') {
+        filtered = filtered.filter(item => getOdcPhysicalConditionKey(item.odc) === 'rusak');
+      } else if (currentKond === 'nogembok') {
+        filtered = filtered.filter(item => getOdcPhysicalConditionKey(item.odc) === 'nogembok');
+      } else if (currentKond === 'secure') {
+        filtered = filtered.filter(item => getOdcPhysicalConditionKey(item.odc) === 'secure');
+      } else if (currentKond === 'rusak_all') {
+        filtered = filtered.filter(item => {
+          const k = getOdcPhysicalConditionKey(item.odc);
+          return k === 'rusak' || k === 'nogembok';
+        });
+      } else if (currentKond === 'bagus_all') {
+        filtered = filtered.filter(item => {
+          const k = getOdcPhysicalConditionKey(item.odc);
+          return k === 'bagus' || k === 'secure';
+        });
       }
 
       // Filter by Search Query
