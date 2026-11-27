@@ -462,8 +462,8 @@
                 <select id="evidFilterTifStatus" onchange="setTifVerificationFilter(this.value)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 12px; cursor: pointer;">
                   <option value="all">Semua Verifikasi TIF</option>
                   <option value="ceklis">✅ Ceklis / Approved</option>
-                  <option value="reject">❌ Reject / Ditolak</option>
-                  <option value="pending">⏳ Belum Dicek</option>
+                  <option value="pending">⏳ Pending</option>
+                  <option value="belum">⚪ Belum Dicek</option>
                 </select>
               </div>
             </div>
@@ -524,8 +524,8 @@
                       <select id="thFilterTifStatus" onchange="setTifVerificationFilter(this.value)" title="Filter Verifikasi TIF" style="padding: 2px 4px; font-size: 10px; font-weight: normal; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-main); cursor: pointer; outline: none;">
                         <option value="all">Semua</option>
                         <option value="ceklis">✅ Ceklis</option>
-                        <option value="reject">❌ Reject</option>
-                        <option value="pending">⏳ Belum</option>
+                        <option value="pending">⏳ Pending</option>
+                        <option value="belum">⚪ Belum</option>
                       </select>
                     </div>
                   </th>
@@ -3653,9 +3653,12 @@
       const tifFilter = window.currentTifVerificationFilter || 'all';
       if (tifFilter === 'ceklis') {
         filtered = filtered.filter(item => getTifVerification(item.odc.name).status === 'ceklis');
-      } else if (tifFilter === 'reject') {
-        filtered = filtered.filter(item => getTifVerification(item.odc.name).status === 'reject');
-      } else if (tifFilter === 'pending') {
+      } else if (tifFilter === 'pending' || tifFilter === 'reject') {
+        filtered = filtered.filter(item => {
+          const s = getTifVerification(item.odc.name).status;
+          return s === 'pending' || s === 'reject';
+        });
+      } else if (tifFilter === 'belum') {
         filtered = filtered.filter(item => !getTifVerification(item.odc.name).status);
       }
 
@@ -3753,6 +3756,7 @@
         const currentRole = (sessionStorage.getItem('adminRole') || '').toUpperCase();
         const isTif = currentRole === 'TIF';
         const tv = getTifVerification(o.name);
+        const isPending = tv.status === 'pending' || tv.status === 'reject';
         
         let tifVerifHtml = '';
         if (isTif) {
@@ -3762,15 +3766,15 @@
                 <span style="background:rgba(46,204,113,0.15); border:1px solid #2ecc71; color:#2ecc71; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:3px;">
                   ✅ Ceklis
                 </span>
-                <button onclick="updateTifVerification('${o.name}', 'reject')" title="Ubah ke Reject" style="background:#e74c3c; border:none; color:white; padding:2px 6px; border-radius:4px; font-size:10px; cursor:pointer; font-weight:bold;">✗</button>
+                <button onclick="updateTifVerification('${o.name}', 'pending')" title="Ubah ke Pending" style="background:#f39c12; border:none; color:white; padding:2px 6px; border-radius:4px; font-size:10px; cursor:pointer; font-weight:bold;">⏳</button>
                 <button onclick="updateTifVerification('${o.name}', '')" title="Reset ke Belum Dicek" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:2px 5px; border-radius:4px; font-size:10px; cursor:pointer;">↺</button>
               </div>
             `;
-          } else if (tv.status === 'reject') {
+          } else if (isPending) {
             tifVerifHtml = `
               <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
-                <span style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; color:#e74c3c; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:3px;">
-                  ❌ Reject
+                <span style="background:rgba(243,156,18,0.15); border:1px solid #f39c12; color:#d97706; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:3px;">
+                  ⏳ Pending
                 </span>
                 <button onclick="updateTifVerification('${o.name}', 'ceklis')" title="Ubah ke Ceklis" style="background:#2ecc71; border:none; color:white; padding:2px 6px; border-radius:4px; font-size:10px; cursor:pointer; font-weight:bold;">✓</button>
                 <button onclick="updateTifVerification('${o.name}', '')" title="Reset ke Belum Dicek" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:2px 5px; border-radius:4px; font-size:10px; cursor:pointer;">↺</button>
@@ -3782,8 +3786,8 @@
                 <button onclick="updateTifVerification('${o.name}', 'ceklis')" class="link-btn" style="background:rgba(46,204,113,0.15); border:1px solid #2ecc71; color:#2ecc71; font-size:10.5px; padding:3px 7px; cursor:pointer; border-radius:5px; font-weight:bold; display:inline-flex; align-items:center; gap:2px;" title="Ceklis / Approve Evidence Ini">
                   ✅ Ceklis
                 </button>
-                <button onclick="updateTifVerification('${o.name}', 'reject')" class="link-btn" style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; color:#e74c3c; font-size:10.5px; padding:3px 7px; cursor:pointer; border-radius:5px; font-weight:bold; display:inline-flex; align-items:center; gap:2px;" title="Reject Evidence Ini">
-                  ❌ Reject
+                <button onclick="updateTifVerification('${o.name}', 'pending')" class="link-btn" style="background:rgba(243,156,18,0.15); border:1px solid #f39c12; color:#d97706; font-size:10.5px; padding:3px 7px; cursor:pointer; border-radius:5px; font-weight:bold; display:inline-flex; align-items:center; gap:2px;" title="Pending Evidence Ini">
+                  ⏳ Pending
                 </button>
               </div>
             `;
@@ -3796,16 +3800,16 @@
                 ✅ Ceklis
               </span>
             `;
-          } else if (tv.status === 'reject') {
+          } else if (isPending) {
             tifVerifHtml = `
-              <span style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; color:#e74c3c; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:3px;">
-                ❌ Reject
+              <span style="background:rgba(243,156,18,0.15); border:1px solid #f39c12; color:#d97706; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:3px;">
+                ⏳ Pending
               </span>
             `;
           } else {
             tifVerifHtml = `
               <span style="background:rgba(148,163,184,0.1); border:1px solid var(--border-color); color:var(--text-muted); padding:3px 8px; border-radius:12px; font-size:10.5px; display:inline-flex; align-items:center; gap:3px;">
-                ⏳ Belum Dicek
+                ⚪ Belum Dicek
               </span>
             `;
           }
@@ -3886,7 +3890,7 @@
         let itemKurang = an.missingList.join('; ');
 
         const tv = getTifVerification(o.name);
-        const tifStatusText = tv.status === 'ceklis' ? 'Ceklis (Approved)' : (tv.status === 'reject' ? 'Reject (Ditolak)' : 'Belum Dicek');
+        const tifStatusText = tv.status === 'ceklis' ? 'Ceklis (Approved)' : ((tv.status === 'pending' || tv.status === 'reject') ? 'Pending' : 'Belum Dicek');
         const tifNoteText = tv.note || '';
 
         const row = [
