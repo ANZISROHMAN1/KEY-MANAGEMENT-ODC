@@ -529,7 +529,7 @@
                       </select>
                     </div>
                   </th>
-                  <th style="min-width: 180px;">Catatan TIF (Free Text)</th>
+                  <th style="min-width: 160px;">Catatan TIF</th>
                   <th style="text-align: center;">Aksi</th>
                 </tr>
               </thead>
@@ -3411,6 +3411,12 @@
     }
 
     async function updateTifVerification(odcName, status) {
+      const currentRole = (sessionStorage.getItem('adminRole') || '').toUpperCase();
+      if (currentRole !== 'TIF') {
+        alert('Hanya akun TIF (Master Admin) yang memiliki izin untuk memverifikasi evidence.');
+        return;
+      }
+
       const map = getTifVerificationsMap();
       if (!map[odcName]) map[odcName] = {};
       map[odcName].status = status;
@@ -3426,6 +3432,12 @@
     }
 
     async function saveTifNote(odcName, note, inputEl) {
+      const currentRole = (sessionStorage.getItem('adminRole') || '').toUpperCase();
+      if (currentRole !== 'TIF') {
+        alert('Hanya akun TIF (Master Admin) yang memiliki izin untuk mengubah catatan TIF.');
+        return;
+      }
+
       const map = getTifVerificationsMap();
       if (!map[odcName]) map[odcName] = {};
       map[odcName].note = (note || '').trim();
@@ -3737,59 +3749,97 @@
 
         const oTikor = o.tikor || (window.odcTikorMap ? (window.odcTikorMap[o.name] || window.odcTikorMap[(o.sto || '') + '-' + o.name]) : '') || '';
 
-        // TIF Verification Badge & Quick Actions
+        // TIF Verification Badge & Quick Actions (Role-based: TIF can edit, HSA is read-only)
+        const currentRole = (sessionStorage.getItem('adminRole') || '').toUpperCase();
+        const isTif = currentRole === 'TIF';
         const tv = getTifVerification(o.name);
+        
         let tifVerifHtml = '';
-        if (tv.status === 'ceklis') {
-          tifVerifHtml = `
-            <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
+        if (isTif) {
+          if (tv.status === 'ceklis') {
+            tifVerifHtml = `
+              <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                <span style="background:rgba(46,204,113,0.15); border:1px solid #2ecc71; color:#2ecc71; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:3px;">
+                  ✅ Ceklis
+                </span>
+                <button onclick="updateTifVerification('${o.name}', 'reject')" title="Ubah ke Reject" style="background:#e74c3c; border:none; color:white; padding:2px 6px; border-radius:4px; font-size:10px; cursor:pointer; font-weight:bold;">✗</button>
+                <button onclick="updateTifVerification('${o.name}', '')" title="Reset ke Belum Dicek" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:2px 5px; border-radius:4px; font-size:10px; cursor:pointer;">↺</button>
+              </div>
+            `;
+          } else if (tv.status === 'reject') {
+            tifVerifHtml = `
+              <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                <span style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; color:#e74c3c; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:3px;">
+                  ❌ Reject
+                </span>
+                <button onclick="updateTifVerification('${o.name}', 'ceklis')" title="Ubah ke Ceklis" style="background:#2ecc71; border:none; color:white; padding:2px 6px; border-radius:4px; font-size:10px; cursor:pointer; font-weight:bold;">✓</button>
+                <button onclick="updateTifVerification('${o.name}', '')" title="Reset ke Belum Dicek" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:2px 5px; border-radius:4px; font-size:10px; cursor:pointer;">↺</button>
+              </div>
+            `;
+          } else {
+            tifVerifHtml = `
+              <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                <button onclick="updateTifVerification('${o.name}', 'ceklis')" class="link-btn" style="background:rgba(46,204,113,0.15); border:1px solid #2ecc71; color:#2ecc71; font-size:10.5px; padding:3px 7px; cursor:pointer; border-radius:5px; font-weight:bold; display:inline-flex; align-items:center; gap:2px;" title="Ceklis / Approve Evidence Ini">
+                  ✅ Ceklis
+                </button>
+                <button onclick="updateTifVerification('${o.name}', 'reject')" class="link-btn" style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; color:#e74c3c; font-size:10.5px; padding:3px 7px; cursor:pointer; border-radius:5px; font-weight:bold; display:inline-flex; align-items:center; gap:2px;" title="Reject Evidence Ini">
+                  ❌ Reject
+                </button>
+              </div>
+            `;
+          }
+        } else {
+          // Tampilan Read-Only untuk HSA / User Non-TIF
+          if (tv.status === 'ceklis') {
+            tifVerifHtml = `
               <span style="background:rgba(46,204,113,0.15); border:1px solid #2ecc71; color:#2ecc71; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:3px;">
                 ✅ Ceklis
               </span>
-              <button onclick="updateTifVerification('${o.name}', 'reject')" title="Ubah ke Reject" style="background:#e74c3c; border:none; color:white; padding:2px 6px; border-radius:4px; font-size:10px; cursor:pointer; font-weight:bold;">✗</button>
-              <button onclick="updateTifVerification('${o.name}', '')" title="Reset ke Belum Dicek" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:2px 5px; border-radius:4px; font-size:10px; cursor:pointer;">↺</button>
-            </div>
-          `;
-        } else if (tv.status === 'reject') {
-          tifVerifHtml = `
-            <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
+            `;
+          } else if (tv.status === 'reject') {
+            tifVerifHtml = `
               <span style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; color:#e74c3c; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:3px;">
                 ❌ Reject
               </span>
-              <button onclick="updateTifVerification('${o.name}', 'ceklis')" title="Ubah ke Ceklis" style="background:#2ecc71; border:none; color:white; padding:2px 6px; border-radius:4px; font-size:10px; cursor:pointer; font-weight:bold;">✓</button>
-              <button onclick="updateTifVerification('${o.name}', '')" title="Reset ke Belum Dicek" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:2px 5px; border-radius:4px; font-size:10px; cursor:pointer;">↺</button>
+            `;
+          } else {
+            tifVerifHtml = `
+              <span style="background:rgba(148,163,184,0.1); border:1px solid var(--border-color); color:var(--text-muted); padding:3px 8px; border-radius:12px; font-size:10.5px; display:inline-flex; align-items:center; gap:3px;">
+                ⏳ Belum Dicek
+              </span>
+            `;
+          }
+        }
+
+        // TIF Free Text Note (TIF bisa edit, HSA hanya melihat / read-only)
+        const safeOdcName = (o.name || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const safeNoteValue = (tv.note || '').replace(/"/g, '&quot;');
+        const safeNoteDisplay = (tv.note || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
+        let tifNoteHtml = '';
+        if (isTif) {
+          tifNoteHtml = `
+            <div style="position:relative; width:100%; min-width:160px;">
+              <input type="text"
+                id="tifNote_${safeOdcName}"
+                value="${safeNoteValue}"
+                placeholder="Ketik catatan TIF..."
+                onblur="saveTifNote('${o.name}', this.value, this)"
+                onkeydown="if(event.key==='Enter') { this.blur(); }"
+                style="width:100%; padding:5px 8px; font-size:11px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-main); transition:border 0.2s;"
+                title="Ketik catatan lalu tekan Enter atau klik di luar untuk menyimpan"
+              />
+              <span class="save-indicator" style="position:absolute; right:7px; top:50%; transform:translateY(-50%); font-size:10px; color:#2ecc71; display:none; font-weight:bold;">✓</span>
             </div>
           `;
         } else {
-          tifVerifHtml = `
-            <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
-              <button onclick="updateTifVerification('${o.name}', 'ceklis')" class="link-btn" style="background:rgba(46,204,113,0.15); border:1px solid #2ecc71; color:#2ecc71; font-size:10.5px; padding:3px 7px; cursor:pointer; border-radius:5px; font-weight:bold; display:inline-flex; align-items:center; gap:2px;" title="Ceklis / Approve Evidence Ini">
-                ✅ Ceklis
-              </button>
-              <button onclick="updateTifVerification('${o.name}', 'reject')" class="link-btn" style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; color:#e74c3c; font-size:10.5px; padding:3px 7px; cursor:pointer; border-radius:5px; font-weight:bold; display:inline-flex; align-items:center; gap:2px;" title="Reject Evidence Ini">
-                ❌ Reject
-              </button>
+          // Read-only untuk HSA
+          tifNoteHtml = `
+            <div style="font-size:11px; min-width:140px; color:${tv.note ? 'var(--text-main)' : 'var(--text-muted)'}; padding:5px 8px; background:rgba(148,163,184,0.06); border-radius:6px; border:1px solid var(--border-color); word-break:break-word; max-width:240px;" title="${safeNoteValue ? safeNoteValue : 'Belum ada catatan dari TIF'}">
+              ${tv.note ? safeNoteDisplay : '<span style="font-style:italic; opacity:0.6;">(Tidak ada catatan)</span>'}
             </div>
           `;
         }
-
-        // TIF Free Text Note
-        const safeOdcName = (o.name || '').replace(/[^a-zA-Z0-9_-]/g, '_');
-        const safeNoteValue = (tv.note || '').replace(/"/g, '&quot;');
-        const tifNoteHtml = `
-          <div style="position:relative; width:100%; min-width:160px;">
-            <input type="text"
-              id="tifNote_${safeOdcName}"
-              value="${safeNoteValue}"
-              placeholder="Ketik catatan TIF..."
-              onblur="saveTifNote('${o.name}', this.value, this)"
-              onkeydown="if(event.key==='Enter') { this.blur(); }"
-              style="width:100%; padding:5px 8px; font-size:11px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-main); transition:border 0.2s;"
-              title="Ketik catatan lalu tekan Enter atau klik di luar untuk menyimpan"
-            />
-            <span class="save-indicator" style="position:absolute; right:7px; top:50%; transform:translateY(-50%); font-size:10px; color:#2ecc71; display:none; font-weight:bold;">✓</span>
-          </div>
-        `;
 
         html += `
           <tr>
