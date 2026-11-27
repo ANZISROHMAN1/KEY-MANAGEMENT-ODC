@@ -457,6 +457,15 @@
                   <button type="button" onclick="closeAllKondisiDropdowns()" style="width: 100%; margin-top: 8px; padding: 6px; font-size: 11.5px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Terapkan &amp; Tutup</button>
                 </div>
               </div>
+              <!-- Filter Verifikasi TIF (Master Admin) -->
+              <div style="min-width: 170px;">
+                <select id="evidFilterTifStatus" onchange="setTifVerificationFilter(this.value)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-main); font-size: 12px; cursor: pointer;">
+                  <option value="all">Semua Verifikasi TIF</option>
+                  <option value="ceklis">✅ Ceklis / Approved</option>
+                  <option value="reject">❌ Reject / Ditolak</option>
+                  <option value="pending">⏳ Belum Dicek</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -509,11 +518,23 @@
                   <th>Preview Evidence</th>
                   <th>Kekurangan Evidence</th>
                   <th>Update Terakhir</th>
+                  <th style="min-width: 145px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                      <span>Verifikasi TIF</span>
+                      <select id="thFilterTifStatus" onchange="setTifVerificationFilter(this.value)" title="Filter Verifikasi TIF" style="padding: 2px 4px; font-size: 10px; font-weight: normal; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-main); cursor: pointer; outline: none;">
+                        <option value="all">Semua</option>
+                        <option value="ceklis">✅ Ceklis</option>
+                        <option value="reject">❌ Reject</option>
+                        <option value="pending">⏳ Belum</option>
+                      </select>
+                    </div>
+                  </th>
+                  <th style="min-width: 180px;">Catatan TIF (Free Text)</th>
                   <th style="text-align: center;">Aksi</th>
                 </tr>
               </thead>
               <tbody id="monitoringEvidenceTableBody">
-                <tr><td colspan="10" style="text-align:center; padding: 25px;">Memuat data kelengkapan evidence...</td></tr>
+                <tr><td colspan="12" style="text-align:center; padding: 25px;">Memuat data kelengkapan evidence...</td></tr>
               </tbody>
             </table>
           </div>
@@ -1271,6 +1292,14 @@
           if (oltDash && oltDash.style.display === 'block') {
             renderOltDashboard(data.oltData);
           }
+        }
+
+        if (data.tifVerifications) {
+          try {
+            const currentLocal = JSON.parse(localStorage.getItem('ODC_TIF_EVIDENCE_VERIFICATIONS') || '{}');
+            const merged = Object.assign({}, currentLocal, data.tifVerifications);
+            localStorage.setItem('ODC_TIF_EVIDENCE_VERIFICATIONS', JSON.stringify(merged));
+          } catch(e) {}
         }
 
         renderDashboard(data.dashboard);
@@ -3364,6 +3393,90 @@
       });
     }
 
+    // --- TIF Verification & Free Text Logic ---
+    window.currentTifVerificationFilter = 'all';
+
+    function getTifVerificationsMap() {
+      try {
+        return JSON.parse(localStorage.getItem('ODC_TIF_EVIDENCE_VERIFICATIONS') || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function getTifVerification(odcName) {
+      if (!odcName) return { status: '', note: '' };
+      const map = getTifVerificationsMap();
+      return map[odcName] || { status: '', note: '', updatedBy: '', updatedAt: '' };
+    }
+
+    async function updateTifVerification(odcName, status) {
+      const map = getTifVerificationsMap();
+      if (!map[odcName]) map[odcName] = {};
+      map[odcName].status = status;
+      map[odcName].updatedBy = sessionStorage.getItem('adminUsername') || 'TIF';
+      map[odcName].updatedAt = new Date().toLocaleString('id-ID');
+      localStorage.setItem('ODC_TIF_EVIDENCE_VERIFICATIONS', JSON.stringify(map));
+
+      // Background sync to backend Google Apps Script if available
+      syncTifVerificationToBackend(odcName, status, map[odcName].note || '');
+
+      // Re-filter table to refresh status badges
+      filterEvidenceTable(window.currentEvidenceFilter || 'all');
+    }
+
+    async function saveTifNote(odcName, note, inputEl) {
+      const map = getTifVerificationsMap();
+      if (!map[odcName]) map[odcName] = {};
+      map[odcName].note = (note || '').trim();
+      map[odcName].updatedBy = sessionStorage.getItem('adminUsername') || 'TIF';
+      map[odcName].updatedAt = new Date().toLocaleString('id-ID');
+      localStorage.setItem('ODC_TIF_EVIDENCE_VERIFICATIONS', JSON.stringify(map));
+
+      if (inputEl) {
+        inputEl.style.borderColor = '#2ecc71';
+        const indicator = inputEl.parentElement ? inputEl.parentElement.querySelector('.save-indicator') : null;
+        if (indicator) {
+          indicator.style.display = 'inline';
+          setTimeout(() => {
+            indicator.style.display = 'none';
+            inputEl.style.borderColor = 'var(--border-color)';
+          }, 1500);
+        }
+      }
+
+      syncTifVerificationToBackend(odcName, map[odcName].status || '', note);
+    }
+
+    function setTifVerificationFilter(val = 'all') {
+      window.currentTifVerificationFilter = val;
+      const thSel = document.getElementById('thFilterTifStatus');
+      if (thSel && thSel.value !== val) thSel.value = val;
+      const barSel = document.getElementById('evidFilterTifStatus');
+      if (barSel && barSel.value !== val) barSel.value = val;
+      filterEvidenceTable(window.currentEvidenceFilter || 'all');
+    }
+
+    async function syncTifVerificationToBackend(odcName, status, note) {
+      try {
+        await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'verifyEvidenceTif',
+            payload: {
+              odc: odcName,
+              status: status,
+              note: note,
+              reviewer: sessionStorage.getItem('adminUsername') || 'TIF',
+              time: new Date().toLocaleString('id-ID')
+            }
+          })
+        });
+      } catch (err) {
+        // silent fail on network error, localStorage is already saved
+      }
+    }
+
     function populateEvidenceStoDropdown(list) {
       const select = document.getElementById('evidFilterSto');
       if (!select || select.dataset.populated === 'true') return;
@@ -3524,22 +3637,35 @@
         });
       }
 
+      // Filter by TIF Verification
+      const tifFilter = window.currentTifVerificationFilter || 'all';
+      if (tifFilter === 'ceklis') {
+        filtered = filtered.filter(item => getTifVerification(item.odc.name).status === 'ceklis');
+      } else if (tifFilter === 'reject') {
+        filtered = filtered.filter(item => getTifVerification(item.odc.name).status === 'reject');
+      } else if (tifFilter === 'pending') {
+        filtered = filtered.filter(item => !getTifVerification(item.odc.name).status);
+      }
+
       // Filter by Search Query
       const query = (document.getElementById('evidSearchInput')?.value || '').toLowerCase().trim();
       if (query) {
         filtered = filtered.filter(item => {
           const o = item.odc;
+          const tv = getTifVerification(o.name);
           return (o.name && o.name.toLowerCase().includes(query)) ||
                  (o.sto && o.sto.toLowerCase().includes(query)) ||
                  (o.tikor && o.tikor.toLowerCase().includes(query)) ||
-                 (o.petugasGembok && o.petugasGembok.toLowerCase().includes(query));
+                 (o.petugasGembok && o.petugasGembok.toLowerCase().includes(query)) ||
+                 (tv.note && tv.note.toLowerCase().includes(query)) ||
+                 (tv.status && tv.status.toLowerCase().includes(query));
         });
       }
 
       window.currentFilteredEvidenceList = filtered;
 
       if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:#888;">Tidak ada data ODC yang sesuai dengan filter atau pencarian.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:30px; color:#888;">Tidak ada data ODC yang sesuai dengan filter atau pencarian.</td></tr>';
         return;
       }
 
@@ -3611,6 +3737,60 @@
 
         const oTikor = o.tikor || (window.odcTikorMap ? (window.odcTikorMap[o.name] || window.odcTikorMap[(o.sto || '') + '-' + o.name]) : '') || '';
 
+        // TIF Verification Badge & Quick Actions
+        const tv = getTifVerification(o.name);
+        let tifVerifHtml = '';
+        if (tv.status === 'ceklis') {
+          tifVerifHtml = `
+            <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
+              <span style="background:rgba(46,204,113,0.15); border:1px solid #2ecc71; color:#2ecc71; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:3px;">
+                ✅ Ceklis
+              </span>
+              <button onclick="updateTifVerification('${o.name}', 'reject')" title="Ubah ke Reject" style="background:#e74c3c; border:none; color:white; padding:2px 6px; border-radius:4px; font-size:10px; cursor:pointer; font-weight:bold;">✗</button>
+              <button onclick="updateTifVerification('${o.name}', '')" title="Reset ke Belum Dicek" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:2px 5px; border-radius:4px; font-size:10px; cursor:pointer;">↺</button>
+            </div>
+          `;
+        } else if (tv.status === 'reject') {
+          tifVerifHtml = `
+            <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
+              <span style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; color:#e74c3c; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:bold; display:inline-flex; align-items:center; gap:3px;">
+                ❌ Reject
+              </span>
+              <button onclick="updateTifVerification('${o.name}', 'ceklis')" title="Ubah ke Ceklis" style="background:#2ecc71; border:none; color:white; padding:2px 6px; border-radius:4px; font-size:10px; cursor:pointer; font-weight:bold;">✓</button>
+              <button onclick="updateTifVerification('${o.name}', '')" title="Reset ke Belum Dicek" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:2px 5px; border-radius:4px; font-size:10px; cursor:pointer;">↺</button>
+            </div>
+          `;
+        } else {
+          tifVerifHtml = `
+            <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
+              <button onclick="updateTifVerification('${o.name}', 'ceklis')" class="link-btn" style="background:rgba(46,204,113,0.15); border:1px solid #2ecc71; color:#2ecc71; font-size:10.5px; padding:3px 7px; cursor:pointer; border-radius:5px; font-weight:bold; display:inline-flex; align-items:center; gap:2px;" title="Ceklis / Approve Evidence Ini">
+                ✅ Ceklis
+              </button>
+              <button onclick="updateTifVerification('${o.name}', 'reject')" class="link-btn" style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; color:#e74c3c; font-size:10.5px; padding:3px 7px; cursor:pointer; border-radius:5px; font-weight:bold; display:inline-flex; align-items:center; gap:2px;" title="Reject Evidence Ini">
+                ❌ Reject
+              </button>
+            </div>
+          `;
+        }
+
+        // TIF Free Text Note
+        const safeOdcName = (o.name || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const safeNoteValue = (tv.note || '').replace(/"/g, '&quot;');
+        const tifNoteHtml = `
+          <div style="position:relative; width:100%; min-width:160px;">
+            <input type="text"
+              id="tifNote_${safeOdcName}"
+              value="${safeNoteValue}"
+              placeholder="Ketik catatan TIF..."
+              onblur="saveTifNote('${o.name}', this.value, this)"
+              onkeydown="if(event.key==='Enter') { this.blur(); }"
+              style="width:100%; padding:5px 8px; font-size:11px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-main); transition:border 0.2s;"
+              title="Ketik catatan lalu tekan Enter atau klik di luar untuk menyimpan"
+            />
+            <span class="save-indicator" style="position:absolute; right:7px; top:50%; transform:translateY(-50%); font-size:10px; color:#2ecc71; display:none; font-weight:bold;">✓</span>
+          </div>
+        `;
+
         html += `
           <tr>
             <td>${index + 1}</td>
@@ -3628,6 +3808,8 @@
               <div>${o.gembokDiganti || '-'}</div>
               ${o.petugasGembok ? `<div style="font-size:10px; color:var(--text-muted);">Oleh: ${o.petugasGembok}</div>` : ''}
             </td>
+            <td>${tifVerifHtml}</td>
+            <td>${tifNoteHtml}</td>
             <td style="text-align:center;">${actionBtn}</td>
           </tr>
         `;
@@ -3643,7 +3825,7 @@
         return;
       }
 
-      let csv = 'No,STO,Kode ODC,Tikor,Kondisi Fisik,Status Evidence,Foto Lengkap,Foto Kurang,Petugas,Tanggal Update,Foto Sebelum,Foto Sesudah,Foto Samping,Foto Dalam,Foto Overpal Sebelum,Foto Overpal Sesudah\n';
+      let csv = 'No,STO,Kode ODC,Tikor,Kondisi Fisik,Status Evidence,Foto Lengkap,Foto Kurang,Petugas,Tanggal Update,Verifikasi TIF,Catatan TIF,Foto Sebelum,Foto Sesudah,Foto Samping,Foto Dalam,Foto Overpal Sebelum,Foto Overpal Sesudah\n';
 
       list.forEach((item, idx) => {
         const o = item.odc;
@@ -3652,6 +3834,10 @@
         
         let statusEvid = an.cat === 'lengkap' ? 'Lengkap' : (an.cat === 'kurang' ? 'Kurang' : 'Belum Submit');
         let itemKurang = an.missingList.join('; ');
+
+        const tv = getTifVerification(o.name);
+        const tifStatusText = tv.status === 'ceklis' ? 'Ceklis (Approved)' : (tv.status === 'reject' ? 'Reject (Ditolak)' : 'Belum Dicek');
+        const tifNoteText = tv.note || '';
 
         const row = [
           idx + 1,
@@ -3664,6 +3850,8 @@
           `"${itemKurang.replace(/"/g, '""')}"`,
           `"${(o.petugasGembok || '').replace(/"/g, '""')}"`,
           `"${(o.gembokDiganti || '').replace(/"/g, '""')}"`,
+          `"${tifStatusText.replace(/"/g, '""')}"`,
+          `"${tifNoteText.replace(/"/g, '""')}"`,
           `"${(o.fotoSebelum || '').replace(/"/g, '""')}"`,
           `"${(o.fotoSesudah || o.fotoGembok || '').replace(/"/g, '""')}"`,
           `"${(o.fotoSamping || '').replace(/"/g, '""')}"`,

@@ -45,8 +45,11 @@ function doGet(e) {
       result = {
         dashboard: getDashboardData(),
         users: getUsersList(),
-        oltData: getOltData()
+        oltData: getOltData(),
+        tifVerifications: getTifVerificationsData()
       };
+    } else if (action === 'getTifVerifications') {
+      result = getTifVerificationsData();
     } else if (action === 'getMasterData') {
       result = getMasterData();
     } else if (action === 'getDashboardData') {
@@ -105,6 +108,8 @@ function doPost(e) {
       result = actionApproval(data.payload);
     } else if (action === 'updateOlt') {
       result = updateOlt(data.payload);
+    } else if (action === 'verifyEvidenceTif') {
+      result = verifyEvidenceTif(data.payload);
     } else {
       result = { success: false, message: 'Invalid action' };
     }
@@ -150,6 +155,10 @@ function initSheets() {
   if (!ss.getSheetByName('DB OLT')) {
     const sheet = ss.insertSheet('DB OLT');
     sheet.appendRow(['No', 'Hostname', 'Lokasi', 'Keterangan', 'Foto Perangkat']);
+  }
+  if (!ss.getSheetByName('VerifikasiEvidenceTIF')) {
+    const sheet = ss.insertSheet('VerifikasiEvidenceTIF');
+    sheet.appendRow(['ODC', 'Status', 'Catatan', 'Reviewer', 'Waktu']);
   }
   
   props.setProperty('SHEETS_INITIALIZED', 'true');
@@ -1459,4 +1468,69 @@ function setupTrigger() {
 function getApprovedBa() {
   const active = getActiveBorrowings();
   return active.filter(item => item.status === 'Approved');
+}
+
+// ==========================================
+// VERIFIKASI EVIDENCE TIF (MASTER ADMIN)
+// ==========================================
+function getTifVerificationsData() {
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const sheet = ss.getSheetByName('VerifikasiEvidenceTIF');
+  if (!sheet) return {};
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return {};
+  
+  const map = {};
+  for (let i = 1; i < data.length; i++) {
+    const odc = (data[i][0] || '').toString().trim();
+    if (odc) {
+      map[odc] = {
+        status: (data[i][1] || '').toString().trim(),
+        note: (data[i][2] || '').toString().trim(),
+        updatedBy: (data[i][3] || '').toString().trim(),
+        updatedAt: (data[i][4] || '').toString().trim()
+      };
+    }
+  }
+  return map;
+}
+
+function verifyEvidenceTif(payload) {
+  if (!payload || !payload.odc) {
+    return { success: false, message: 'ODC tidak valid' };
+  }
+  const ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  let sheet = ss.getSheetByName('VerifikasiEvidenceTIF');
+  if (!sheet) {
+    sheet = ss.insertSheet('VerifikasiEvidenceTIF');
+    sheet.appendRow(['ODC', 'Status', 'Catatan', 'Reviewer', 'Waktu']);
+  }
+
+  const odcTarget = payload.odc.toString().trim();
+  const status = (payload.status !== undefined ? payload.status : '').toString().trim();
+  const note = (payload.note !== undefined ? payload.note : '').toString().trim();
+  const reviewer = (payload.reviewer || 'TIF').toString().trim();
+  const time = payload.time || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm:ss');
+
+  const data = sheet.getDataRange().getValues();
+  let foundRow = -1;
+  for (let i = 1; i < data.length; i++) {
+    if ((data[i][0] || '').toString().trim().toUpperCase() === odcTarget.toUpperCase()) {
+      foundRow = i + 1; // 1-based index
+      break;
+    }
+  }
+
+  if (foundRow !== -1) {
+    const currentStatus = data[foundRow - 1][1] || '';
+    const currentNote = data[foundRow - 1][2] || '';
+    const finalStatus = (payload.status !== undefined) ? status : currentStatus;
+    const finalNote = (payload.note !== undefined) ? note : currentNote;
+
+    sheet.getRange(foundRow, 1, 1, 5).setValues([[odcTarget, finalStatus, finalNote, reviewer, time]]);
+  } else {
+    sheet.appendRow([odcTarget, status, note, reviewer, time]);
+  }
+
+  return { success: true, odc: odcTarget, status: status, note: note };
 }
